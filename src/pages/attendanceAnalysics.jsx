@@ -1,152 +1,169 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 const sessions = [
-  { id: 1, name: 'Fourth Year students', date: '2024-03-15', year: 2025, department: 'Accounting' },
-  { id: 2, name: 'Third Year students', date: '2024-03-22', year: 2025, department: 'Sociology' },
-  { id: 3, name: 'Second Year students', date: '2024-03-29', year: 2025, department: 'Economics' },
-  { id: 4, name: 'First Year students', date: '2024-04-05', year: 2025, department: 'Logistics' },
-];
+  { id: 1, name: 'Session One', yearLabel: 'First Year', year: 2025, department: 'Accounting' },
+  { id: 2, name: 'Session Two', yearLabel: 'Second Year', year: 2025, department: 'Sociology' },
+  { id: 3, name: 'Session Three', yearLabel: 'First Year', year: 2025, department: 'Economics' },
+  { id: 4, name: 'Session Four', yearLabel: 'First Year', year: 2025, department: 'Logistics' },
+]
 
 const attendanceData = {
   1: [
-    { name: 'student 1', status: 'Present', gender: 'female' },
-    { name: 'student 2', status: 'Absent', gender: 'male' },
-    { name: 'student 3', status: 'Present', gender: 'male' },
+    { id: 101, name: 'Abebe', studentId: '1234', status: 'Present', gender: 'Male', department: 'Accounting', phone: '0912345678' },
+    { id: 102, name: 'Sara', studentId: '2345', status: 'Absent', gender: 'Female', department: 'Accounting', phone: '0912345679' },
+    { id: 103, name: 'Mikael', studentId: '3456', status: 'Present', gender: 'Male', department: 'Accounting', phone: '0912345680' },
   ],
   2: [
-    { name: 'student 1', status: 'Present', gender: 'male' },
-    { name: 'student 2', status: 'Present', gender: 'female' },
-    { name: 'student 3', status: 'Present', gender: 'male' },
+    { id: 201, name: 'John', studentId: '4567', status: 'Present', gender: 'Male', department: 'Sociology', phone: '0912345681' },
   ],
   3: [
-    { name: 'student 1', status: 'Absent', gender: 'female' },
-    { name: 'student 2', status: 'Present', gender: 'female' },
+    { id: 301, name: 'Alice', studentId: '5678', status: 'Absent', gender: 'Female', department: 'Economics', phone: '0912345682' },
   ],
   4: [
-    { name: 'student 1', status: 'Present', gender: 'female' },
-    { name: 'student 2', status: 'Present', gender: 'female' },
+    { id: 401, name: 'Eleni', studentId: '6789', status: 'Present', gender: 'Female', department: 'Logistics', phone: '0912345683' },
   ],
-};
-
-const getStatusColor = (status) => {
-  switch (status) {
-    case 'Present': return 'bg-green-600';
-    case 'Absent': return 'bg-red-600';
-    case 'Late': return 'bg-yellow-500';
-    default: return 'bg-gray-500';
-  }
-};
+}
 
 export default function AttendanceAnalysis() {
-  const navigate = useNavigate();
-  const [filterYear, setFilterYear] = useState('All');
-  const [filterDepartment, setFilterDepartment] = useState('All');
-  const [filterGender, setFilterGender] = useState('All');
-  const [expandedSessions, setExpandedSessions] = useState({});
+  const navigate = useNavigate()
 
-  const years = [...new Set(sessions.map(s => s.year))];
+  const [searchId, setSearchId] = useState('')
+  const [filterGender, setFilterGender] = useState('All')
+  const [filterDepartment, setFilterDepartment] = useState('All')
+  const [currentPage, setCurrentPage] = useState(1)
+  const studentsPerPage = 5
 
-  const toggleDetails = (id) => {
-    setExpandedSessions(prev => ({ ...prev, [id]: !prev[id] }));
-  };
+  const allStudents = Object.values(attendanceData).flat()
 
-  const filteredSessions = sessions.filter(s => {
-    if (filterYear !== 'All' && s.year !== parseInt(filterYear)) return false;
-    if (filterDepartment !== 'All' && s.department !== filterDepartment) return false;
-    return true;
-  });
+  // Default filter: first-year students
+  const firstYearStudents = allStudents
+    .filter(s =>
+      sessions.find(sess =>
+        sess.id ===
+        Number(Object.keys(attendanceData).find(id => attendanceData[id].includes(s)))
+      )?.yearLabel === 'First Year'
+    )
+    .sort((a, b) => a.name.localeCompare(b.name))
+
+  // Filtering logic
+  let filteredStudents = searchId
+    ? allStudents.filter(s => s.studentId === searchId)
+    : firstYearStudents.filter(s =>
+      (filterGender === 'All' || s.gender === filterGender) &&
+      (filterDepartment === 'All' || s.department === filterDepartment)
+    )
+
+  const indexOfLast = currentPage * studentsPerPage
+  const indexOfFirst = indexOfLast - studentsPerPage
+  const currentStudents = searchId
+    ? filteredStudents
+    : filteredStudents.slice(indexOfFirst, indexOfLast)
+  const totalPages = Math.ceil(filteredStudents.length / studentsPerPage)
+
+  const calculateAttendance = (student) => {
+    const records = Object.values(attendanceData).flat().filter(st => st.studentId === student.studentId)
+    const totalSessions = records.length
+    const presentCount = records.filter(r => r.status === 'Present').length
+    const percentPresent = totalSessions > 0 ? (presentCount / totalSessions) * 100 : 0
+    return percentPresent.toFixed(1)
+  }
 
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col items-center p-8">
-      <h1 className="text-2xl font-bold text-yellow-400 mb-6">Attendance Analysis</h1>
+    <div className="min-h-screen  bg-[#111] text-white flex flex-col items-center p-4 md:p-8">
+      <h1 className="text-3xl font-bold text-yellow-400 mb-6">Attendance Analysis</h1>
 
-      {/* Filters */}
-      <div className="flex gap-4 mb-6 flex-wrap">
+      {/* Search and Filters */}
+      <div className="flex flex-col md:flex-row gap-2 mb-6 w-full max-w-4xl">
+        <input
+          type="text"
+          placeholder="Enter student ID"
+          value={searchId}
+          onChange={(e) => { setSearchId(e.target.value); setCurrentPage(1) }}
+          className="p-2 border border-yellow-400 bg-transparent rounded flex-1 text-white placeholder-gray-400"
+        />
         <select
-          className="p-2 rounded text-black"
-          value={filterYear}
-          onChange={e => setFilterYear(e.target.value)}
-        >
-          <option value="All">All Years</option>
-          {years.map(y => <option key={y} value={y}>{y}</option>)}
-        </select>
-
-        <select
-          className="p-2 rounded text-black"
-          value={filterDepartment}
-          onChange={(e) => setFilterDepartment(e.target.value)}
-        >
-          <option value="All">All Departments</option>
-          {[...new Set(sessions.map(s => s.department))].map(dep => (
-            <option key={dep} value={dep}>{dep}</option>
-          ))}
-        </select>
-
-        <select
-          className="p-2 rounded text-black"
           value={filterGender}
-          onChange={e => setFilterGender(e.target.value)}
+          onChange={(e) => setFilterGender(e.target.value)}
+          className="p-2 border border-yellow-400 bg-transparent rounded text-white"
         >
           <option value="All">All Genders</option>
-          <option value="male">Male</option>
-          <option value="female">Female</option>
+          <option value="Male">Male</option>
+          <option value="Female">Female</option>
+        </select>
+        <select
+          value={filterDepartment}
+          onChange={(e) => setFilterDepartment(e.target.value)}
+          className="p-2 border border-yellow-400 bg-transparent rounded text-white"
+        >
+          <option value="All">All Departments</option>
+          {[...new Set(allStudents.map(s => s.department))].map(dep =>
+            <option key={dep} value={dep}>{dep}</option>
+          )}
         </select>
       </div>
 
-      {/* Sessions */}
-      <div className="w-full max-w-4xl space-y-6">
-        {filteredSessions.map(session => {
-          const allStudents = attendanceData[session.id] || [];
-          const students = allStudents.filter(s => filterGender === 'All' || s.gender.toLowerCase() === filterGender.toLowerCase());
-          const totalFiltered = students.length;
-          const presentCount = students.filter(s => s.status === 'Present').length;
-          const percentPresent = totalFiltered > 0 ? ((presentCount / totalFiltered) * 100).toFixed(1) : 0;
-          const isExpanded = expandedSessions[session.id] || false;
+      {/* Students List */}
+      <div className="w-full max-w-4xl space-y-4">
+        {currentStudents.length === 0 && (
+          <p className="text-gray-400 text-center">No student found.</p>
+        )}
 
+        {currentStudents.map((s) => {
+          const percentPresent = calculateAttendance(s)
           return (
-            <div key={session.id} className="bg-[#111] p-4 rounded border border-gray-700">
-              <div className="flex justify-between items-center mb-2">
-                <span className="font-semibold text-yellow-400">{session.name} ({session.year})</span>
-                <span>
-                  {percentPresent}% of {filterGender === 'All' ? 'students' : filterGender}
-                  {filterDepartment !== 'All' ? ` in ${session.department}` : ''} present ({presentCount}/{totalFiltered})
-                </span>
+            <div
+              key={s.studentId}
+              className="bg-white/10 border border-yellow-400 rounded-lg p-4 flex flex-col gap-3"
+            >
+              <div className="flex flex-col md:flex-row md:justify-between">
+                <div>
+                  <p className="text-lg font-semibold text-yellow-400">{s.name}</p>
+                  <p className="text-sm text-gray-300">ID: {s.studentId}</p>
+                </div>
+                <div className="text-sm text-gray-300 mt-2 md:mt-0">
+                  <p>Department: {s.department}</p>
+                  <p>Gender: {s.gender}</p>
+                  <p>Phone: {s.phone}</p>
+                </div>
               </div>
 
-              <button
-                onClick={() => toggleDetails(session.id)}
-                className="bg-gray-700 px-3 py-1 rounded text-sm mb-2 hover:bg-gray-600 transition"
-              >
-                {isExpanded ? 'Hide Details' : 'View Details'}
-              </button>
-
-              {isExpanded && (
-                <div className="space-y-1">
-                  {students.map((s, i) => {
-                    const studentPercent = ((s.status === 'Present' ? 1 : 0) / totalFiltered * 100).toFixed(1);
-                    return (
-                      <div key={i} className="flex justify-between bg-[#222] p-2 rounded">
-                        <span>{s.name}</span>
-                        <span className={`${getStatusColor(s.status)} px-2 py-1 rounded text-sm font-semibold`}>
-                          {s.status} ({studentPercent}% of class)
-                        </span>
-                      </div>
-                    );
-                  })}
+              <div className="mt-2">
+                <div className="w-full bg-white/20 h-3 rounded">
+                  <div
+                    className="h-3 rounded bg-green-500 transition-all duration-500"
+                    style={{ width: `${percentPresent}%` }}
+                  ></div>
                 </div>
-              )}
+                <p className="text-sm text-gray-300 mt-1">{percentPresent}% Present</p>
+              </div>
             </div>
-          );
+          )
         })}
       </div>
 
+      {/* Pagination */}
+      {!searchId && totalPages > 1 && (
+        <div className="flex gap-2 mt-6">
+          {Array.from({ length: totalPages }, (_, i) => (
+            <button
+              key={i}
+              onClick={() => setCurrentPage(i + 1)}
+              className={`px-3 py-1 rounded border border-yellow-400 ${currentPage === i + 1 ? 'bg-yellow-400 text-black' : 'text-yellow-400'
+                }`}
+            >
+              {i + 1}
+            </button>
+          ))}
+        </div>
+      )}
+
       <button
         onClick={() => navigate('/sessionhistory')}
-        className="bg-yellow-500 text-black px-6 py-2 rounded-lg mt-8"
+        className="mt-8 border border-yellow-400 text-yellow-400 px-6 py-2 rounded-md hover:bg-yellow-400 hover:text-black transition"
       >
         ← Back To Session History
       </button>
     </div>
-  );
-}
+  )
+} 

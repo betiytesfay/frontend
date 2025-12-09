@@ -14,8 +14,21 @@ export default function sessionHistory() {
   const [filterYear, setFilterYear] = useState(new Date().getFullYear());
   const [filterGender, setFilterGender] = useState('All');
 
+  // Add Session form states
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [newSessionName, setNewSessionName] = useState('');
+  const [newSessionDate, setNewSessionDate] = useState('');
+  const [newSessionRate, setNewSessionRate] = useState('');
+  const [newSessionYear, setNewSessionYear] = useState(new Date().getFullYear());
+  const [showEditForm, setShowEditForm] = useState(false);
+  const [editSession, setEditSession] = useState(null);
+  const [editName, setEditName] = useState('');
+  const [editDate, setEditDate] = useState('');
+  const [editRate, setEditRate] = useState('');
+  const [editYear, setEditYear] = useState(new Date().getFullYear());
+
   // Sessions & filtered sessions
-  const [sessions] = useState([
+  const [sessions, setSessions] = useState([
     { id: 1, name: 'Fourth Year students', date: '2024-03-15', rate: '88%', year: 2025 },
     { id: 2, name: 'Third Year students', date: '2024-03-22', rate: '92%', year: 2025 },
     { id: 3, name: 'Second Year students', date: '2024-03-29', rate: '78%', year: 2025 },
@@ -25,10 +38,10 @@ export default function sessionHistory() {
 
   // Attendance Data
   const attendanceData = {
-    1: [{ name: 'Martha Lee', status: 'Present', gender: 'female' }, { name: 'Paul Green', status: 'Absent', gender: 'female' }],
-    2: [{ name: 'Alice Smith', status: 'Present', gender: 'male' }, { name: 'Bob Johnson', status: 'Present', gender: 'female' }, { name: 'Charlie Brown', status: 'Present', gender: 'male' }],
-    3: [{ name: 'David King', status: 'Absent', gender: 'female' }, { name: 'Sophie Lane', status: 'Present', gender: 'female' }],
-    4: [{ name: 'Brian Cox', status: 'Present', gender: 'female' }, { name: 'Olivia Ray', status: 'Present', gender: 'female' }],
+    1: [{ name: 'Student 1', status: 'Present', gender: 'female' }, { name: 'Student 2', status: 'Absent', gender: 'female' }],
+    2: [{ name: 'Student 1', status: 'Present', gender: 'male' }, { name: 'Student 2', status: 'Present', gender: 'female' }, { name: 'Student 3', status: 'Present', gender: 'male' }],
+    3: [{ name: 'Student 1', status: 'Absent', gender: 'female' }, { name: 'Student 2', status: 'Present', gender: 'female' }],
+    4: [{ name: 'Student 1', status: 'Present', gender: 'female' }, { name: 'Student 2', status: 'Present', gender: 'female' }],
   };
 
   const getAttendanceSummary = (sessionId) => {
@@ -70,54 +83,124 @@ export default function sessionHistory() {
   }, [sessions, searchQuery, filterYearEnabled, filterGenderEnabled, filterYear, filterGender]);
 
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col items-center p-8">
-      <div className="w-full max-w-6xl bg-[#111] p-8 rounded-xl shadow-lg border border-gray-700">
+    <div className="min-h-screen justify-center bg-[#d1c8c8] text-black flex flex-col items-center p-4 sm:p-8">
+      <div className="w-full max-w-6xl justify-center bg-[#ffffff] p-4 sm:p-8 rounded-xl shadow-lg border border-[#e0d9d9]">
 
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-2xl font-bold text-yellow-400">Session Attendance History</h1>
+        {/* Header Section */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 sm:mb-8 gap-3 sm:gap-0">
+          <h1 className="text-xl sm:text-2xl font-bold text-[#D4AF35]">Session Attendance History</h1>
 
-          <div className="flex gap-3">
-            {/* New Button: Go to Attendance Analysis */}
+          <div className="flex flex-wrap gap-2 sm:gap-3">
             <button
-              onClick={() => navigate('/attendance-analysis')} // Make sure your route matches this
-              className="bg-green-500 text-black px-4 py-2 rounded hover:bg-blue-400 transition"
+              onClick={() => navigate('/attendance-analysis')}
+              className="bg-[#D4AF35] text-white px-4 py-2 rounded hover:bg-[#ffc70f] transition w-full sm:w-auto"
             >
               Attendance Analysis
             </button>
 
-            {/* Add Session */}
-            <button
-              onClick={() => alert('Add Session clicked')}
-              className="bg-green-500 text-black px-4 py-2 rounded hover:bg-green-400 transition"
-            >
-              + Add Session
-            </button>
+            {/* Add Session Dropdown */}
+            <div className="relative w-full sm:w-auto">
+              <button
+                onClick={() => setShowAddForm(!showAddForm)}
+                className="bg-[#D4AF35] text-white px-4 py-2 rounded hover:bg-[#ffc70f] transition w-full sm:w-auto"
+              >
+                + Add Session
+              </button>
+
+              {showAddForm && (
+                <div className="absolute right-0 mt-2 bg-[#222] p-4 rounded shadow-lg border border-gray-600 w-64 sm:w-72 z-10">
+                  <h3 className="text-[#D4AF35] mb-3 font-semibold text-center">Add New Session</h3>
+
+                  <input
+                    type="text"
+                    placeholder="Session name..."
+                    value={newSessionName}
+                    onChange={(e) => setNewSessionName(e.target.value)}
+                    className="w-full mb-2 p-2 rounded bg-white text-black border border-gray-500"
+                  />
+
+                  <input
+                    type="date"
+                    value={newSessionDate}
+                    onChange={(e) => setNewSessionDate(e.target.value)}
+                    className="w-full mb-2 p-2 rounded bg-black text-white border border-gray-500"
+                  />
+
+                  <input
+                    type="text"
+                    placeholder="Rate (e.g. 85%)"
+                    value={newSessionRate}
+                    onChange={(e) => setNewSessionRate(e.target.value)}
+                    className="w-full mb-2 p-2 rounded bg-white text-white border border-gray-500"
+                  />
+
+                  <input
+                    type="number"
+                    placeholder="Year"
+                    value={newSessionYear}
+                    onChange={(e) => setNewSessionYear(parseInt(e.target.value))}
+                    className="w-full mb-3 p-2 rounded bg-black text-white border border-gray-500"
+                  />
+
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <button
+                      onClick={() => {
+                        if (!newSessionName || !newSessionDate || !newSessionRate || !newSessionYear) {
+                          alert('Please fill all fields');
+                          return;
+                        }
+                        const newSession = {
+                          id: sessions.length + 1,
+                          name: newSessionName,
+                          date: newSessionDate,
+                          rate: newSessionRate,
+                          year: newSessionYear,
+                        };
+                        setSessions([...sessions, newSession]);
+                        setFilteredSessions([...sessions, newSession]);
+                        setShowAddForm(false);
+                        setNewSessionName('');
+                        setNewSessionDate('');
+                        setNewSessionRate('');
+                        setNewSessionYear(new Date().getFullYear());
+                      }}
+                      className="flex-1 bg-[#D4AF35] text-black py-1 rounded hover:bg-[#d6aa19] transition"
+                    >
+                      Save
+                    </button>
+                    <button
+                      onClick={() => setShowAddForm(false)}
+                      className="flex-1 bg-gray-600 text-white py-1 rounded hover:bg-gray-500 transition"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
-
-        {/* Search + Filter Toggle */}
-        <div className="flex items-center gap-3 mb-4">
+        {/* Search + Filter */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-4">
           <input
             type="text"
             placeholder="Search session name..."
-            className="p-2 rounded flex-1 bg-black text-gray-300 border border-gray-500 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-500"
+            className="p-2 rounded flex-1 bg-white text-gray-300 border border-gray-500 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-500"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
           <button
             onClick={() => setShowFilterPanel(!showFilterPanel)}
-            className="bg-yellow-500 text-black px-4 py-2 rounded hover:bg-yellow-600 transition"
+            className="bg-[#D4AF35] text-black px-4 py-2 rounded hover:bg-[#d6aa19] transition"
           >
             Filter {showFilterPanel ? '▲' : '▼'}
           </button>
         </div>
 
         {/* Filter Panel */}
-        {/* Filter Panel */}
         {showFilterPanel && (
-          <div className="bg-gray-800 p-4 rounded mb-6 w-full max-w-lg shadow-lg">
-            {/* Year Filter */}
+          <div className="bg-[#dbd6d6] p-4 rounded mb-6 w-full sm:max-w-lg shadow-lg">
             <div className="flex items-center gap-2 mb-2">
               <input type="checkbox" checked={filterYearEnabled} onChange={() => setFilterYearEnabled(!filterYearEnabled)} />
               <label>Filter by Year</label>
@@ -130,7 +213,6 @@ export default function sessionHistory() {
               )}
             </div>
 
-            {/* Gender Filter */}
             <div className="flex items-center gap-2 mb-2">
               <input type="checkbox" checked={filterGenderEnabled} onChange={() => setFilterGenderEnabled(!filterGenderEnabled)} />
               <label>Filter by Gender</label>
@@ -143,27 +225,20 @@ export default function sessionHistory() {
               )}
             </div>
 
-            {/* Apply Button */}
             <button
               onClick={() => {
                 let filtered = sessions;
 
-                if (filterYearEnabled) {
-                  filtered = filtered.filter(s => s.year === filterYear);
-                }
-
+                if (filterYearEnabled) filtered = filtered.filter(s => s.year === filterYear);
                 if (filterGenderEnabled && filterGender !== 'All') {
                   filtered = filtered.filter(session =>
                     (attendanceData[session.id] || []).some(student => student.gender === filterGender)
                   );
                 }
-
-                if (searchQuery) {
-                  filtered = filtered.filter(s => s.name.toLowerCase().includes(searchQuery.toLowerCase()));
-                }
+                if (searchQuery) filtered = filtered.filter(s => s.name.toLowerCase().includes(searchQuery.toLowerCase()));
 
                 setFilteredSessions(filtered);
-                setShowFilterPanel(false); // hide panel after applying
+                setShowFilterPanel(false);
               }}
               className="bg-green-500 text-black px-4 py-2 rounded hover:bg-green-400 transition mt-2"
             >
@@ -172,13 +247,12 @@ export default function sessionHistory() {
           </div>
         )}
 
-
         {/* Sessions Table */}
-        <div className="flex flex-col md:flex-row gap-8">
-          <div className="flex-1 bg-[#1a1a1a] rounded-lg p-6 border border-gray-700">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-gray-600 text-yellow-400">
+        <div className="flex flex-col lg:flex-row gap-6">
+          <div className="flex-1 bg-[#ffffff] rounded-lg p-4 sm:p-6 border border-[#D4AF35] overflow-x-auto">
+            <table className="min-w-full text-left border-collapse">
+              <thead className="border-b border-black">
+                <tr className="border-b border-black text-[#D4AF35] text-sm sm:text-base">
                   <th className="py-2">Session Name</th>
                   <th className="py-2">Date</th>
                   <th className="py-2">Rate</th>
@@ -187,14 +261,14 @@ export default function sessionHistory() {
               </thead>
               <tbody>
                 {filteredSessions.map((session) => (
-                  <tr key={session.id} className="border-b border-gray-700 hover:bg-gray-800 transition">
-                    <td className="py-2">{session.name}</td>
-                    <td className="py-2">{session.date}</td>
-                    <td className="py-2 text-yellow-400">{session.rate}</td>
+                  <tr key={session.id} className="border-b border-[#D4AF35] hover:bg-gray-800 transition text-sm sm:text-base">
+                    <td className="py-2 text-[#D4AF35]">{session.name}</td>
+                    <td className="py-2 text-[#D4AF35]">{session.date}</td>
+                    <td className="py-2 text-[#D4AF35]">{session.rate}</td>
                     <td className="py-2">
                       <button
                         onClick={() => setSelectedSession(session)}
-                        className="bg-yellow-500 text-black px-3 py-1 rounded hover:bg-yellow-400 transition"
+                        className="bg-[#D4AF35] text-black px-3 py-1 rounded hover:bg-[#d6aa19] transition text-sm"
                       >
                         View Details
                       </button>
@@ -207,11 +281,11 @@ export default function sessionHistory() {
 
           {/* Attendance Details */}
           {selectedSession && (
-            <div className="flex-1 bg-[#1a1a1a] rounded-lg p-6 border border-gray-700 animate-fadeIn">
-              <h2 className="text-lg font-semibold mb-4 text-yellow-400">
+            <div className="flex-1 bg-[#1a1a1a] rounded-lg p-4 sm:p-6 border border-black animate-fadeIn">
+              <h2 className="text-base sm:text-lg font-semibold mb-4 text-[#D4AF35]">
                 Attendance for {selectedSession.name} ({selectedSession.year})
               </h2>
-              <div className="flex gap-4 mb-4">
+              <div className="flex flex-wrap gap-3 mb-4">
                 {Object.entries(getAttendanceSummary(selectedSession.id)).map(([status, count]) => (
                   <div key={status} className={`px-3 py-1 rounded text-sm font-semibold ${getStatusColor(status)}`}>
                     {status}: {count}
@@ -223,7 +297,7 @@ export default function sessionHistory() {
                   ?.filter(student => filterGender === 'All' || student.gender.toLowerCase() === filterGender.toLowerCase())
                   .map((student, i) => (
                     <div key={i} className="flex justify-between items-center bg-[#222] p-3 rounded hover:bg-[#333] transition">
-                      <span>{student.name}</span>
+                      <span className="text-sm sm:text-base">{student.name}</span>
                       <span className={`${getStatusColor(student.status)} px-3 py-1 rounded text-sm font-semibold`}>
                         {student.status}
                       </span>
@@ -235,10 +309,10 @@ export default function sessionHistory() {
         </div>
 
         {/* Back Button */}
-        <div className="flex justify-center mt-8">
+        <div className="flex justify-center mt-6 sm:mt-8">
           <button
             onClick={() => navigate('/sessionAdmin')}
-            className="bg-yellow-500 text-black px-6 py-2 rounded-lg shadow-md hover:bg-yellow-400 hover:scale-105 transition-transform duration-200 font-semibold"
+            className="bg-[#D4AF35] text-black px-6 py-2 rounded-lg shadow-md hover:bg-[#d6aa19] hover:scale-105 transition-transform duration-200 font-semibold text-sm sm:text-base"
           >
             ← Back To Dashboard
           </button>

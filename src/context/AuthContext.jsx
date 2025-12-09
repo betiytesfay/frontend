@@ -5,15 +5,23 @@ const AuthContext = createContext(null)
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
 
-  const login = async ({ username, password }) => {
-    // Replace with real API call. For now accept any non-empty username.
-    if (!username) throw new Error('username required')
-    const fakeUser = { id: 1, name: username, role: 'admin' }
-    setUser(fakeUser)
-    return fakeUser
-  }
+  // login function accepts role too
+  const login = async ({ username, password, role }) => {
+    // Hardcoded credentials
+    const credentials = {
+      session: { username: 'sessionadmin', password: '54321' },
+      general: { username: 'generaladmin', password: '12345' },
+    }
 
-  
+    const validUser = credentials[role]
+    if (!validUser || username !== validUser.username || password !== validUser.password) {
+      throw new Error('Invalid credentials')
+    }
+
+    const loggedInUser = { username, role }
+    setUser(loggedInUser)
+    return loggedInUser
+  }
 
   const logout = () => {
     setUser(null)

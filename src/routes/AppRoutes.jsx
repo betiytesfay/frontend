@@ -4,6 +4,7 @@ import AdminLogin from '../pages/AdminLogin'
 import SessionAdmin from '../pages/SessionAdmin'
 import Dashboard from '../pages/Dashboard'
 import { useAuth } from '../context/AuthContext'
+import GeneralAdmin from '../pages/GeneralAdmin'
 
 function PrivateRoute({ children }) {
   const { user } = useAuth()
@@ -20,6 +21,14 @@ export default function AppRoutes() {
         element={
           <PrivateRoute>
             <SessionAdmin />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/admin/general"
+        element={
+          <PrivateRoute>
+            <GeneralAdmin />
           </PrivateRoute>
         }
       />

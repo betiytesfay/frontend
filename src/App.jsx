@@ -1,25 +1,4 @@
-// import React from "react";
-// import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-// import "./App.css";
-// import Home from "./pages/Home";
-// import GeneralAdmin from "./pages/GeneralAdmin";
 
-
-
-
-
-
-// function App() {
-//   return (
-//     <Router>
-//       <Routes>
-//         <Route path="/" element={<Home />} />
-//         <Route path="/general-admin" element={<GeneralAdmin />} />
-        
-//       </Routes>
-//     </Router>
-//   );
-// }
 
 // export default App;
 import { useNavigate } from 'react-router-dom'
@@ -44,22 +23,29 @@ export default function App() {
         style={{ backgroundColor: 'rgba(255, 255, 255, 0.2)' }} // 70% white
       >
         <img src={logo} alt="Logo" className="w-40 h-40 object-contain mb-4" />
+        <h1 className="text-3xl md:text-2xl font-bold text-white text-center drop-shadow-lg">
+          <span className="animate-fadeSlide inline-block">
+            Welcome to
+            Gibi <br />  Attendance
+          </span>
+        </h1>
 
         <div className="flex flex-col gap-4 w-full">
 
           <button
-            onClick={() => navigate('/admin')}
-            className="w-full border border-[#D7B450] text-white py-3 px-3 rounded-md text-base transition duration-200 hover:text- hover:bg-yellow-400"
+            onClick={() => navigate('/login', { state: { role: 'general' } })}
+            className="w-full border border-[#D7B450] text-white py-3 px-3 rounded-md text-base transition duration-200 hover:bg-yellow-400"
           >
             Login as General Admin
           </button>
 
           <button
-            onClick={() => navigate('/login')}
-            className="w-full border border-[#D7B450] text-white py-3 rounded-md text-base transition duration-200 hover:bg-yellow-400 hover:text-black hover:scale-105"
+            onClick={() => navigate('/login', { state: { role: 'session' } })}
+            className="w-full border border-[#D7B450] text-white py-3 rounded-md text-base transition duration-200 hover:bg-yellow-400"
           >
             Login as Session Admin
           </button>
+
         </div>
 
         <p className="text-white text-sm mt-2 cursor-pointer hover:underline">
