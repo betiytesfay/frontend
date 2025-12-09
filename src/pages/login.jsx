@@ -1,9 +1,8 @@
 import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { BackButton } from '../component/backButton'
-import axios from 'axios'
+// import axios from 'axios' // Commented out since we are not using backend for now
 import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
-
 
 export default function Login() {
   const navigate = useNavigate()
@@ -12,6 +11,8 @@ export default function Login() {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
+  const [error, setError] = useState('')
 
   // Determine which role this login is for
   const role = location.state?.role || 'session'
@@ -21,9 +22,15 @@ export default function Login() {
     session: { redirect: '/sessionAdmin' },
     general: { redirect: '/admin' },
   }
-  const [showPassword, setShowPassword] = useState(false);
 
-  // Backend login using Axios
+  // Local credentials for testing
+  const localCredentials = {
+    session: { username: 'eyob', password: '54321', redirect: '/sessionAdmin' },
+    general: { username: 'eyob', password: '12345', redirect: '/admin' },
+  }
+
+  // Backend login using Axios (currently commented out)
+  /*
   const handleLogin = async () => {
     setLoading(true);
     try {
@@ -49,7 +56,7 @@ export default function Login() {
       if (user.role === "super-admin") navigate("/admin");
       if (generaluser === "eyob" && passwordeg == 12345) navigate("/admin");
       if (user.role === "super-admin") navigate("/admin");
-      if (generaluser === "eyob" && passwordeg == 54321) navigate("/sessionAdmin");
+      if (sessionuser === "eyob" && passwordeg == 54321) navigate("/sessionAdmin");
 
       else if (user.role === "session-admin") navigate("/sessionAdmin");
       else navigate("/"); // fallback
@@ -60,8 +67,24 @@ export default function Login() {
       setLoading(false);
     }
   };
+  */
 
+  // Local login handler
+  const handleLogin = () => {
+    setLoading(true)
+    setError('')
 
+    const cred = localCredentials[role]
+
+    setTimeout(() => { // optional delay to simulate loading
+      if (username === cred.username && password === cred.password) {
+        navigate(cred.redirect)
+      } else {
+        setError('Invalid username or password')
+      }
+      setLoading(false)
+    }, 500)
+  }
 
   return (
     <div className="h-screen flex items-center justify-center bg-gray-100">
@@ -73,18 +96,18 @@ export default function Login() {
           {role === 'session' ? 'Session Admin Login' : 'General Admin Login'}
         </h1>
 
-        <label>username:</label>
+        {error && <p className="text-red-500 text-center">{error}</p>}
+
+        <label>Username:</label>
         <input
           type="text"
           placeholder="0000"
           value={username}
-
-
           onChange={(e) => setUsername(e.target.value)}
           className="border border-gray-300 rounded p-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-400"
         />
 
-        <label>password:</label>
+        <label>Password:</label>
         <div className="relative w-full">
           <input
             type={showPassword ? 'text' : 'password'}
@@ -106,7 +129,6 @@ export default function Login() {
             )}
           </button>
         </div>
-
 
         <button
           onClick={handleLogin}
