@@ -1,5 +1,7 @@
 import React, { useState } from "react";
-import { FaUserPlus, FaUserEdit, FaUserMinus, FaUserCircle } from "react-icons/fa";
+import { FaUserPlus, FaUserEdit, FaUserMinus, FaUserCircle, FaSearch, FaFilter, FaEdit, FaTrash } from "react-icons/fa";
+
+
 
 const ManageStudents = () => {
   // === Students State ===
@@ -16,7 +18,19 @@ const ManageStudents = () => {
   const [filterDepartment, setFilterDepartment] = useState("");
 
 
-  const [students, setStudents] = useState([]);
+
+  const [students, setStudents] = useState([
+    {
+      id: 1,
+      firstname: "Eyob",
+      lastname: "Simachew",
+      phone: "0987654321",
+      gender: "male",
+      department: "Accounting",
+      email: "eyob@gmail.com"
+    }
+  ]);
+
   const [studentDepartment, setStudentDepartment] = useState("");
   const [showAddPopup, setShowAddPopup] = useState(false);
 
@@ -207,17 +221,21 @@ const ManageStudents = () => {
     <div className="bg-white p-6 rounded-lg  max-w-5xl mx-auto">
       {/* Step 2: Select Action */}
       {!selectedAction && (
-        <div className="flex flex-col justify-center gap-4 h-[40vh] max-w-sm bg-white/50 p-4 rounded-xl shadow-md w-full mx-auto">
+        <div className="flex flex-col justify-center gap-4 max-w-md sm:max-w-lg bg-white/50 p-6 rounded-xl shadow-md w-full mx-auto">
+
+
           <h2 className="text-xl font-semibold text-center">Select One</h2>
           <button
             onClick={() => setSelectedAction("add")}
-            className="flex items-center gap-2 bg-yellow-500 text-white px-4 py-3 rounded w-full hover:bg-yellow-600 transition"
+            className="flex items-center gap-2 bg-yellow-500 text-white px-4 py-3 rounded w-full sm:w-auto hover:bg-yellow-600 transition"
+
           >
             <FaUserPlus className="w-5 h-5" /> Add Student
           </button>
           <button
             onClick={() => setSelectedAction("edit")}
-            className="flex items-center gap-2 bg-yellow-500 text-white px-4 py-3 rounded w-full hover:bg-yellow-600 transition"
+            className="flex items-center gap-2 bg-yellow-500 text-white px-4 py-3 rounded w-full sm:w-auto hover:bg-yellow-600 transition"
+
           >
             <FaUserEdit className="w-5 h-5" /> Edit Student
           </button>
@@ -241,69 +259,73 @@ const ManageStudents = () => {
 
       {/* Add Student Form */}
       {selectedAction === "add" && (
-        <div className="bg-white/90 p-6 rounded-lg shadow-md max-w-5xl mx-auto">
+        <div className="bg-white/90 p-6 rounded-lg shadow-md w-full max-w-md mx-auto max-h-[90vh] overflow-y-auto">
+
           <h2 className="font-semibold mb-4 text-xl">Add Student</h2>
-          <div className="flex flex-col gap-4 mb-4">
-            <div className="flex items-center gap-4">
-              <label className="w-32 text-right">First Name:</label>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-medium">First Name:</label>
               <input
                 type="text"
                 placeholder="First Name"
                 value={studentFirstName}
                 onChange={(e) => setStudentFirstName(e.target.value)}
-                className="border rounded h-9 px-2 flex-1"
+                className="border rounded h-10 px-2 w-full"
               />
             </div>
-            <div className="flex items-center gap-4">
-              <label className="w-32 text-right">Last Name:</label>
+
+
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-medium">Last Name:</label>
               <input
                 type="text"
                 placeholder="Last Name"
                 value={studentLastName}
                 onChange={(e) => setStudentLastName(e.target.value)}
-                className="border rounded h-9 px-2 flex-1"
+                className="border rounded h-10 px-2 w-full"
               />
             </div>
 
-            <div className="flex items-center gap-4">
-              <label className="w-32 text-right">Phone:</label>
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-medium">Phone:</label>
               <input
                 type="text"
                 placeholder="Phone Number"
                 value={studentPhone}
                 onChange={(e) => setStudentPhone(e.target.value)}
-                className="border rounded h-9 px-2 flex-1"
+                className="border rounded h-10 px-2 w-full"
               />
             </div>
-            <div className="flex items-center gap-4">
-              <label className="w-32 text-right">Email:</label>
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-medium">Email:</label>
               <input
                 type="email"
                 placeholder="example@gmail.com"
                 value={studentEmail}
                 onChange={(e) => setStudentEmail(e.target.value)}
-                className="border rounded h-9 px-2 flex-1"
+                className="border rounded h-10 px-2 w-full"
               />
             </div>
 
 
-            <div className="flex items-center gap-4">
-              <label className="w-32 text-right">Department:</label>
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-medium">Department:</label>
               <input
                 type="text"
                 placeholder="Accounting"
                 value={studentDepartment}
                 onChange={(e) => setStudentDepartment(e.target.value)}
-                className="border rounded h-9 px-2 flex-1"
+                className="border rounded h-10 px-2 w-full"
               />
             </div>
 
-            <div className="flex items-center gap-4">
-              <label className="w-32 text-right">Gender:</label>
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-medium">Gender:</label>
               <select
                 value={studentGender}
                 onChange={(e) => setStudentGender(e.target.value)}
-                className="border rounded h-9 px-2 min-w-[200px] flex-1"
+                className="border rounded h-10 px-2 w-full"
               >
                 <option value="male">Male</option>
                 <option value="female">Female</option>
@@ -323,104 +345,107 @@ const ManageStudents = () => {
         </div>
       )}
 
-      {selectedAction === "edit" && (<div className="w-full p-4">
+      {selectedAction === "edit" && (
+        <div className="w-full p-4">
 
-        {/* Search Bar */}
-        <div className="flex items-center gap-2">
-          <input
-            type="text"
-            placeholder="Search by ID…"
-            value={searchId}
-            onChange={(e) => setSearchId(e.target.value)}
-            className="flex-1 border px-3 py-2 rounded"
-          />
-          <button
-            onClick={fetchStudentById}
-            className="px-4 py-2 bg-blue-600 text-white rounded"
-          >
-            Search
-          </button>
+          {/* Search Bar */}
+          <div className="flex justify-center mt-4">
+            <div className="flex items-center gap-2 w-full max-w-sm">
+              <input
+                type="text"
+                placeholder="Search by ID…"
+                value={searchId}
+                onChange={(e) => setSearchId(e.target.value)}
+                className="border px-2 py-1 rounded w-32 sm:w-40"
+              />
+              <button
+                onClick={fetchStudentById}
+                className="p-2 bg-blue-600 text-white rounded flex items-center justify-center"
+              >
+                <FaSearch className="w-4 h-4" />
+              </button>
 
-          {/* Filter Button */}
-          <button
-            onClick={() => setShowFilter(!showFilter)}
-            className="px-4 py-2 bg-gray-200 rounded"
-          >
-            Filter
-          </button>
-        </div>
-
-        {/* Filter Overlay */}
-        {showFilter && (
-          <div className="mt-3 border p-3 rounded bg-white shadow">
-            <input
-              type="text"
-              placeholder="Name…"
-              value={filterName}
-              onChange={(e) => setFilterName(e.target.value)}
-              className="w-full border px-3 py-2 rounded mb-2"
-            />
-
-            <select
-              value={filterDepartment}
-              onChange={(e) => setFilterDepartment(e.target.value)}
-              className="w-full border px-3 py-2 rounded mb-2"
-            >
-              <option value="">Department</option>
-              <option value="Accounting">Accounting</option>
-              <option value="Computer Science">Computer Science</option>
-            </select>
-
-            <button
-              onClick={applyFilter}
-              className="w-full px-4 py-2 bg-blue-600 text-white rounded"
-            >
-              Apply
-            </button>
-          </div>
-        )}
-
-        {/* Cards */}
-        <div className="mt-4 space-y-4">
-          {students.map((s) => (
-            <div key={s.id} className="border rounded p-3 shadow bg-white">
-              <div className="flex justify-between items-center">
-
-                {/* Left: Checkbox + ID */}
-                <div className="flex items-center gap-2">
-                  <input type="checkbox" />
-                  <span>ID: {s.id}</span>
-                </div>
-
-                {/* Right: actions */}
-                <div className="flex items-center gap-2">
-                  <button
-                    className="text-blue-600"
-                    onClick={() => openEditForm(s)}
-                  >
-                    Edit
-                  </button>
-                  <button
-                    className="text-red-600"
-                    onClick={() => openDeleteConfirm(s)}
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>
-
-              {/* Info */}
-              <div className="mt-2 text-sm">
-                <p>Name: {s.firstname} {s.lastname}</p>
-                <p>Department: {s.department}</p>
-                <p>Phone: {s.phone}</p>
-                <p>Gender: {s.gender}</p>
-              </div>
+              {/* Filter Button */}
+              <button
+                onClick={() => setShowFilter(!showFilter)}
+                className="p-2 bg-gray-200 rounded flex items-center justify-center"
+              >
+                <FaFilter className="w-4 h-4" />
+              </button>
             </div>
-          ))}
-        </div>
+          </div>
 
-      </div>
+          {/* Filter Overlay */}
+          {showFilter && (
+            <div className="mt-3 border p-3 rounded bg-white shadow">
+              <input
+                type="text"
+                placeholder="Name…"
+                value={filterName}
+                onChange={(e) => setFilterName(e.target.value)}
+                className="w-full border px-3 py-2 rounded mb-2"
+              />
+
+              <select
+                value={filterDepartment}
+                onChange={(e) => setFilterDepartment(e.target.value)}
+                className="w-full border px-3 py-2 rounded mb-2"
+              >
+                <option value="">Department</option>
+                <option value="Accounting">Accounting</option>
+                <option value="Computer Science">Computer Science</option>
+              </select>
+
+              <button
+                onClick={applyFilter}
+                className="w-full px-4 py-2 bg-blue-600 text-white rounded"
+              >
+                Apply
+              </button>
+            </div>
+          )}
+
+          {/* Cards */}
+          <div className="mt-4 space-y-4 w-full max-w-full overflow-hidden">
+            {students.map((s) => (
+              <div key={s.id} className="border rounded p-3 shadow bg-white w-full break-words">
+                <div className="flex justify-between items-center">
+
+                  {/* Left: Checkbox + ID */}
+                  <div className="flex items-center gap-2">
+                    <input type="checkbox" />
+                    <span>ID: {s.id}</span>
+                  </div>
+
+                  {/* Right: actions */}
+                  <div className="flex items-center gap-2">
+                    <button
+                      className="text-blue-600"
+                      onClick={() => openEditForm(s)}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      className="text-red-600"
+                      onClick={() => openDeleteConfirm(s)}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+
+                {/* Info */}
+                <div className="mt-2 text-sm">
+                  <p>Name: {s.firstname} {s.lastname}</p>
+                  <p>Department: {s.department}</p>
+                  <p>Phone: {s.phone}</p>
+                  <p>Gender: {s.gender}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+        </div>
       )}
 
       {selectedAction === "view" && students.length > 0 && (
@@ -503,56 +528,40 @@ const ManageStudents = () => {
         </div>
       )}
       {/* === EDIT POPUP === */}
-      {showEditPopup && selectedStudent && (
+      {showEditPopup && selectedCourse && (
         <div className="fixed inset-0 bg-black/40 flex justify-center items-center">
-          <div className="bg-white p-6 rounded-lg w-96 shadow-lg">
-            <h2 className="font-semibold text-lg mb-4">Edit Student</h2>
+          <div className="bg-white p-6 rounded-lg w-full max-w-md shadow-lg">
+            <h2 className="font-semibold text-lg mb-4">Edit Course</h2>
 
             <div className="flex flex-col gap-3">
               <input
                 type="text"
-                value={studentFirstName}
-                onChange={(e) => setStudentFirstName(e.target.value)}
-                placeholder="First Name"
-                className="border px-3 py-2 rounded"
+                value={courseName}
+                onChange={(e) => setCourseName(e.target.value)}
+                placeholder="Course Name"
+                className="border px-3 py-2 rounded w-full"
               />
               <input
                 type="text"
-                value={studentLastName}
-                onChange={(e) => setStudentLastName(e.target.value)}
-                placeholder="Last Name"
-                className="border px-3 py-2 rounded"
+                value={courseCode}
+                onChange={(e) => setCourseCode(e.target.value)}
+                placeholder="Course Code"
+                className="border px-3 py-2 rounded w-full"
+              />
+              <input
+                type="number"
+                value={courseCredit}
+                onChange={(e) => setCourseCredit(e.target.value)}
+                placeholder="Credit Hours"
+                className="border px-3 py-2 rounded w-full"
               />
               <input
                 type="text"
-                value={studentPhone}
-                onChange={(e) => setStudentPhone(e.target.value)}
-                placeholder="Phone"
-                className="border px-3 py-2 rounded"
-              />
-              <input
-                type="email"
-                value={studentEmail}
-                onChange={(e) => setStudentEmail(e.target.value)}
-                placeholder="Email"
-                className="border px-3 py-2 rounded"
-              />
-
-              <input
-                type="text"
-                value={studentDepartment}
-                onChange={(e) => setStudentDepartment(e.target.value)}
+                value={courseDepartment}
+                onChange={(e) => setCourseDepartment(e.target.value)}
                 placeholder="Department"
-                className="border px-3 py-2 rounded"
+                className="border px-3 py-2 rounded w-full"
               />
-              <select
-                value={studentGender}
-                onChange={(e) => setStudentGender(e.target.value)}
-                className="border px-3 py-2 rounded"
-              >
-                <option value="male">Male</option>
-                <option value="female">Female</option>
-              </select>
             </div>
 
             <div className="flex justify-between mt-4">
@@ -565,29 +574,21 @@ const ManageStudents = () => {
 
               <button
                 onClick={async () => {
-                  await handleSaveEditStudent(selectedStudent.id);
-                  await fetchStudents();         // <-- ⭐ ADD THIS LINE
-                  setShowEditPopup(false);
+                  if (selectedCourse) {
+                    await handleSaveEditCourse(selectedCourse.id);
+                    await fetchCourses();
+                    setShowEditPopup(false);
+                  }
                 }}
                 className="px-4 py-2 bg-blue-600 text-white rounded"
               >
                 Save
               </button>
-              <button
-                onClick={async () => {
-                  await handleSaveEditStudent(selectedStudent.id);
-                  await fetchStudents();
-                  setShowEditPopup(false);
-                }}
-                className="px-4 py-2 bg-Yellow-600 text-white rounded"
-              >
-                Save
-              </button>
-
             </div>
           </div>
         </div>
       )}
+
 
       {/* === VIEW POPUP === */}
       {showViewPopup && selectedStudent && (

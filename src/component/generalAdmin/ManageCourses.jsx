@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { FaBook, FaEdit, FaTrash, FaPlus, FaEye } from "react-icons/fa";
+import { FaBook, FaEdit, FaTrash, FaPlus, FaEye, FaSearch, FaFilter } from "react-icons/fa";
 
 const ManageCourses = () => {
   // === Course States ===
@@ -40,7 +40,7 @@ const ManageCourses = () => {
   };
 
   useEffect(() => {
-    if (selectedAction === "view" || selectedAction === "edit") {
+    if (selectedAction === "view") {
       fetchCourses();
     }
   }, [selectedAction]);
@@ -100,6 +100,8 @@ const ManageCourses = () => {
     setSelectedCourse(c);
     setCourseName(c.name);
     setCourseCode(c.code);
+
+
     setCourseCredit(c.credit);
     setCourseDepartment(c.department);
     setShowEditPopup(true);
@@ -237,20 +239,20 @@ const ManageCourses = () => {
               placeholder="Search by Course Code…"
               value={searchCode}
               onChange={(e) => setSearchCode(e.target.value)}
-              className="flex-1 border px-3 py-2 rounded"
+              className="border px-2 py-1 rounded w-32 sm:w-4"
             />
             <button
               onClick={fetchCourseByCode}
               className="bg-blue-600 text-white px-4 py-2 rounded"
             >
-              Search
+              <FaSearch className="w-4 h-4" />
             </button>
 
             <button
               onClick={() => setShowFilter(!showFilter)}
               className="bg-gray-200 px-4 py-2 rounded"
             >
-              Filter
+              <FaFilter className="w-4 h-4" />
             </button>
           </div>
 
@@ -395,39 +397,39 @@ const ManageCourses = () => {
       )}
 
       {/* EDIT POPUP */}
-      {showEditPopup && (
+      {showEditPopup && selectedCourse && (
         <div className="fixed inset-0 bg-black/40 flex justify-center items-center">
-          <div className="bg-white p-6 rounded-lg w-96 shadow-lg">
+          <div className="bg-white p-6 rounded-lg w-full max-w-md shadow-lg">
             <h2 className="font-semibold text-lg mb-4">Edit Course</h2>
 
             <div className="flex flex-col gap-3">
               <input
                 type="text"
-                placeholder="Name"
                 value={courseName}
                 onChange={(e) => setCourseName(e.target.value)}
-                className="border rounded px-3 py-2"
+                placeholder="Course Name"
+                className="border px-3 py-2 rounded w-full"
               />
               <input
                 type="text"
-                placeholder="Code"
                 value={courseCode}
                 onChange={(e) => setCourseCode(e.target.value)}
-                className="border rounded px-3 py-2"
+                placeholder="Course Code"
+                className="border px-3 py-2 rounded w-full"
               />
               <input
                 type="number"
-                placeholder="Credit"
                 value={courseCredit}
                 onChange={(e) => setCourseCredit(e.target.value)}
-                className="border rounded px-3 py-2"
+                placeholder="Credit Hours"
+                className="border px-3 py-2 rounded w-full"
               />
               <input
                 type="text"
-                placeholder="Department"
                 value={courseDepartment}
                 onChange={(e) => setCourseDepartment(e.target.value)}
-                className="border rounded px-3 py-2"
+                placeholder="Department"
+                className="border px-3 py-2 rounded w-full"
               />
             </div>
 
@@ -440,7 +442,13 @@ const ManageCourses = () => {
               </button>
 
               <button
-                onClick={() => handleSaveEditCourse(selectedCourse.id)}
+                onClick={async () => {
+                  if (selectedCourse) {
+                    await handleSaveEditCourse(selectedCourse.id);
+                    await fetchCourses();
+                    setShowEditPopup(false);
+                  }
+                }}
                 className="px-4 py-2 bg-blue-600 text-white rounded"
               >
                 Save
@@ -449,6 +457,7 @@ const ManageCourses = () => {
           </div>
         </div>
       )}
+
 
       {/* DELETE POPUP */}
       {showDeletePopup && selectedCourse && (
