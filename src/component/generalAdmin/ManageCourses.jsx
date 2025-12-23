@@ -4,10 +4,7 @@ import { FaBook, FaEdit, FaTrash, FaPlus, FaEye, FaSearch, FaFilter } from "reac
 const ManageCourses = () => {
   // === Course States ===
   const [courseName, setCourseName] = useState("");
-  const [courseCode, setCourseCode] = useState("");
-  const [courseCredit, setCourseCredit] = useState("");
-  const [courseDepartment, setCourseDepartment] = useState("");
-
+  const [courseDescription, setCourseDescription] = useState("");
   const [courses, setCourses] = useState([]);
 
   // === UI States ===
@@ -18,26 +15,14 @@ const ManageCourses = () => {
   const [showEditPopup, setShowEditPopup] = useState(false);
   const [showDeletePopup, setShowDeletePopup] = useState(false);
   const [showViewPopup, setShowViewPopup] = useState(false);
+  const [searchId, setSearchId] = useState("");
 
   // === Filters ===
-  const [searchCode, setSearchCode] = useState("");
+
   const [showFilter, setShowFilter] = useState(false);
   const [filterName, setFilterName] = useState("");
-  const [filterDepartment, setFilterDepartment] = useState("");
-
   // === API URLs ===
   const BASE = "https://attendance-production-d583.up.railway.app/course";
-
-  // === Load all courses ===
-  const fetchCourses = async () => {
-    try {
-      const res = await fetch(BASE);
-      const data = await res.json();
-      setCourses(data);
-    } catch {
-      alert("Cannot load courses");
-    }
-  };
 
   useEffect(() => {
     if (selectedAction === "view") {
@@ -45,37 +30,54 @@ const ManageCourses = () => {
     }
   }, [selectedAction]);
 
-  // === Search by course code ===
+  // === Search by course id ===
   const fetchCourseByCode = async () => {
     try {
-      const res = await fetch(`${BASE}/${searchCode}`);
+      const res = await fetch(`${BASE}/${searchId}`);
+      if (!res.ok) {
+        alert("Course not found");
+        return;
+      }
       const data = await res.json();
       setCourses([data]);
-    } catch {
-      alert("Course not found");
+    } catch (err) {
+      alert("Backend not reachable");
     }
   };
 
   // === Filter Courses ===
-  const applyFilter = async () => {
-    const res = await fetch(
-      `${BASE}?name=${filterName}&department=${filterDepartment}`
-    );
-    const data = await res.json();
-    setCourses(data);
+  const [allCourses, setAllCourses] = useState([]);
+
+  const fetchCourses = async () => {
+    try {
+      const res = await fetch(BASE);
+      if (!res.ok) throw new Error("Backend error");
+
+      const data = await res.json();
+      setCourses(data);
+      setAllCourses(data);
+    } catch (err) {
+      console.error(err);
+      setCourses([]);
+      setAllCourses([]);
+    }
   };
 
+  const applyFilter = () => {
+    const filtered = allCourses.filter(c =>
+      c.course_name.toLowerCase().includes(filterName.toLowerCase())
+    );
+    setCourses(filtered);
+  };
   // === Add new course ===
   const handleAddCourse = async () => {
-    if (!courseName || !courseCode || !courseCredit || !courseDepartment) {
+    if (!courseName) {
       return alert("Fill all fields");
     }
 
     const newCourse = {
       name: courseName,
-      code: courseCode,
-      credit: courseCredit,
-      department: courseDepartment,
+      description: courseDescription,
     };
 
     const res = await fetch(BASE, {
@@ -88,31 +90,22 @@ const ManageCourses = () => {
 
     await fetchCourses();
     setShowAddPopup(false);
-
     setCourseName("");
-    setCourseCode("");
-    setCourseCredit("");
-    setCourseDepartment("");
+    setCourseDescription("");
   };
 
   // === Edit Course ===
   const openEditForm = (c) => {
     setSelectedCourse(c);
     setCourseName(c.name);
-    setCourseCode(c.code);
-
-
-    setCourseCredit(c.credit);
-    setCourseDepartment(c.department);
+    setCourseDescription(c.description);
     setShowEditPopup(true);
   };
 
   const handleSaveEditCourse = async (id) => {
     const updated = {
       name: courseName,
-      code: courseCode,
-      credit: courseCredit,
-      department: courseDepartment,
+      description: courseDescription,
     };
 
     const res = await fetch(`${BASE}/${id}`, {
@@ -134,7 +127,7 @@ const ManageCourses = () => {
   };
 
   const handleDeleteCourse = async (id) => {
-    const res = await fetch(`${BASE}/delete/${id}`, { method: "DELETE" });
+    const res = await fetch(`${BASE}/${id}`, { method: "DELETE" });
 
     if (!res.ok) return alert("Failed to delete");
 
@@ -198,25 +191,9 @@ const ManageCourses = () => {
 
             <input
               type="text"
-              placeholder="Course Code"
-              value={courseCode}
-              onChange={(e) => setCourseCode(e.target.value)}
-              className="border px-3 py-2 rounded"
-            />
-
-            <input
-              type="number"
-              placeholder="Credit Hours"
-              value={courseCredit}
-              onChange={(e) => setCourseCredit(e.target.value)}
-              className="border px-3 py-2 rounded"
-            />
-
-            <input
-              type="text"
-              placeholder="Department"
-              value={courseDepartment}
-              onChange={(e) => setCourseDepartment(e.target.value)}
+              placeholder="Description"
+              value={courseDescription}
+              onChange={(e) => setCourseDescription(e.target.value)}
               className="border px-3 py-2 rounded"
             />
 
@@ -236,11 +213,11 @@ const ManageCourses = () => {
           <div className="flex items-center gap-2">
             <input
               type="text"
-              placeholder="Search by Course Code…"
-              value={searchCode}
-              onChange={(e) => setSearchCode(e.target.value)}
-              className="border px-2 py-1 rounded w-32 sm:w-4"
+              placeholder="Search by Course ID…"
+              value={searchId}
+              onChange={(e) => setSearchId(e.target.value)}
             />
+
             <button
               onClick={fetchCourseByCode}
               className="bg-blue-600 text-white px-4 py-2 rounded"
@@ -260,20 +237,11 @@ const ManageCourses = () => {
             <div className="mt-3 p-3 border rounded bg-white shadow">
               <input
                 type="text"
-                placeholder="Course name"
+                placeholder="Course Name"
                 value={filterName}
                 onChange={(e) => setFilterName(e.target.value)}
                 className="w-full border px-3 py-2 rounded mb-2"
               />
-
-              <input
-                type="text"
-                placeholder="Department"
-                value={filterDepartment}
-                onChange={(e) => setFilterDepartment(e.target.value)}
-                className="w-full border px-3 py-2 rounded mb-2"
-              />
-
               <button
                 onClick={applyFilter}
                 className="w-full bg-blue-600 text-white px-4 py-2 rounded"
@@ -286,11 +254,11 @@ const ManageCourses = () => {
           {/* CARDS */}
           <div className="mt-4 space-y-4">
             {courses.map((c) => (
-              <div key={c.id} className="border rounded p-3 bg-white shadow">
+              <div key={c.course_idid} className="border rounded p-3 bg-white shadow">
                 <div className="flex justify-between items-center">
                   <div className="flex items-center gap-2">
                     <input type="checkbox" />
-                    <span>ID: {c.id}</span>
+                    <span>ID: {c.course_id}</span>
                   </div>
 
                   <div className="flex gap-2">
@@ -312,9 +280,7 @@ const ManageCourses = () => {
 
                 <div className="mt-2 text-sm">
                   <p>Name: {c.name}</p>
-                  <p>Code: {c.code}</p>
-                  <p>Credit: {c.credit}</p>
-                  <p>Department: {c.department}</p>
+                  <p>Description: {c.description}</p>
                 </div>
               </div>
             ))}
@@ -326,11 +292,11 @@ const ManageCourses = () => {
       {selectedAction === "view" && (
         <div className="mt-4 space-y-4">
           {courses.map((c) => (
-            <div key={c.id} className="p-4 rounded bg-white shadow border">
+            <div key={c.course_id} className="p-4 rounded bg-white shadow border">
               <div className="flex justify-between items-center">
                 <div className="flex items-center gap-2">
                   <input type="checkbox" />
-                  <span className="font-semibold">ID: {c.id}</span>
+                  <span className="font-semibold">ID: {c.course_id}</span>
                 </div>
 
                 <div className="flex gap-2">
@@ -362,9 +328,7 @@ const ManageCourses = () => {
 
               <div className="mt-2">
                 <p><strong>Name:</strong> {c.name}</p>
-                <p><strong>Code:</strong> {c.code}</p>
-                <p><strong>Credit:</strong> {c.credit}</p>
-                <p><strong>Department:</strong> {c.department}</p>
+                <p><strong>Description:</strong> {c.description}</p>
               </div>
             </div>
           ))}
@@ -389,7 +353,7 @@ const ManageCourses = () => {
                 onClick={handleAddCourse}
                 className="px-4 py-2 bg-green-600 text-white rounded"
               >
-                Yes, Add
+                Yes
               </button>
             </div>
           </div>
@@ -410,25 +374,12 @@ const ManageCourses = () => {
                 placeholder="Course Name"
                 className="border px-3 py-2 rounded w-full"
               />
+
               <input
                 type="text"
-                value={courseCode}
-                onChange={(e) => setCourseCode(e.target.value)}
-                placeholder="Course Code"
-                className="border px-3 py-2 rounded w-full"
-              />
-              <input
-                type="number"
-                value={courseCredit}
-                onChange={(e) => setCourseCredit(e.target.value)}
-                placeholder="Credit Hours"
-                className="border px-3 py-2 rounded w-full"
-              />
-              <input
-                type="text"
-                value={courseDepartment}
-                onChange={(e) => setCourseDepartment(e.target.value)}
-                placeholder="Department"
+                value={courseDescription}
+                onChange={(e) => setCourseDescription(e.target.value)}
+                placeholder="description.."
                 className="border px-3 py-2 rounded w-full"
               />
             </div>
@@ -466,7 +417,7 @@ const ManageCourses = () => {
             <p className="text-lg font-semibold">Confirm Delete</p>
 
             <p className="mt-2 font-bold">{selectedCourse.name}</p>
-            <p>({selectedCourse.code})</p>
+            <p>({selectedCourse.description})</p>
 
             <div className="flex justify-between mt-4">
               <button
@@ -494,9 +445,7 @@ const ManageCourses = () => {
             <h2 className="font-bold text-lg mb-2">Course Details</h2>
 
             <p><strong>Name:</strong> {selectedCourse.name}</p>
-            <p><strong>Code:</strong> {selectedCourse.code}</p>
-            <p><strong>Credit:</strong> {selectedCourse.credit}</p>
-            <p><strong>Department:</strong> {selectedCourse.department}</p>
+            <p><strong>Description:</strong> {selectedCourse.description}</p>
 
             <div className="flex justify-end mt-4">
               <button

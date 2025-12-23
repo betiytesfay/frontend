@@ -7,40 +7,89 @@ import EthDatePicker from '../component/ethioDate';
 
 
 export default function AttendancePage() {
-  const [courseId, setCourseId] = useState('');
   const [batchId, setBatchId] = useState('');
   const [ethDate, setEthDate] = useState('');
   const [date, setDate] = useState('');
+  const [courseDates, setCourseDates] = useState([]);
+  const [courseDateId, setCourseDateId] = useState('');
   const [showAttendanceBox, setShowAttendanceBox] = useState(false);
   const [studentId, setStudentId] = useState('');
   const [studentData, setStudentData] = useState(null);
   const [recordedStudents, setRecordedStudents] = useState([]);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
+  useEffect(() => {
+    const fetchCourseDates = async () => {
+      try {
+        const res = await axios.post(
+          'https://attendance-production-d583.up.railway.app/course_date',
+          {}, // empty data
+          { withCredentials: true }
+        );
+        setCourseDates(res.data);
+      } catch (err) {
+        console.error('Failed to fetch course dates', err);
+        alert('Could not load courses. Check your internet connection.');
+      }
+    };
+
+    fetchCourseDates();
+  }, []);
+
+
+
   const [savedSessions, setSavedSessions] = useState(
     JSON.parse(localStorage.getItem('attendanceSessions')) || []
   );
   const verifySessionAdminPassword = async (enteredPassword) => {
     try {
       const res = await axios.post(
-        'http://localhost:9800/auth/login',
+        'https://attendance-production-d583.up.railway.app/auth/login',
         {
-          student_id: 'sessionadmin', // hardcoded sessionadmin username
+          student_id: 'sessionadmin',
           password: enteredPassword,
           role: 'session'
         },
         { withCredentials: true }
       );
-
-
-      return true;
+      return res.status === 200;
     } catch (err) {
-      return false; // login failed = incorrect password
+      return false;
     }
   };
 
+  const handleSendAllSessionsToBackend = async () => {
+    if (savedSessions.length === 0) {
+      alert('No sessions to send.');
+      return;
+    }
+
+    try {
+
+      for (const session of savedSessions) {
+        await axios.post(
+          'https://attendance-production-d583.up.railway.app/attendance',
+          {
+            date_id: session.courseDateId,
+            students: session.students
+          },
+          { withCredentials: true }
+        );
+      }
+
+      setSavedSessions([]);
+      localStorage.removeItem('attendanceSessions');
+
+      setToastMessage('All sessions sent to backend successfully!');
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 4000);
+    } catch (err) {
+      console.error(err);
+      alert('Failed to send all sessions. Check your internet connection.');
+    }
+  };
   const handleDoneAttendanceWithPassword = async () => {
-    // Ask for session admin password
+
     const enteredPassword = prompt('Enter session admin password to complete attendance:');
     if (!enteredPassword) return;
 
@@ -50,8 +99,6 @@ export default function AttendancePage() {
       alert('Incorrect password!');
       return;
     }
-
-    // If password is correct, proceed with the original handleDoneAttendance logic
     handleDoneAttendance();
   };
 
@@ -65,11 +112,11 @@ export default function AttendancePage() {
   const handleStartAttendance = () => {
 
 
-    if (!courseId || !batchId || !ethDate) {  // <- use ethDate
+    if (!courseDateId || !batchId || !ethDate) {
       alert('Please fill all fields');
       return;
     }
-    setDate(ethDate); // optional: store for session object
+    setDate(ethDate);
     setShowAttendanceBox(true);
   };
 
@@ -82,7 +129,7 @@ export default function AttendancePage() {
     try {
 
       const res = await axios.get(
-        `http://localhost:9800/student/${studentId}`,
+        `https://attendance-production-d583.up.railway.app/student/${studentId}`,
         { withCredentials: true }
       );
       const fullName = `${res.data.first_name} ${res.data.last_name}`;
@@ -96,11 +143,10 @@ export default function AttendancePage() {
       if (err.response?.status === 401) {
         try {
           const refreshRes = await axios.post(
-            'http://localhost:9800/auth/refresh',
+            'https://attendance-production-d583.up.railway.app/auth/refresh',
             {},
             { headers: { Authorization: `Bearer ${refreshToken}` }, withCredentials: true }
           );
-
 
           const { newAccessToken, newRefreshToken } = refreshRes.data;
           localStorage.setItem('accessToken', newAccessToken);
@@ -108,7 +154,7 @@ export default function AttendancePage() {
 
 
           const res = await axios.get(
-            `http://localhost:9800/student/${studentId}`,
+            `https://attendance-production-d583.up.railway.app/student/${studentId}`,
             { withCredentials: true }
           );
 
@@ -123,12 +169,8 @@ export default function AttendancePage() {
       } else {
         alert('Student not found or fetch failed.');
       }
-
-
-
     }
   };
-
 
   const handleFinishAttendance = () => {
     if (!studentData) return;
@@ -145,33 +187,60 @@ export default function AttendancePage() {
   const handleBackToID = () => {
     setStudentData(null);
   };
+  const handleSendSessionToBackend = async (session) => {
+    try {
+      await axios.post(
+        'https://attendance-production-d583.up.railway.app/attendance',
+        {
+          date_id: session.courseDateId,
+          students: session.students
+        },
+        { withCredentials: true }
+      );
 
-  const handleDoneAttendance = async () => {
+      // Remove session from local storage after successful send
+      setSavedSessions(prev => prev.filter(s => s.id !== session.id));
+      setToastMessage('Session sent to backend successfully!');
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 4000);
+    } catch (err) {
+      console.error(err);
+      alert('Failed to send session to backend. Check your internet connection.');
+    }
+  };
+
+  const handleDoneAttendance = () => {
     if (recordedStudents.length === 0) return alert('No attendance to save.');
+    if (!courseDateId || !batchId) return alert('Please select course/date and batch.');
 
-    const session = {
-      id: Date.now().toString(),
-      courseId,
+    const newSession = {
+      id: Date.now().toString(), // unique ID
+      courseDateId,
       batchId,
       date,
-      students: recordedStudents,
+      students: recordedStudents.map(s => ({
+        student_id: s.student_id,
+        is_present: true
+      })),
     };
 
-    setSavedSessions(prev => [...prev, session]);
+    // Save locally
+    setSavedSessions(prev => [...prev, newSession]);
 
-    // Clear current session
-    setStudentId('');
-    setStudentData(null);
-    setShowAttendanceBox(false);
-    setRecordedStudents([]);
     setToastMessage('Attendance saved locally!');
     setShowToast(true);
     setTimeout(() => setShowToast(false), 4000);
 
-    setCourseId('');
+    // Clear current attendance
+    setStudentId('');
+    setStudentData(null);
+    setShowAttendanceBox(false);
+    setRecordedStudents([]);
+    setCourseDateId('');
     setBatchId('');
     setDate('');
   };
+
 
   const handleDeleteSession = (id) => {
     const updated = savedSessions.filter(s => s.id !== id);
@@ -181,9 +250,18 @@ export default function AttendancePage() {
     setTimeout(() => setShowToast(false), 4000);
   };
   const handleExportSession = (id) => {
+    const session = savedSessions.find(s => s.id === id);
+    if (!session) return;
 
-  }
-
+    const dataStr = JSON.stringify(session, null, 2);
+    const blob = new Blob([dataStr], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `session_${id}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
 
   return (
     <div className="h-screen w-screen flex items-center justify-center bg-white p-6">
@@ -214,22 +292,21 @@ export default function AttendancePage() {
           Session Attendance Setup
         </h1>
 
-        <label>Course:</label>
+        <label>Course & Date:</label>
         <select
-          value={courseId}
-          onChange={e => setCourseId(e.target.value)}
+          value={courseDateId}
+          onChange={e => setCourseDateId(e.target.value)}
           className="border p-2 rounded w-full"
         >
-          <option value="">Select Course</option>
-          <option value="first sem1">First Year semester one</option>
-          <option value="first sem2">First Year semester two</option>
-          <option value="second sem1">Second Year semester one</option>
-          <option value="second sem2">Second Year semester two</option>
-          <option value="third sem1">Third Year semester one</option>
-          <option value="third sem2">Third Year semester two</option>
-          <option value="fourth sem1">Fourth Year semester one</option>
-          <option value="fourth sem2">Fourth Year semester two</option>
+          <option value="">Select Course & Date</option>
+          {(courseDates || []).map(cd => (
+            <option key={cd.id} value={cd.id}>
+              {cd.course.course_name} - {new Date(cd.class_date).toLocaleDateString()}
+            </option>
+          ))}
+
         </select>
+
 
         <label>Batch:</label>
         <select
@@ -276,11 +353,9 @@ export default function AttendancePage() {
 
                   if (isValid) {
                     // go back normally
-                    if (studentData) {
-                      setStudentData(null);
-                    } else {
-                      setShowAttendanceBox(false);
-                    }
+
+                    setShowAttendanceBox(false);
+
                   } else {
                     alert('Incorrect password!');
                   }
@@ -355,7 +430,10 @@ export default function AttendancePage() {
                 {savedSessions.map(session => (
                   <tr key={session.id}>
                     <td className="border border-gray-300 px-3 py-2">{session.date}</td>
-                    <td className="border border-gray-300 px-3 py-2">{session.courseId}</td>
+                    <td className="border border-gray-300 px-3 py-2">
+                      {courseDates.find(cd => cd.id === session.courseDateId)?.course.course_name || 'N/A'}
+                    </td>
+
                     <td className="border border-gray-300 px-3 py-2">{session.batchId}</td>
                     <td className="border border-gray-300 px-3 py-2 flex gap-2">
                       <button
@@ -375,15 +453,24 @@ export default function AttendancePage() {
                 ))}
               </tbody>
             </table>
+
           )}
         </div>
+        {savedSessions.length > 0 && (
+          <button
+            onClick={handleSendAllSessionsToBackend}
+            className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition mb-4"
+          >
+            Send All Sessions to Backend
+          </button>
+        )}
+
 
         {showToast && (
           <div className="fixed bottom-10 right-10 bg-green-500 text-white py-2 px-4 rounded shadow-lg transition-opacity z-50">
             {toastMessage}
           </div>
         )}
-
 
       </div>
     </div>

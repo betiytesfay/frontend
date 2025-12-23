@@ -8,11 +8,11 @@ const ManageStudents = () => {
   const [studentFirstName, setStudentFirstName] = useState("");
   const [studentLastName, setStudentLastName] = useState("");
   const [studentEmail, setStudentEmail] = useState("");
-
   const [studentPhone, setStudentPhone] = useState("");
   const [studentGender, setStudentGender] = useState("male");
   const [searchId, setSearchId] = useState("");
-
+  const [page, setPage] = useState(1);
+  const studentsPerPage = 6;
   const [showFilter, setShowFilter] = useState(false);
   const [filterName, setFilterName] = useState("");
   const [filterDepartment, setFilterDepartment] = useState("");
@@ -73,25 +73,30 @@ const ManageStudents = () => {
       const res = await fetch("https://attendance-production-d583.up.railway.app/student", {
         method: "GET",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
       });
 
-      if (!res.ok) {
-        console.log("Failed to fetch students");
-        return;
-      }
+      if (!res.ok) throw new Error("Failed to fetch students");
 
       const data = await res.json();
       setStudents(data);
     } catch (err) {
       console.log("Backend error:", err);
+      alert("Cannot fetch students from backend. Please check the server.");
     }
   };
+
+
   React.useEffect(() => {
     fetchStudents();
   }, []);
   const fetchStudentById = async () => {
     const res = await fetch(
-      `https://attendance-production-d583.up.railway.app/student/${searchId}`
+      `https://attendance-production-d583.up.railway.app/student/${searchId}`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+    }
     );
     const data = await res.json();
     setStudents([data]);
@@ -134,6 +139,7 @@ const ManageStudents = () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newStudent),
+        credentials: "include",
       });
 
       if (!res.ok) {
@@ -174,6 +180,7 @@ const ManageStudents = () => {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updateStudent),
+        credentials: "include",
       });
 
       if (!res.ok) return alert("Failed to update student");
@@ -202,8 +209,9 @@ const ManageStudents = () => {
 
   const handleDeleteStudent = async (id) => {
     try {
-      const res = await fetch(`https://attendance-production-d583.up.railway.app/student/delete/${id}`, {
+      const res = await fetch(`https://attendance-production-d583.up.railway.app/student/${id}`, {
         method: "DELETE",
+        credentials: "include",
       });
 
       if (!res.ok) return alert("Failed to delete student");
@@ -215,44 +223,51 @@ const ManageStudents = () => {
       alert("Could not connect to backend");
     }
   };
+  const startIndex = (page - 1) * studentsPerPage;
+  const paginatedStudents = students.slice(
+    startIndex,
+    startIndex + studentsPerPage
+  );
+
 
 
   return (
     <div className="bg-white p-6 rounded-lg  max-w-5xl mx-auto">
       {/* Step 2: Select Action */}
       {!selectedAction && (
-        <div className="flex flex-col justify-center gap-4 max-w-md sm:max-w-lg bg-white/50 p-6 rounded-xl shadow-md w-full mx-auto">
+        <div className="flex flex-col justify-center gap-4 max-w-4xl sm:max-w-lg bg-white/50 p-6 rounded-xl shadow-md w-full mx-auto">
 
+          <h2 className="text-xl font-semibold text-center">Select </h2>
+          <div className="flex flex-col sm:flex-row justify-center gap-4">
+            <button
+              onClick={() => setSelectedAction("add")}
+              className="flex items-center gap-2 bg-yellow-500 text-white  px-4 py-3 flex-1 rounded w-full sm:w-auto hover:bg-yellow-600 transition"
 
-          <h2 className="text-xl font-semibold text-center">Select One</h2>
-          <button
-            onClick={() => setSelectedAction("add")}
-            className="flex items-center gap-2 bg-yellow-500 text-white px-4 py-3 rounded w-full sm:w-auto hover:bg-yellow-600 transition"
+            >
+              <FaUserPlus className="w-5 h-5" /> Add Student
+            </button>
+            <button
+              onClick={() => setSelectedAction("edit")}
+              className="flex items-center gap-2 bg-yellow-500 text-white px-4 py-3 rounded w-full sm:w-auto hover:bg-yellow-600 transition"
 
-          >
-            <FaUserPlus className="w-5 h-5" /> Add Student
-          </button>
-          <button
-            onClick={() => setSelectedAction("edit")}
-            className="flex items-center gap-2 bg-yellow-500 text-white px-4 py-3 rounded w-full sm:w-auto hover:bg-yellow-600 transition"
+            >
+              <FaUserEdit className="w-5 h-5" /> Edit Student
+            </button>
+            <button
+              onClick={() => setSelectedAction("delete")}
+              className="flex items-center gap-2 bg-yellow-500 text-white px-4 py-3 rounded w-full hover:bg-yellow-600 transition"
+            >
+              <FaUserMinus className="w-5 h-5" /> Delete Student
+            </button>
 
-          >
-            <FaUserEdit className="w-5 h-5" /> Edit Student
-          </button>
-          <button
-            onClick={() => setSelectedAction("delete")}
-            className="flex items-center gap-2 bg-yellow-500 text-white px-4 py-3 rounded w-full hover:bg-yellow-600 transition"
-          >
-            <FaUserMinus className="w-5 h-5" /> Delete Student
-          </button>
+            <button
+              className="flex items-center gap-2 bg-yellow-500 text-white px-4 py-3 rounded w-full hover:bg-yellow-600 transition"
+              onClick={() => setSelectedAction("view")}
 
-          <button
-            className="flex items-center gap-2 bg-yellow-500 text-white px-4 py-3 rounded w-full hover:bg-yellow-600 transition"
-            onClick={() => setSelectedAction("view")}
-
-          >
-            <FaUserCircle className="w-5 h-5" /> View Student
-          </button>
+            >
+              <FaUserCircle className="w-5 h-5" /> View Student
+            </button>
+          </div>
 
         </div>
       )}
@@ -290,11 +305,13 @@ const ManageStudents = () => {
             <div className="flex flex-col gap-1">
               <label className="text-sm font-medium">Phone:</label>
               <input
-                type="text"
-                placeholder="Phone Number"
+                type="number"
+                placeholder="+251987654321"
                 value={studentPhone}
                 onChange={(e) => setStudentPhone(e.target.value)}
                 className="border rounded h-10 px-2 w-full"
+                maxLength={13}
+
               />
             </div>
             <div className="flex flex-col gap-1">
@@ -310,14 +327,19 @@ const ManageStudents = () => {
 
 
             <div className="flex flex-col gap-1">
-              <label className="text-sm font-medium">Department:</label>
-              <input
-                type="text"
-                placeholder="Accounting"
+              <label className="text-sm font-medium">Department</label>
+              <select className="border rounded h-10 px-2 w-full max-w-xs "
                 value={studentDepartment}
-                onChange={(e) => setStudentDepartment(e.target.value)}
-                className="border rounded h-10 px-2 w-full"
-              />
+                onChange={(e) => setStudentDepartment(e.target.value)}>
+                <option value="Accounting"> Accounting</option>
+                <option value="law">law</option>
+                <option value="sociology">sociology</option>
+                <option value="Economics">Economics</option>
+                <option value="Management">Management</option>
+                <option value="other">other</option>
+
+              </select>
+
             </div>
 
             <div className="flex flex-col gap-1">
@@ -356,7 +378,7 @@ const ManageStudents = () => {
                 placeholder="Search by ID…"
                 value={searchId}
                 onChange={(e) => setSearchId(e.target.value)}
-                className="border px-2 py-1 rounded w-32 sm:w-40"
+                className="border px-2 py-1 rounded w-32 sm:w-4"
               />
               <button
                 onClick={fetchStudentById}
@@ -407,7 +429,7 @@ const ManageStudents = () => {
 
           {/* Cards */}
           <div className="mt-4 space-y-4 w-full max-w-full overflow-hidden">
-            {students.map((s) => (
+            {paginatedStudents.map((s) => (
               <div key={s.id} className="border rounded p-3 shadow bg-white w-full break-words">
                 <div className="flex justify-between items-center">
 
@@ -450,7 +472,7 @@ const ManageStudents = () => {
 
       {selectedAction === "view" && students.length > 0 && (
         <div className="flex flex-col gap-4 mt-4">
-          {students.map((s) => (
+          {paginatedStudents.map((s) => (
             <div
               key={s.id}
               className="border rounded-lg p-4 shadow-sm bg-white flex flex-col gap-2"
@@ -528,40 +550,64 @@ const ManageStudents = () => {
         </div>
       )}
       {/* === EDIT POPUP === */}
-      {showEditPopup && selectedCourse && (
+      {showEditPopup && selectedStudent && (
         <div className="fixed inset-0 bg-black/40 flex justify-center items-center">
-          <div className="bg-white p-6 rounded-lg w-full max-w-md shadow-lg">
-            <h2 className="font-semibold text-lg mb-4">Edit Course</h2>
+          <div className="bg-white p-6 rounded-lg w-full max-w-md max-h-[90vh] overflow-y-auto shadow-lg">
+
+
+            <h2 className="font-semibold text-lg mb-4">Edit Student</h2>
 
             <div className="flex flex-col gap-3">
               <input
                 type="text"
-                value={courseName}
-                onChange={(e) => setCourseName(e.target.value)}
-                placeholder="Course Name"
-                className="border px-3 py-2 rounded w-full"
+                value={studentFirstName}
+                onChange={(e) => setStudentFirstName(e.target.value)}
+                placeholder="First Name"
+                className="border px-3 py-2 rounded w-full max-w-full box-border"
+
               />
               <input
                 type="text"
-                value={courseCode}
-                onChange={(e) => setCourseCode(e.target.value)}
-                placeholder="Course Code"
-                className="border px-3 py-2 rounded w-full"
-              />
-              <input
-                type="number"
-                value={courseCredit}
-                onChange={(e) => setCourseCredit(e.target.value)}
-                placeholder="Credit Hours"
-                className="border px-3 py-2 rounded w-full"
+                value={studentLastName}
+                onChange={(e) => setStudentLastName(e.target.value)}
+                placeholder="Last Name"
+                className="border px-3 py-2 rounded w-full max-w-full box-border"
+
               />
               <input
                 type="text"
-                value={courseDepartment}
-                onChange={(e) => setCourseDepartment(e.target.value)}
+                value={studentPhone}
+                onChange={(e) => setStudentPhone(e.target.value)}
+                placeholder="Phone"
+                className="border px-3 py-2 rounded w-full max-w-full box-border"
+
+              />
+              <input
+                type="email"
+                value={studentEmail}
+                onChange={(e) => setStudentEmail(e.target.value)}
+                placeholder="Email"
+                className="border px-3 py-2 rounded w-full max-w-full box-border"
+
+              />
+
+              <input
+                type="text"
+                value={studentDepartment}
+                onChange={(e) => setStudentDepartment(e.target.value)}
                 placeholder="Department"
-                className="border px-3 py-2 rounded w-full"
+                className="border px-3 py-2 rounded w-full max-w-full box-border"
+
               />
+              <select
+                value={studentGender}
+                onChange={(e) => setStudentGender(e.target.value)}
+                className="border px-3 py-2 rounded w-full max-w-full box-border"
+
+              >
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+              </select>
             </div>
 
             <div className="flex justify-between mt-4">
@@ -574,21 +620,29 @@ const ManageStudents = () => {
 
               <button
                 onClick={async () => {
-                  if (selectedCourse) {
-                    await handleSaveEditCourse(selectedCourse.id);
-                    await fetchCourses();
-                    setShowEditPopup(false);
-                  }
+                  await handleSaveEditStudent(selectedStudent.id);
+                  await fetchStudents();         // <-- ⭐ ADD THIS LINE
+                  setShowEditPopup(false);
                 }}
                 className="px-4 py-2 bg-blue-600 text-white rounded"
               >
                 Save
               </button>
+              <button
+                onClick={async () => {
+                  await handleSaveEditStudent(selectedStudent.id);
+                  await fetchStudents();
+                  setShowEditPopup(false);
+                }}
+                className="px-4 py-2 bg-Yellow-600 text-white rounded"
+              >
+                Save
+              </button>
+
             </div>
           </div>
         </div>
       )}
-
 
       {/* === VIEW POPUP === */}
       {showViewPopup && selectedStudent && (

@@ -1,16 +1,51 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import contactImage from '../assets/contact.png'
 import calanderImage from '../assets/calander.png'
 import bgImage from '../assets/background.png'
 import { BackButton } from '../component/backButton'
+import axios from 'axios'
 
 export default function SessionPage() {
   const navigate = useNavigate()
+  const baseURL = "https://attendance-production-d583.up.railway.app";
   const [totalStudent, setTotalStudent] = useState(50)
   const [lastSessionDate, setLastSessionDate] = useState('2025-10-23')
   const [showHistory, setShowHistory] = useState(false)
   const [attendanceHistory, setAttendanceHistory] = useState([])
+
+  useEffect(() => {
+    const fetchTotalStudents = async () => {
+      try {
+        const response = await axios.get(`${baseURL}/student`)
+        const students = response.data
+        setTotalStudent(students.length) // count the number of students
+      } catch (err) {
+        console.error("Failed to fetch students:", err)
+      }
+    }
+
+    fetchTotalStudents()
+  }, [])
+  useEffect(() => {
+    const fetchLastSession = async () => {
+      try {
+        const response = await axios.get(`${baseURL}/attendance`)
+        const allRecords = response.data
+
+        if (allRecords.length > 0) {
+          // Sort by date descending to get the latest
+          const latest = allRecords.sort((a, b) => new Date(b.date) - new Date(a.date))[0]
+          setLastSessionDate(latest.date)
+        }
+      } catch (err) {
+        console.error("Failed to fetch attendance:", err)
+        setLastSessionDate('N/A')
+      }
+    }
+
+    fetchLastSession()
+  }, [])
 
   const handleViewHistory = async () => {
     const dummyData = [
@@ -79,11 +114,17 @@ export default function SessionPage() {
           </div>
 
           <div className="flex flex-col sm:flex-row items-center gap-4">
-            <img
-              src={calanderImage}
-              alt="Calendar"
-              className="w-32 h-32 sm:w-40 sm:h-40"
-            />
+            <button
+              onClick={() => navigate('/sessionHistory')}
+              className="w-32 h-32 sm:w-40 sm:h-40 cursor-pointer"
+            >
+              <img
+                src={calanderImage}
+                alt="Calendar"
+                className="w-full h-full object-contain"
+              />
+            </button>
+
             <div className="text-center sm:text-left">
               <p className="text-base sm:text-lg font-semibold">
                 Last Session: <span className="text-gray-600">{lastSessionDate}</span>
