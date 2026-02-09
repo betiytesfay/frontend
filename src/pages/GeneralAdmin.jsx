@@ -19,52 +19,52 @@ const GeneralAdmin = () => {
 
 
   return (
-    <div className="min-h-screen grid place-items-center bg-cover bg-center p-8 overflow-x-hidden" style={{ backgroundAttachment: 'fixed', backgroundImage: "url('/gbiphoto.jpg')" }}>
-      <div className="bg-white p-4 sm:p-6 rounded-lg shadow-lg w-full sm:max-w-md md:max-w-2xl lg:max-w-4xl  mx-auto h-auto  flex flex-col justify-between gap-6 ">
+    <div className="min-h-screen grid place-items-center bg-cover bg-center p-8 absolute inset-0 bg-black/70 overflow-x-hidden" style={{ backgroundAttachment: 'fixed', backgroundImage: "url('/gbiphoto.jpg')" }}>
+      <div className="bg-white/50 p-4 min-h-[60vh] sm:p-6 rounded-lg shadow-2xl w-full sm:max-w-md md:max-w-2xl lg:max-w-3xl  backdrop-blur-md mx-auto h-auto  flex flex-col justify-between gap-6 ">
 
 
         {!selectedCategory && (
-          <div className="flex justify-between items-center mb-6">
-            <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl">
+          <div className="flex justify-between items-center mb-1">
+            <h1 className="text-xl font-bold sm:text-2xl md:text-3xl lg:text-4xl">
               Welcome Back,<br />
-              <span className="font-extrabold sm:text-2xl md:text-3xl lg:text-4xl">General Admin</span>
+              <span className="font-bold sm:text-2xl md:text-3xl lg:text-4xl">General Admin</span>
             </h1>
             <FaUserCircle className="w-10 h-10 text-gray-700" />
           </div>
         )}
-
-
 
         {/* Tabs */}
 
         {/* Step 1: Select Category */}
         {!selectedCategory && (
 
-          <div className="sm:max-w-md md:max-w-lg lg:max-w-xl mx-auto bg-white/70 p-4 rounded-xl shadow-md  w-full">
-            <h2 className="text-lg font-semibold text-center mb-4">Manage</h2>
+          <div className="bg-white/70 sm:max-w-md md:max-w-lg lg:max-w-xl min-h-[40vh] mx-auto  p-4 rounded-xl shadow-md  max-h-[100vh] overflow-clip backdrop-blur-md w-full">
+            <>
+              <h2 className="text-2xl font-bold  text-center  mt-6 mb-4">Manage</h2>
 
-            <div className="flex flex-col gap-2 sm:gap-3 md:gap-4">
-              <button onClick={() => setSelectedCategory("students")}
-                className="flex items-center gap-3 bg-yellow-500 text-white px-4 py-3 rounded w-full hover:bg-yellow-600 sm:text-2xl md:text-3xl lg:text-4xl active:scale-95 transition">
-                <FaUserGraduate className="w-6 h-6" />
-                Students
-              </button>
-              <button onClick={() => setSelectedCategory("courses")}
-                className="flex items-center gap-3 bg-yellow-500 text-white px-4 py-3 rounded w-full hover:bg-yellow-600 sm:text-2xl md:text-3xl lg:text-4xl active:scale-95 transition">
-                <FaBook className="w-6 h-6" />
-                Courses
-              </button>
-              <button onClick={() => setSelectedCategory("batches")}
-                className="flex items-center gap-3 bg-yellow-500 text-white px-4 py-3 rounded w-full hover:bg-yellow-600 sm:text-2xl md:text-3xl lg:text-4xl active:scale-95 transition">
-                <FaLayerGroup className="w-6 h-6" />
-                Batches
-              </button>
-              <button onClick={() => setSelectedCategory("admins")}
-                className="flex items-center gap-3 bg-yellow-500 text-white px-4 py-3 rounded w-full hover:bg-yellow-600 sm:text-2xl md:text-3xl lg:text-4xl active:scale-95 transition">
-                <FaUserShield className="w-6 h-6" />
-                Session Admins
-              </button>
-            </div>
+              <div className="flex flex-col gap-2 sm:gap-3 md:gap-4 max-h-[80vh] overflow-auto">
+                <button onClick={() => setSelectedCategory("students")}
+                  className="flex items-center gap-1 bg-yellow-500  text-white px-4 py-2 font-bold rounded w-full hover:bg-yellow-600 sm:text-3xl md:text-3xl  active:scale-95 transition">
+                  <FaUserGraduate className="w-6 h-6" />
+                  Students
+                </button>
+                <button onClick={() => setSelectedCategory("courses")}
+                  className="flex items-center gap-1 bg-yellow-500 text-white px-4 py-2 font-bold rounded w-full hover:bg-yellow-600 sm:text-2xl md:text-3xl  active:scale-95 transition">
+                  <FaBook className="w-6 h-6" />
+                  Courses
+                </button>
+                <button onClick={() => setSelectedCategory("batches")}
+                  className="flex items-center gap-1 bg-yellow-500 text-white px-4 py-2 font-bold rounded w-full hover:bg-yellow-600 sm:text-2xl md:text-3xl  active:scale-95 transition">
+                  <FaLayerGroup className="w-6 h-6" />
+                  Batches
+                </button>
+                <button onClick={() => setSelectedCategory("admins")}
+                  className="flex items-center gap-1 bg-yellow-500 text-white px-4 py-2 font-bold rounded w-full hover:bg-yellow-600 sm:text-2xl md:text-3xl  active:scale-95 transition">
+                  <FaUserShield className="w-6 h-6" />
+                  Session Admins
+                </button>
+              </div>
+            </>
           </div>
         )}
         {selectedCategory === "students" && <ManageStudents />}
@@ -74,7 +74,7 @@ const GeneralAdmin = () => {
 
 
         {/* Bottom buttons */}
-        <div className="flex justify-center gap-6 mt-12">
+        <div className="flex justify-center gap-6 mt-3">
 
           <button
             onClick={() => {
@@ -91,7 +91,6 @@ const GeneralAdmin = () => {
             Back
           </button>
 
-          <button className="w-32 h-10 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 transition">Next</button>
         </div>
       </div>
     </div>

@@ -14,46 +14,17 @@ export default function Login() {
   const [error, setError] = useState('')
 
   const role = location.state?.role || 'session'
-  const handleLogin = async () => {
-    setLoading(true);
-
-    // --- Hard-coded login start ---
-    const user = {
-      role: role === 'session' ? 'session-admin' : 'super-admin',
-      username: username
-    };
-
-    // Simulate loading delay
-    setTimeout(() => {
-      if (user.role === "super-admin") {
-        navigate("/admin");
-      } else if (user.role === "session-admin") {
-        navigate("/sessionAdmin");
-      } else {
-        navigate("/");
-      }
-      setLoading(false);
-    }, 500);
-  };
-
   // const handleLogin = async () => {
   //   setLoading(true);
-  //   try {
-  //     const fullStudentId = `UGR-${username}`;
-  //     const response = await axios.post(
-  //       'https://attendance-production-d583.up.railway.app/auth/login',
-  //       { student_id: fullStudentId, password },
-  //       { withCredentials: true }
-  //     );
 
-  //     const user = response.data?.data?.user;
-  //     console.log("Logged-in user:", user);
+  //   // --- Hard-coded login start ---
+  //   const user = {
+  //     role: role === 'session' ? 'session-admin' : 'super-admin',
+  //     username: username
+  //   };
 
-  //     if (!user) {
-  //       console.error("No user returned from backend");
-  //       return;
-  //     }
-
+  //   // Simulate loading delay
+  //   setTimeout(() => {
   //     if (user.role === "super-admin") {
   //       navigate("/admin");
   //     } else if (user.role === "session-admin") {
@@ -61,13 +32,42 @@ export default function Login() {
   //     } else {
   //       navigate("/");
   //     }
-
-  //   } catch (err) {
-  //     console.error("Login error:", err.response?.data || err);
-  //   } finally {
   //     setLoading(false);
-  //   }
+  //   }, 500);
   // };
+
+  const handleLogin = async () => {
+    setLoading(true);
+    try {
+      const fullStudentId = `UGR-${username}`;
+      const response = await axios.post(
+        'https://gibi-backend-669108940571.us-central1.run.app/auth/login',
+        { student_id: fullStudentId, password },
+        { withCredentials: true }
+      );
+
+      const user = response.data?.data?.user;
+      console.log("Logged-in user:", user);
+
+      if (!user) {
+        console.error("No user returned from backend");
+        return;
+      }
+
+      if (user.role === "super-admin") {
+        navigate("/admin");
+      } else if (user.role === "session-admin") {
+        navigate("/sessionAdmin");
+      } else {
+        navigate("/");
+      }
+
+    } catch (err) {
+      console.error("Login error:", err.response?.data || err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="h-screen flex items-center justify-center bg-gray-100">

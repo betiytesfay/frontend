@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { FaUserPlus, FaUserEdit, FaUserMinus, FaUserCircle } from 'react-icons/fa';
 
 const ManageUser = () => {
   const [selectedAction, setSelectedAction] = useState("");
@@ -11,6 +12,19 @@ const ManageUser = () => {
   const [role, setRole] = useState("admin");
   const [email, setEmail] = useState("");
   const [selectedUserId, setSelectedUserId] = useState(null);
+  const [showViewPopup, setShowViewPopup] = useState(false);
+  const [showEditPopup, setShowEditPopup] = useState(false);
+  const [showDeletePopup, setShowDeletePopup] = useState(false);
+  useEffect(() => {
+    setUsers([
+      { user_id: 1, username: "admin1", email: "admin1@example.com", role: "admin" },
+      { user_id: 2, username: "admin2", email: "admin2@example.com", role: "super_admin" },
+      { user_id: 3, username: "admin3", email: "admin2@example.com", role: "super_admin" },
+      { user_id: 4, username: "admin4", email: "admin2@example.com", role: "super_admin" }
+    ]);
+  }, []);
+
+
 
   const baseURL = "https://attendance-production-d583.up.railway.app";
 
@@ -86,39 +100,43 @@ const ManageUser = () => {
   };
 
   return (
-    <div className="bg-white p-6 rounded-lg max-w-4xl mx-auto">
+    <div className="bg-white p-6   max-w-5xl mx-auto flex flex-col justify-center gap-4 mt-8  sm:max-w-lg rounded-xl shadow-md w-full">
 
       {/* action selection */}
       {!selectedAction && (
-        <div className="flex flex-col gap-4 bg-white p-4 rounded shadow max-w-sm mx-auto">
-          <button
-            className="bg-yellow-500 text-white px-4 py-2 rounded"
-            onClick={() => setSelectedAction("add")}
-          >
-            Add User
-          </button>
 
-          <button
-            className="bg-yellow-500 text-white px-4 py-2 rounded"
-            onClick={() => setSelectedAction("edit")}
-          >
-            Edit User
-          </button>
+        <>
+          <div className="flex flex-col sm:flex-row justify-center gap-4 mt-4 mb-8">
+            <h2 className="text-xl font-semibold text-center ">Select </h2>
+            <button
+              onClick={() => setSelectedAction("add")}
+              className="flex items-center gap-2 bg-yellow-500 text-white  px-4 py-3 flex-1 rounded w-full sm:w-auto hover:bg-yellow-600 transition"
+            >
+              <FaUserPlus className="w-5 h-5" /> Add User
+            </button>
+            <button
+              onClick={() => setSelectedAction("edit")}
+              className="flex items-center gap-2 bg-yellow-500 text-white px-4 py-3 rounded w-full sm:w-auto hover:bg-yellow-600 transition"
 
-          <button
-            className="bg-yellow-500 text-white px-4 py-2 rounded"
-            onClick={() => setSelectedAction("delete")}
-          >
-            Delete User
-          </button>
+            >
+              <FaUserEdit className="w-5 h-5" /> Edit User
+            </button>
+            <button
+              onClick={() => setSelectedAction("delete")}
+              className="flex items-center gap-2 bg-yellow-500 text-white px-4 py-3 rounded w-full hover:bg-yellow-600 transition"
+            >
+              <FaUserMinus className="w-5 h-5" /> Delete User
+            </button>
 
-          <button
-            className="bg-yellow-500 text-white px-4 py-2 rounded"
-            onClick={() => setSelectedAction("view")}
-          >
-            View Users
-          </button>
-        </div>
+            <button
+              className="flex items-center gap-2 bg-yellow-500 text-white px-4 py-3 rounded w-full hover:bg-yellow-600 transition"
+              onClick={() => setSelectedAction("view")}
+
+            >
+              <FaUserCircle className="w-5 h-5" /> View Users
+            </button>
+          </div>
+        </>
       )}
 
       {/* Add User */}
@@ -274,20 +292,98 @@ const ManageUser = () => {
       )}
 
       {/* View Users */}
-      {selectedAction === "view" && (
-        <div className="mt-4 bg-white p-4 rounded shadow">
-          <h2 className="font-semibold text-lg mb-4">All Users</h2>
+      {selectedAction === "view" && users.length > 0 && (
+        <div className="flex flex-col gap-4 mt-4">
+          <h2 className="font-semibold text-lg mb-4">{selectedAction.charAt(0).toUpperCase() + selectedAction.slice(1)} User</h2>
 
-          {users.map((u) => (
-            <div key={u.user_id} className="border p-3 rounded mb-2">
-              <p><b>Username:</b> {u.username}</p>
-              <p><b>Student ID:</b> {u.student_id}</p>
-              <p><b>Email:</b> {u.email}</p>
-              <p><b>Role:</b> {u.role}</p>
+          {users.map((user) => (
+            <div
+              key={user.user_id}
+              className="border rounded-lg p-4 shadow-sm bg-white flex flex-col gap-2"
+            >
+              {/* Top row: Checkbox, ID, Actions */}
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                  <input type="checkbox" className="w-4 h-4" />
+                  <span className="font-semibold">ID: {user.user_id}</span>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => {
+                      setSelectedUserId(user.user_id);
+                      setShowViewPopup(true);
+                    }}
+                    className="px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+                  >
+                    View
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setSelectedUserId(user.user_id);
+                      setUsername(user.username);
+                      setStudentId(user.student_id);
+                      setRole(user.role);
+                      setEmail(user.email);
+                      setShowEditPopup(true);
+                    }}
+                    className="px-2 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600"
+                  >
+                    Edit
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setSelectedUserId(user.user_id);
+                      setShowDeletePopup(true);
+                    }}
+                    className="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+
+              {/* User details */}
+              <div className="flex flex-col gap-1 mt-2">
+                <span><strong>Username:</strong> {user.username}</span>
+                <span><strong>Email:</strong> {user.email}</span>
+                <span><strong>Role:</strong> {user.role}</span>
+              </div>
             </div>
           ))}
         </div>
       )}
+
+
+      {showViewPopup &&
+        selectedUserId && (
+          <div className="fixed inset-0 bg-black/40 flex justify-center items-center">
+
+            <div className="bg-white p-6 rounded-lg w-80 shadow-lg">
+              <h2 className="font-semibold text-lg mb-4">Admin Info</h2>
+
+              {users
+                .filter((u) => u.user_id === selectedUserId)
+                .map((user) => (
+                  <div key={user.user_id} className="flex flex-col gap-1">
+                    <p><strong>ID:</strong> {user.user_id}</p>
+                    <p><strong>Username:</strong> {user.username}</p>
+                    <p><strong>Email:</strong> {user.email}</p>
+                    <p><strong>Role:</strong> {user.role}</p>
+                  </div>
+                ))}
+
+              <button
+                onClick={() => setShowViewPopup(false)}
+                className="w-full px-4 py-2 bg-gray-300 rounded mt-4"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        )}
+
     </div>
   );
 };

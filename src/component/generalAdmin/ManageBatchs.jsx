@@ -1,4 +1,19 @@
 import React, { useState, useEffect } from "react";
+import { FaPlus, FaEdit, FaTrash, FaExchangeAlt } from 'react-icons/fa';
+
+const BASE = "https://gibi-backend-669108940571.us-central1.run.app";
+
+const normalizeBatch = (raw) => {
+  if (!raw) return null;
+  return {
+    batch_id: raw.batch_id || raw.id || raw.batchId || null,
+    batch_name: raw.batch_name || raw.batch_name || raw.name || raw.batchName || '',
+    start_date: raw.start_date ? (raw.start_date.split ? raw.start_date.split('T')[0] : raw.start_date) : '',
+    end_date: raw.end_date ? (raw.end_date.split ? raw.end_date.split('T')[0] : raw.end_date) : '',
+    is_completed: raw.is_completed ?? raw.isCompleted ?? false,
+    raw,
+  };
+};
 
 const ManageBatches = () => {
   const [selectedAction, setSelectedAction] = useState("");
@@ -18,9 +33,16 @@ const ManageBatches = () => {
 
 
   const fetchBatches = async () => {
-    const res = await fetch("https://attendance-production-d583.up.railway.app/batch");
-    const data = await res.json();
-    setBatches(data);
+    try {
+      const res = await fetch(`${BASE}/batch`, { credentials: 'include' });
+      if (!res.ok) throw new Error(`Failed to fetch batches: ${res.status}`);
+      const payload = await res.json();
+      const list = Array.isArray(payload) ? payload : (payload.data || payload.batches || payload);
+      setBatches((list || []).map(normalizeBatch));
+    } catch (err) {
+      console.error(err);
+      setBatches([]);
+    }
   };
 
   useEffect(() => {
@@ -30,14 +52,15 @@ const ManageBatches = () => {
   const handleAddBatch = async () => {
     const newBatch = {
       batch_name: batchName,
-      start_date: new Date(startDate),
-      end_date: endDate ? new Date(endDate) : null
+      start_date: startDate || null,
+      end_date: endDate || null
     };
 
-    const res = await fetch("https://attendance-production-d583.up.railway.app/batch", {
+    const res = await fetch(`${BASE}/batch`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(newBatch)
+      body: JSON.stringify(newBatch),
+      credentials: 'include'
     });
 
     if (!res.ok) return alert("Failed to add batch");
@@ -51,18 +74,16 @@ const ManageBatches = () => {
   const handleEditBatch = async () => {
     const updated = {
       batch_name: batchName,
-      start_date: new Date(startDate),
-      end_date: endDate ? new Date(endDate) : null
+      start_date: startDate || null,
+      end_date: endDate || null
     };
 
-    const res = await fetch(
-      `https://attendance-production-d583.up.railway.app/batch/${selectedBatchId}`,
-      {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updated)
-      }
-    );
+    const res = await fetch(`${BASE}/batch/${encodeURIComponent(selectedBatchId)}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(updated),
+      credentials: 'include'
+    });
 
     if (!res.ok) return alert("Failed to update batch");
 
@@ -74,12 +95,10 @@ const ManageBatches = () => {
   };
 
   const handleDeleteBatch = async (id) => {
-    const res = await fetch(
-      `https://attendance-production-d583.up.railway.app/batch/${id}`,
-      {
-        method: "DELETE"
-      }
-    );
+    const res = await fetch(`${BASE}/batch/${encodeURIComponent(id)}`, {
+      method: "DELETE",
+      credentials: 'include'
+    });
 
     if (!res.ok) return alert("Failed to delete batch");
 
@@ -94,14 +113,14 @@ const ManageBatches = () => {
 
     if (transferMode === "single") {
       if (!studentId) return alert("Enter Student ID");
-      url = "https://attendance-production-d583.up.railway.app/student/transfer";
+      url = `${BASE}/student/transfer`;
       body = {
         student_id: studentId,
         from_batch_id: Number(fromBatch),
         to_batch_id: Number(toBatch)
       };
     } else {
-      url = "https://attendance-production-d583.up.railway.app/student/transfer-all";
+      url = `${BASE}/student/transfer-all`;
       body = {
         from_batch_id: Number(fromBatch),
         to_batch_id: Number(toBatch)
@@ -111,7 +130,8 @@ const ManageBatches = () => {
     const res = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body)
+      body: JSON.stringify(body),
+      credentials: 'include'
     });
 
     if (!res.ok) return alert("Transfer failed");
@@ -124,39 +144,42 @@ const ManageBatches = () => {
 
 
   return (
-    <div className="bg-white p-4 sm:p-6 md:p-8 rounded-lg max-w-4xl mx-auto">
+    <div className="bg-white p-6 max-w-5xl mx-auto flex flex-col justify-center gap-4 mt-8 sm:max-w-lg rounded-xl shadow-md w-full">
 
       {/* Action Selection */}
       {!selectedAction && (
-        <div className="flex flex-col gap-4 bg-white p-4 rounded shadow max-w-full sm:max-w-2xl">
-          <button
-            className="bg-yellow-500 text-white px-4 py-2 rounded"
-            onClick={() => setSelectedAction("add")}
-          >
-            Add Batch
-          </button>
+        <>
+          <div className="flex flex-col sm:flex-row justify-center gap-4 mt-4 mb-8">
+            <h2 className="text-xl font-semibold text-center ">Select </h2>
+            <button
+              onClick={() => setSelectedAction("add")}
+              className="flex items-center gap-2 bg-yellow-500 text-white  px-4 py-3 flex-1 rounded w-full sm:w-auto hover:bg-yellow-600 transition"
+            >
+              <FaPlus className="w-5 h-5" /> Add Batch
+            </button>
+            <button
+              onClick={() => setSelectedAction("edit")}
+              className="flex items-center gap-2 bg-yellow-500 text-white px-4 py-3 rounded w-full sm:w-auto hover:bg-yellow-600 transition"
 
-          <button
-            className="bg-yellow-500 text-white px-4 py-2  rounded"
-            onClick={() => setSelectedAction("edit")}
-          >
-            Edit Batch
-          </button>
+            >
+              <FaEdit className="w-5 h-5" /> Edit Batch
+            </button>
+            <button
+              onClick={() => setSelectedAction("delete")}
+              className="flex items-center gap-2 bg-yellow-500 text-white px-4 py-3 rounded w-full hover:bg-yellow-600 transition"
+            >
+              <FaTrash className="w-5 h-5" /> Delete Batch
+            </button>
 
-          <button
-            className="bg-yellow-500 text-white px-4 py-2 rounded"
-            onClick={() => setSelectedAction("delete")}
-          >
-            Delete Batch
-          </button>
+            <button
+              className="flex items-center gap-2 bg-yellow-500 text-white px-4 py-3 rounded w-full hover:bg-yellow-600 transition"
+              onClick={() => setSelectedAction("transfer")}
 
-          <button
-            className="bg-yellow-500 text-white px-4 py-2  rounded"
-            onClick={() => setSelectedAction("transfer")}
-          >
-            Transfer Batch
-          </button>
-        </div>
+            >
+              <FaExchangeAlt className="w-5 h-5" /> Transfer Batch
+            </button>
+          </div>
+        </>
       )}
 
       {/* Add Batch */}

@@ -1,6 +1,18 @@
 import React, { useState, useEffect } from "react";
 import { FaBook, FaEdit, FaTrash, FaPlus, FaEye, FaSearch, FaFilter } from "react-icons/fa";
 
+const BASE = "https://gibi-backend-669108940571.us-central1.run.app";
+
+const normalizeCourse = (raw) => {
+  if (!raw) return null;
+  return {
+    id: raw.course_id || raw.id || null,
+    name: raw.course_name || raw.name || raw.courseName || '',
+    description: raw.description || raw.desc || '',
+    raw,
+  };
+};
+
 const ManageCourses = () => {
   // === Course States ===
   const [courseName, setCourseName] = useState("");
@@ -33,13 +45,14 @@ const ManageCourses = () => {
   // === Search by course id ===
   const fetchCourseByCode = async () => {
     try {
-      const res = await fetch(`${BASE}/${searchId}`);
+      const res = await fetch(`${BASE}/course/${encodeURIComponent(searchId)}`, { credentials: 'include' });
       if (!res.ok) {
         alert("Course not found");
         return;
       }
-      const data = await res.json();
-      setCourses([data]);
+      const payload = await res.json();
+      const obj = payload.data || payload || {};
+      setCourses([normalizeCourse(obj)]);
     } catch (err) {
       alert("Backend not reachable");
     }
@@ -50,12 +63,14 @@ const ManageCourses = () => {
 
   const fetchCourses = async () => {
     try {
-      const res = await fetch(BASE);
+      const res = await fetch(`${BASE}/course`, { credentials: 'include' });
       if (!res.ok) throw new Error("Backend error");
 
-      const data = await res.json();
-      setCourses(data);
-      setAllCourses(data);
+      const payload = await res.json();
+      const list = Array.isArray(payload) ? payload : (payload.data || payload.courses || payload);
+      const normalized = (list || []).map(normalizeCourse);
+      setCourses(normalized);
+      setAllCourses(normalized);
     } catch (err) {
       console.error(err);
       setCourses([]);
@@ -76,14 +91,15 @@ const ManageCourses = () => {
     }
 
     const newCourse = {
-      name: courseName,
+      course_name: courseName,
       description: courseDescription,
     };
 
-    const res = await fetch(BASE, {
+    const res = await fetch(`${BASE}/course`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(newCourse),
+      credentials: 'include'
     });
 
     if (!res.ok) return alert("Failed to add course");
@@ -96,22 +112,24 @@ const ManageCourses = () => {
 
   // === Edit Course ===
   const openEditForm = (c) => {
-    setSelectedCourse(c);
-    setCourseName(c.name);
-    setCourseDescription(c.description);
+    const n = normalizeCourse(c);
+    setSelectedCourse(n);
+    setCourseName(n.name);
+    setCourseDescription(n.description);
     setShowEditPopup(true);
   };
 
   const handleSaveEditCourse = async (id) => {
     const updated = {
-      name: courseName,
+      course_name: courseName,
       description: courseDescription,
     };
 
-    const res = await fetch(`${BASE}/${id}`, {
+    const res = await fetch(`${BASE}/course/${encodeURIComponent(id)}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(updated),
+      credentials: 'include'
     });
 
     if (!res.ok) return alert("Failed to update");
@@ -127,7 +145,7 @@ const ManageCourses = () => {
   };
 
   const handleDeleteCourse = async (id) => {
-    const res = await fetch(`${BASE}/${id}`, { method: "DELETE" });
+    const res = await fetch(`${BASE}/course/${encodeURIComponent(id)}`, { method: "DELETE", credentials: 'include' });
 
     if (!res.ok) return alert("Failed to delete");
 
@@ -136,11 +154,12 @@ const ManageCourses = () => {
   };
 
   return (
-    <div className="bg-white p-6 rounded-lg max-w-5xl mx-auto">
+    <div className="bg-white px-3 mt-8 rounded-lg w-full max-w-3xl ms:max-w-lg mx-auto">
 
       {/* Action Buttons */}
       {!selectedAction && (
         <div className="flex flex-col gap-4 h-[40vh] justify-center items-center">
+          <h2 className="text-bold text-xl">Select</h2>
           <button
             onClick={() => setSelectedAction("add")}
             className="w-full bg-yellow-500 px-4 py-3 rounded text-white"
@@ -178,9 +197,8 @@ const ManageCourses = () => {
       {/* ADD COURSE */}
       {selectedAction === "add" && (
         <div>
-          <h2 className="text-xl font-bold mb-4">Add Course</h2>
-
-          <div className="flex flex-col gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4 mt-6">
+            <h2 className="text-xl font-bold mb-3">Add Course</h2>
             <input
               type="text"
               placeholder="Course Name"
@@ -209,7 +227,7 @@ const ManageCourses = () => {
 
       {/* EDIT / SEARCH */}
       {selectedAction === "edit" && (
-        <div>
+        <div className="p-1 h-[85hv] flex flex-col">
           <div className="flex items-center gap-2">
             <input
               type="text"
@@ -252,13 +270,13 @@ const ManageCourses = () => {
           )}
 
           {/* CARDS */}
-          <div className="mt-4 space-y-4">
+          <div className="mt-4 space-y-4 flex-1 overflow-y-auto border-t border-b pt-3 pb-4">
             {courses.map((c) => (
-              <div key={c.course_idid} className="border rounded p-3 bg-white shadow">
+              <div key={c.id} className="border rounded p-3 bg-white shadow">
                 <div className="flex justify-between items-center">
                   <div className="flex items-center gap-2">
                     <input type="checkbox" />
-                    <span>ID: {c.course_id}</span>
+                    <span>ID: {c.id}</span>
                   </div>
 
                   <div className="flex gap-2">
@@ -292,11 +310,11 @@ const ManageCourses = () => {
       {selectedAction === "view" && (
         <div className="mt-4 space-y-4">
           {courses.map((c) => (
-            <div key={c.course_id} className="p-4 rounded bg-white shadow border">
+            <div key={c.id} className="p-4 rounded bg-white shadow border">
               <div className="flex justify-between items-center">
                 <div className="flex items-center gap-2">
                   <input type="checkbox" />
-                  <span className="font-semibold">ID: {c.course_id}</span>
+                  <span className="font-semibold">ID: {c.id}</span>
                 </div>
 
                 <div className="flex gap-2">

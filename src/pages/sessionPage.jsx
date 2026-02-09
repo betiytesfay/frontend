@@ -71,39 +71,24 @@ export default function SessionPage() {
       }}
     >
       <div
-        className="w-full sm:w-[700px] min-h-[500px] p-6 sm:p-12 rounded-xl shadow-lg text-center flex flex-col justify-center gap-8 bg-white bg-opacity-95"
+        className="w-full sm:w-[700px] min-h-[500px] p-6 sm:p-6 rounded-xl shadow-lg text-center flex flex-col justify-center gap-8 bg-white "
       >
         <div className="flex justify-start">
           <BackButton to="/login" label="← " />
         </div>
 
         <h1 className="text-2xl sm:text-3xl font-bold text-green-700">
-          <b>Welcome, Session Admin!</b>
+          Welcome, Session Admin!
         </h1>
 
-        <div className="flex flex-col sm:flex-row justify-center gap-4 sm:gap-6">
-          <button
-            onClick={() => navigate('/attendance')}
-            className="flex-1 h-15 bg-white text-[#D4AF35] px-5 py-3 text-lg rounded-lg border-2 border-yellow-600 hover:bg-[#d6aa19] hover:text-white transition"
-          >
-            <b>Start Attendance</b>
-          </button>
-
-          <button
-            onClick={() => navigate('/sessionHistory')}
-            className="flex-1 h-15 bg-white text-[#D4AF35] px-5 py-3 text-lg rounded-lg border-2 border-yellow-600 hover:bg-[#d6aa19] hover:text-white transition"
-          >
-            <b>View History</b>
-          </button>
-        </div>
 
         {/* Stats section */}
-        <div className="mt-8 flex flex-col md:flex-row justify-between items-center gap-6">
+        <div className="mt-5 flex flex-row md:flex-row justify-between items-center gap-4">
           <div className="flex flex-col sm:flex-row items-center gap-4">
             <img
               src={contactImage}
               alt="Total Students"
-              className="w-32 h-32 sm:w-40 sm:h-40"
+              className="w-32 h-32 sm:w-40 sm:h-40  rounded-3xl"
             />
             <div className="text-center sm:text-left">
               <p className="text-base sm:text-lg font-semibold">
@@ -133,6 +118,22 @@ export default function SessionPage() {
             </div>
           </div>
         </div>
+        <div className="flex flex-col sm:flex-row justify-center pt-3 pb-3 gap-4 sm:gap-4">
+          <button
+            onClick={() => navigate('/attendance')}
+            className="flex-1 h-15 bg-[#D4AF35] text-white px-5 py-3 text-lg rounded-lg border-2 border-yellow-600 hover:bg-[#d6aa19] hover:text-white transition"
+          >
+            <b>Start Attendance</b>
+          </button>
+
+          <button
+            onClick={() => navigate('/sessionHistory')}
+            className="flex-1 h-15 bg-[#D4AF35] text-white px-5 py-3 text-lg rounded-lg border-2 border-yellow-600 hover:bg-[#d6aa19] hover:text-white transition"
+          >
+            <b>View History</b>
+          </button>
+        </div>
+
       </div>
 
       {/* History Modal */}

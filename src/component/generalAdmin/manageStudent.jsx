@@ -1,7 +1,23 @@
 import React, { useState } from "react";
 import { FaUserPlus, FaUserEdit, FaUserMinus, FaUserCircle, FaSearch, FaFilter, FaEdit, FaTrash } from "react-icons/fa";
+import { toEthiopian } from 'ethiopian-date';
 
+const BASE = "https://gibi-backend-669108940571.us-central1.run.app";
 
+// normalize/backend -> UI model
+const normalizeStudent = (raw) => {
+  if (!raw) return null;
+  return {
+    id: raw.student_id || raw.id || raw.student_id_value || String(raw.student_id || raw.id || ''),
+    firstname: raw.first_name || raw.firstname || raw.firstName || raw.name || '',
+    lastname: raw.last_name || raw.lastname || raw.lastName || '',
+    email: raw.email || raw.email_address || '',
+    phone: raw.phone_number || raw.phone || raw.phoneNumber || '',
+    department: raw.department || raw.dept || '',
+    gender: raw.gender || 'male',
+    raw,
+  };
+};
 
 const ManageStudents = () => {
   // === Students State ===
@@ -17,19 +33,7 @@ const ManageStudents = () => {
   const [filterName, setFilterName] = useState("");
   const [filterDepartment, setFilterDepartment] = useState("");
 
-
-
-  const [students, setStudents] = useState([
-    {
-      id: 1,
-      firstname: "Eyob",
-      lastname: "Simachew",
-      phone: "0987654321",
-      gender: "male",
-      department: "Accounting",
-      email: "eyob@gmail.com"
-    }
-  ]);
+  const [students, setStudents] = useState([]);
 
   const [studentDepartment, setStudentDepartment] = useState("");
   const [showAddPopup, setShowAddPopup] = useState(false);
@@ -70,16 +74,19 @@ const ManageStudents = () => {
   // load all students from backend
   const fetchStudents = async () => {
     try {
-      const res = await fetch("https://attendance-production-d583.up.railway.app/student", {
+      const res = await fetch(`${BASE}/student`, {
         method: "GET",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
       });
 
-      if (!res.ok) throw new Error("Failed to fetch students");
+      if (!res.ok) throw new Error(`Failed to fetch students: ${res.status}`);
 
-      const data = await res.json();
-      setStudents(data);
+      const payload = await res.json();
+      const list = Array.isArray(payload) ? payload : (payload.data || payload.students || payload.students_list || []);
+      const normalized = (list || []).map(normalizeStudent);
+      setStudents(normalized);
+
     } catch (err) {
       console.log("Backend error:", err);
       alert("Cannot fetch students from backend. Please check the server.");
@@ -91,15 +98,22 @@ const ManageStudents = () => {
     fetchStudents();
   }, []);
   const fetchStudentById = async () => {
-    const res = await fetch(
-      `https://attendance-production-d583.up.railway.app/student/${searchId}`, {
-      method: "GET",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
+    try {
+      const res = await fetch(`${BASE}/student/${encodeURIComponent(searchId)}`, {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+      });
+
+      if (!res.ok) return alert("Student not found");
+
+      const payload = await res.json();
+      const obj = payload.data || payload || {};
+      setStudents([normalizeStudent(obj)]);
+    } catch (err) {
+      console.error(err);
+      alert("Cannot fetch student by id");
     }
-    );
-    const data = await res.json();
-    setStudents([data]);
   };
   React.useEffect(() => {
     if (selectedAction === "view") {
@@ -110,32 +124,78 @@ const ManageStudents = () => {
 
 
   const applyFilter = async () => {
-    const res = await fetch(
-      `https://attendance-production-d583.up.railway.app/student?name=${filterName}&department=${filterDepartment}`
-    );
-    const data = await res.json();
-    setStudents(data);
+    try {
+      const q = new URLSearchParams();
+      if (filterName) q.set('name', filterName);
+      if (filterDepartment) q.set('department', filterDepartment);
+      const res = await fetch(`${BASE}/student?${q.toString()}`, { method: 'GET', headers: { 'Content-Type': 'application/json' }, credentials: 'include' });
+      if (!res.ok) return alert('Filter request failed');
+      const payload = await res.json();
+      const list = Array.isArray(payload) ? payload : (payload.data || payload.students || []);
+      setStudents((list || []).map(normalizeStudent));
+    } catch (err) {
+      console.error(err);
+      alert('Cannot apply filter');
+    }
   };
-
-
 
   // === Handlers ===
   const handleAddStudent = async () => {
-    if (!studentFirstName || !studentLastName || !studentDepartment || !studentEmail || !studentPhone || !studentGender) {
+    // debug: log current form state
+    console.log('handleAddStudent values', {
+      studentFirstName,
+      studentLastName,
+      studentDepartment,
+      studentEmail,
+      studentPhone,
+      studentGender,
+    });
+
+    // trim strings and validate
+    const f = (studentFirstName || "").trim();
+    const l = (studentLastName || "").trim();
+    const dept = (studentDepartment || "").toString().trim();
+    const email = (studentEmail || "").trim();
+    const phone = (studentPhone || "").toString().trim();
+    const gender = (studentGender || "").toString().trim();
+
+    if (!f || !l || !dept || !email || !phone || !gender) {
+      console.warn('Validation failed — missing field', { f, l, dept, email, phone, gender });
       return alert("Please fill out all student info.");
     }
 
+    // check duplicates (email and phone) against loaded students
+    const studentList = Array.isArray(students) ? students : [];
+    console.log('existing students count', studentList.length);
+    const dupEmail = studentList.find(
+      (s) => s && ((s.email && s.email === email) || (s.email_address && s.email_address === email)),
+    );
+    if (dupEmail) return alert('A student with this email already exists.');
+
+    const dupPhone = studentList.find(
+      (s) => s && ((s.phone && s.phone === phone) || (s.phone_number && s.phone_number === phone)),
+    );
+    if (dupPhone) return alert('A student with this phone number already exists.');
+
+    const now = new Date();
+    const [etYear, etMonth, etDay] = toEthiopian(now.getFullYear(), now.getMonth() + 1, now.getDate());
+    const etDate = `${etYear}-${String(etMonth).padStart(2, '0')}-${String(etDay).padStart(2, '0')}`;
+
     const newStudent = {
-      firstname: studentFirstName,
-      lastname: studentLastName,
-      phone: studentPhone,
-      gender: studentGender,
-      department: studentDepartment,
-      email: studentEmail
+      student_id: `STU-${Date.now()}`,
+      first_name: f,
+      last_name: l,
+      phone_number: phone,
+      department: dept,
+      email: email,
+      current_batch_id: 5,
+      is_certified: false,
+      enrollment_date: etDate,
     };
 
+
     try {
-      const res = await fetch("https://attendance-production-d583.up.railway.app/student", {
+      const res = await fetch(`${BASE}/student`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newStudent),
@@ -143,17 +203,29 @@ const ManageStudents = () => {
       });
 
       if (!res.ok) {
-        return alert("Failed to add student");
+        let errBody = null;
+        try {
+          errBody = await res.text();
+        } catch (e) {
+          errBody = '<unreadable response body>';
+        }
+        console.error('Add student failed', res.status, errBody);
+        return alert(`Failed to add student: ${res.status} - ${errBody}`);
       }
 
-      const saved = await res.json(); // backend response
-      setStudents([...students, saved]); // add to local table
+      const result = await res.json();
+      // try several common response shapes
+      const created = result.createdStudent || result.data || result.student || result;
+      setStudents(prev => [
+        ...prev,
+        normalizeStudent(created)
+      ]);
+
     } catch (error) {
       console.log("Error:", error);
       alert("Cannot connect to backend");
     }
 
-    // reset fields
     setStudentFirstName("");
     setStudentLastName("");
     setStudentPhone("");
@@ -163,20 +235,18 @@ const ManageStudents = () => {
   };
 
 
-
   const handleSaveEditStudent = async (id) => {
 
     const updateStudent = {
-      firstname: studentFirstName,
-      lastname: studentLastName,
-      phone: studentPhone,
-      gender: studentGender,
+      first_name: studentFirstName,
+      last_name: studentLastName,
+      phone_number: studentPhone,
       department: studentDepartment,
       email: studentEmail
     };
 
     try {
-      const res = await fetch(`https://attendance-production-d583.up.railway.app/student/${id}`, {
+      const res = await fetch(`${BASE}/student/${encodeURIComponent(id)}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updateStudent),
@@ -209,7 +279,7 @@ const ManageStudents = () => {
 
   const handleDeleteStudent = async (id) => {
     try {
-      const res = await fetch(`https://attendance-production-d583.up.railway.app/student/${id}`, {
+      const res = await fetch(`${BASE}/student/${encodeURIComponent(id)}`, {
         method: "DELETE",
         credentials: "include",
       });
@@ -229,20 +299,17 @@ const ManageStudents = () => {
     startIndex + studentsPerPage
   );
 
-
-
   return (
-    <div className="bg-white p-6 rounded-lg  max-w-5xl mx-auto">
+    <div className="bg-white p-6   max-w-5xl mx-auto flex flex-col justify-center gap-4 mt-8  sm:max-w-lg rounded-xl shadow-md w-full ">
       {/* Step 2: Select Action */}
       {!selectedAction && (
-        <div className="flex flex-col justify-center gap-4 max-w-4xl sm:max-w-lg bg-white/50 p-6 rounded-xl shadow-md w-full mx-auto">
 
-          <h2 className="text-xl font-semibold text-center">Select </h2>
-          <div className="flex flex-col sm:flex-row justify-center gap-4">
+        <>
+          <div className="flex flex-col sm:flex-row justify-center gap-4 mt-4 mb-8">
+            <h2 className="text-xl font-semibold text-center ">Select </h2>
             <button
               onClick={() => setSelectedAction("add")}
               className="flex items-center gap-2 bg-yellow-500 text-white  px-4 py-3 flex-1 rounded w-full sm:w-auto hover:bg-yellow-600 transition"
-
             >
               <FaUserPlus className="w-5 h-5" /> Add Student
             </button>
@@ -268,14 +335,12 @@ const ManageStudents = () => {
               <FaUserCircle className="w-5 h-5" /> View Student
             </button>
           </div>
-
-        </div>
+        </>
       )}
 
       {/* Add Student Form */}
       {selectedAction === "add" && (
-        <div className="bg-white/90 p-6 rounded-lg shadow-md w-full max-w-md mx-auto max-h-[90vh] overflow-y-auto">
-
+        <>
           <h2 className="font-semibold mb-4 text-xl">Add Student</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
 
@@ -305,13 +370,12 @@ const ManageStudents = () => {
             <div className="flex flex-col gap-1">
               <label className="text-sm font-medium">Phone:</label>
               <input
-                type="number"
+                type="tel"
                 placeholder="+251987654321"
                 value={studentPhone}
                 onChange={(e) => setStudentPhone(e.target.value)}
                 className="border rounded h-10 px-2 w-full"
                 maxLength={13}
-
               />
             </div>
             <div className="flex flex-col gap-1">
@@ -364,11 +428,12 @@ const ManageStudents = () => {
               + Add Student
             </button>
           </div>
-        </div>
+        </>
+
       )}
 
       {selectedAction === "edit" && (
-        <div className="w-full p-4">
+        <div className="w-full p-1">
 
           {/* Search Bar */}
           <div className="flex justify-center mt-4">
@@ -457,11 +522,11 @@ const ManageStudents = () => {
                 </div>
 
                 {/* Info */}
-                <div className="mt-2 text-sm">
-                  <p>Name: {s.firstname} {s.lastname}</p>
-                  <p>Department: {s.department}</p>
-                  <p>Phone: {s.phone}</p>
-                  <p>Gender: {s.gender}</p>
+                <div className="mt-2 text-lg">
+                  <p >Name: {s.firstname} {s.lastname}</p>
+                  <p >Department: {s.department}</p>
+                  <p >Phone: {s.phone}</p>
+                  <p >Gender: {s.gender}</p>
                 </div>
               </div>
             ))}
@@ -552,12 +617,12 @@ const ManageStudents = () => {
       {/* === EDIT POPUP === */}
       {showEditPopup && selectedStudent && (
         <div className="fixed inset-0 bg-black/40 flex justify-center items-center">
-          <div className="bg-white p-6 rounded-lg w-full max-w-md max-h-[90vh] overflow-y-auto shadow-lg">
+          <div className="bg-white p-6 rounded-lg w-full max-w-sm sm:max-w overflow-hidden  max-h-[90vh] overflow-y-auto shadow-lg">
 
 
             <h2 className="font-semibold text-lg mb-4">Edit Student</h2>
 
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-3 max-w-full">
               <input
                 type="text"
                 value={studentFirstName}
@@ -575,7 +640,7 @@ const ManageStudents = () => {
 
               />
               <input
-                type="text"
+                type="tel"
                 value={studentPhone}
                 onChange={(e) => setStudentPhone(e.target.value)}
                 placeholder="Phone"
@@ -602,10 +667,10 @@ const ManageStudents = () => {
               <select
                 value={studentGender}
                 onChange={(e) => setStudentGender(e.target.value)}
-                className="border px-3 py-2 rounded w-full max-w-full box-border"
+                className="border px-3 py-2 rounded  max-w-xs overflow-hidden box-border "
 
               >
-                <option value="male">Male</option>
+                <option value="male" className="w-50%">Male</option>
                 <option value="female">Female</option>
               </select>
             </div>
@@ -621,20 +686,10 @@ const ManageStudents = () => {
               <button
                 onClick={async () => {
                   await handleSaveEditStudent(selectedStudent.id);
-                  await fetchStudents();         // <-- ⭐ ADD THIS LINE
-                  setShowEditPopup(false);
-                }}
-                className="px-4 py-2 bg-blue-600 text-white rounded"
-              >
-                Save
-              </button>
-              <button
-                onClick={async () => {
-                  await handleSaveEditStudent(selectedStudent.id);
                   await fetchStudents();
                   setShowEditPopup(false);
                 }}
-                className="px-4 py-2 bg-Yellow-600 text-white rounded"
+                className="px-4 py-2 bg-yellow-600 text-white rounded"
               >
                 Save
               </button>
@@ -672,8 +727,11 @@ const ManageStudents = () => {
 
             <h2 className="text-lg font-semibold mb-2">Confirm Add</h2>
             <p>Are you sure you want to add:</p>
-            <p className="font-bold mt-2">{studentFirstName} {studentLastName}</p>
-            <p>Email: {studentEmail}</p>
+            <br></br>
+            <p className="font-bold mt-2 ring-black">{studentFirstName} {studentLastName}</p>
+
+            <p>Phone Number: {studentPhone}</p>
+
 
             <div className="flex justify-between mt-4">
               <button

@@ -1,11 +1,8 @@
-
-
-// export default App;
 import { useNavigate } from 'react-router-dom'
 import logo from './assets/logo.png'
 import bgImage from './assets/background.png'
 import './index.css'
-import GeneralAdminPage from './pages/GeneralAdmin.jsx'
+
 
 export default function App() {
 
