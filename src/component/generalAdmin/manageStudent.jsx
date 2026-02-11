@@ -248,17 +248,20 @@ const ManageStudents = () => {
     try {
       const res = await fetch(`${BASE}/student/${encodeURIComponent(id)}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "Accept": "application/json" },
         body: JSON.stringify(updateStudent),
         credentials: "include",
       });
 
-      if (!res.ok) return alert("Failed to update student");
+      if (!res.ok) {
+        let body = '<no body>';
+        try { body = await res.text(); } catch (e) { }
+        console.error('Update failed', res.status, body);
+        return alert(`Failed to update student: ${res.status} ${body}`);
+      }
 
-      const updated = await res.json();
-
-      // refresh list
-      fetchStudents();
+      // refresh list from server
+      await fetchStudents();
 
       // Clear form
       setStudentFirstName("");
@@ -281,16 +284,49 @@ const ManageStudents = () => {
     try {
       const res = await fetch(`${BASE}/student/${encodeURIComponent(id)}`, {
         method: "DELETE",
+        headers: { "Content-Type": "application/json", "Accept": "application/json" },
         credentials: "include",
       });
 
-      if (!res.ok) return alert("Failed to delete student");
+      if (!res.ok) {
+        let body = '<no body>';
+        try { body = await res.text(); } catch (e) { }
+        console.error('Delete failed', res.status, body);
+        return alert(`Failed to delete student: ${res.status} ${body}`);
+      }
 
-      setStudents(students.filter((s) => s.id !== id));
+      // Refresh canonical list from server
+      await fetchStudents();
 
     } catch (err) {
       console.log(err);
       alert("Could not connect to backend");
+    }
+  };
+
+  // fetch and open view for a single student id (ensures fresh data)
+  const fetchStudentAndOpenView = async (id) => {
+    try {
+      const res = await fetch(`${BASE}/student/${encodeURIComponent(id)}`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        credentials: 'include',
+      });
+
+      if (!res.ok) {
+        let body = '<no body>';
+        try { body = await res.text(); } catch (e) { }
+        console.error('Fetch single student failed', res.status, body);
+        return alert('Failed to load student details');
+      }
+
+      const payload = await res.json();
+      const obj = payload.data || payload || {};
+      setSelectedStudent(normalizeStudent(obj));
+      setShowViewPopup(true);
+    } catch (err) {
+      console.error(err);
+      alert('Could not fetch student');
     }
   };
   const startIndex = (page - 1) * studentsPerPage;
@@ -550,7 +586,7 @@ const ManageStudents = () => {
                 </div>
                 <div className="flex gap-2">
                   <button
-                    onClick={() => openViewPopup(s)}
+                    onClick={() => fetchStudentAndOpenView(s.id)}
                     className="px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
                   >
                     View

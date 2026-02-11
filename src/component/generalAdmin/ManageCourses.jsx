@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { FaBook, FaEdit, FaTrash, FaPlus, FaEye, FaSearch, FaFilter } from "react-icons/fa";
 
-const BASE = "https://gibi-backend-669108940571.us-central1.run.app";
+const BASE = "https://attendance-production-d583.up.railway.app";
 
 const normalizeCourse = (raw) => {
   if (!raw) return null;
@@ -33,8 +33,7 @@ const ManageCourses = () => {
 
   const [showFilter, setShowFilter] = useState(false);
   const [filterName, setFilterName] = useState("");
-  // === API URLs ===
-  const BASE = "https://attendance-production-d583.up.railway.app/course";
+  // === API base is BASE + /course when used ===
 
   useEffect(() => {
     if (selectedAction === "view") {
@@ -80,7 +79,7 @@ const ManageCourses = () => {
 
   const applyFilter = () => {
     const filtered = allCourses.filter(c =>
-      c.course_name.toLowerCase().includes(filterName.toLowerCase())
+      (c.name || '').toLowerCase().includes((filterName || '').toLowerCase())
     );
     setCourses(filtered);
   };
