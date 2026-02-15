@@ -34,7 +34,7 @@ const ManageBatches = () => {
 
   const fetchBatches = async () => {
     try {
-      const res = await fetch(`${BASE}/batch`, { credentials: 'include' });
+      const res = await fetch(`${BASE}/batches`, { credentials: 'include' });
       if (!res.ok) throw new Error(`Failed to fetch batches: ${res.status}`);
       const payload = await res.json();
       const list = Array.isArray(payload) ? payload : (payload.data || payload.batches || payload);
@@ -56,7 +56,7 @@ const ManageBatches = () => {
       end_date: endDate || null
     };
 
-    const res = await fetch(`${BASE}/batch`, {
+    const res = await fetch(`${BASE}/batches`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(newBatch),
@@ -78,7 +78,7 @@ const ManageBatches = () => {
       end_date: endDate || null
     };
 
-    const res = await fetch(`${BASE}/batch/${encodeURIComponent(selectedBatchId)}`, {
+    const res = await fetch(`${BASE}/batches/${encodeURIComponent(selectedBatchId)}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(updated),
@@ -95,7 +95,7 @@ const ManageBatches = () => {
   };
 
   const handleDeleteBatch = async (id) => {
-    const res = await fetch(`${BASE}/batch/${encodeURIComponent(id)}`, {
+    const res = await fetch(`${BASE}/batches/${encodeURIComponent(id)}`, {
       method: "DELETE",
       credentials: 'include'
     });
@@ -184,7 +184,7 @@ const ManageBatches = () => {
 
       {/* Add Batch */}
       {selectedAction === "add" && (
-        <div className="mt-4 bg-white p-4 rounded shadow">
+        <>
           <h2 className="font-semibold text-lg mb-4">Add Batch</h2>
 
           <input
@@ -215,12 +215,12 @@ const ManageBatches = () => {
           >
             Save
           </button>
-        </div>
+        </>
       )}
 
       {/* Edit Batch */}
       {selectedAction === "edit" && (
-        <div className="mt-4 bg-white p-4 rounded shadow">
+        <>
           <h2 className="font-semibold text-lg mb-4">Edit Batch</h2>
 
           <select
@@ -268,12 +268,12 @@ const ManageBatches = () => {
           >
             Update
           </button>
-        </div>
+        </>
       )}
 
       {/* Delete Batch */}
       {selectedAction === "delete" && (
-        <div className="mt-4 bg-white p-4 rounded shadow">
+        <>
           <h2 className="font-semibold text-lg mb-4">Delete Batch</h2>
 
           {batches.map((b) => (
@@ -290,13 +290,13 @@ const ManageBatches = () => {
               </button>
             </div>
           ))}
-        </div>
+        </>
       )}
 
       {/* Transfer Batch */}
       {/* Transfer Batch */}
       {selectedAction === "transfer" && (
-        <div className="mt-4 bg-white p-4 rounded shadow">
+        <>
           <h2 className="font-semibold text-lg mb-4">Transfer Students</h2>
 
           {/* Mode selector */}
@@ -332,7 +332,7 @@ const ManageBatches = () => {
             value={fromBatch}
             onChange={(e) => setFromBatch(e.target.value)}
           >
-            <option>From Batch</option>
+            <option >From Batch</option>
             {batches.map((b) => (
               <option key={b.batch_id} value={b.batch_id}>{b.batch_name}</option>
             ))}
@@ -355,7 +355,7 @@ const ManageBatches = () => {
           >
             {transferMode === "single" ? "Transfer Student" : "Transfer All"}
           </button>
-        </div>
+        </>
       )}
 
     </div>

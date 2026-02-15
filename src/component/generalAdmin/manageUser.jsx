@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { FaUserPlus, FaUserEdit, FaUserMinus, FaUserCircle } from 'react-icons/fa';
-
+const BASE = "https://attendance-production-d583.up.railway.app";
 const ManageUser = () => {
   const [selectedAction, setSelectedAction] = useState("");
   const [users, setUsers] = useState([]);
@@ -15,23 +15,40 @@ const ManageUser = () => {
   const [showViewPopup, setShowViewPopup] = useState(false);
   const [showEditPopup, setShowEditPopup] = useState(false);
   const [showDeletePopup, setShowDeletePopup] = useState(false);
-  useEffect(() => {
-    setUsers([
-      { user_id: 1, username: "admin1", email: "admin1@example.com", role: "admin" },
-      { user_id: 2, username: "admin2", email: "admin2@example.com", role: "super_admin" },
-      { user_id: 3, username: "admin3", email: "admin2@example.com", role: "super_admin" },
-      { user_id: 4, username: "admin4", email: "admin2@example.com", role: "super_admin" }
-    ]);
-  }, []);
 
-
-
-  const baseURL = "https://attendance-production-d583.up.railway.app";
+  const normalizeUser = (raw) => {
+    if (!raw) return null;
+    return {
+      user_id: raw.user_id || raw.id || raw.userId || null,
+      username: raw.username || raw.name || raw.user || '',
+      email: raw.email || raw.email_address || '',
+      role: raw.role || 'admin',
+      student_id: raw.student_id || raw.studentId || null,
+      raw,
+    };
+  };
 
   const fetchUsers = async () => {
-    const res = await fetch(`${baseURL}/user`);
-    const data = await res.json();
-    setUsers(data);
+    try {
+      const res = await fetch(`${BASE}/user`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        credentials: 'include'
+      });
+
+      if (!res.ok) {
+        console.error('fetchUsers failed', res.status);
+        setUsers([]);
+        return;
+      }
+
+      const payload = await res.json();
+      const list = Array.isArray(payload) ? payload : (payload.data || payload.users || []);
+      setUsers((list || []).map(normalizeUser));
+    } catch (err) {
+      console.error('fetchUsers error', err);
+      setUsers([]);
+    }
   };
 
   useEffect(() => {
@@ -56,15 +73,17 @@ const ManageUser = () => {
       email
     };
 
-    const res = await fetch(`${baseURL}/user`, {
+    const res = await fetch(`${BASE}/user`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
+      body: JSON.stringify(payload),
+      credentials: 'include'
     });
 
     if (!res.ok) return alert("Failed to add user");
 
-    fetchUsers();
+    // refresh canonical list
+    await fetchUsers();
     clearForm();
   };
 
@@ -77,26 +96,49 @@ const ManageUser = () => {
       email
     };
 
-    const res = await fetch(`${baseURL}/user/${selectedUserId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
+    try {
+      const res = await fetch(`${BASE}/user/${encodeURIComponent(selectedUserId)}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", "Accept": "application/json" },
+        body: JSON.stringify(payload),
+        credentials: 'include'
+      });
 
-    if (!res.ok) return alert("Failed to update user");
+      if (!res.ok) {
+        let body = '<no body>';
+        try { body = await res.text(); } catch (e) { }
+        console.error('Edit user failed', res.status, body);
+        return alert('Failed to update user');
+      }
 
-    fetchUsers();
-    clearForm();
+      await fetchUsers();
+      clearForm();
+    } catch (err) {
+      console.error('Edit user error', err);
+      alert('Could not connect to backend');
+    }
   };
 
   const handleDeleteUser = async (id) => {
-    const res = await fetch(`${baseURL}/user/${id}`, {
-      method: "DELETE"
-    });
+    try {
+      const res = await fetch(`${BASE}/user/${encodeURIComponent(id)}`, {
+        method: "DELETE",
+        headers: { 'Accept': 'application/json' },
+        credentials: 'include'
+      });
 
-    if (!res.ok) return alert("Failed to delete user");
+      if (!res.ok) {
+        let body = '<no body>';
+        try { body = await res.text(); } catch (e) { }
+        console.error('Delete user failed', res.status, body);
+        return alert('Failed to delete user');
+      }
 
-    fetchUsers();
+      await fetchUsers();
+    } catch (err) {
+      console.error('Delete user error', err);
+      alert('Could not connect to backend');
+    }
   };
 
   return (
@@ -141,7 +183,7 @@ const ManageUser = () => {
 
       {/* Add User */}
       {selectedAction === "add" && (
-        <div className="mt-4 bg-white p-4 rounded shadow">
+        <>
           <h2 className="font-semibold text-lg mb-4">Add User</h2>
 
           <input
@@ -191,12 +233,12 @@ const ManageUser = () => {
           >
             Save
           </button>
-        </div>
+        </>
       )}
 
       {/* Edit User */}
       {selectedAction === "edit" && (
-        <div className="mt-4 bg-white p-4 rounded shadow">
+        <>
           <h2 className="font-semibold text-lg mb-4">Edit User</h2>
 
           <select
@@ -266,12 +308,12 @@ const ManageUser = () => {
           >
             Update
           </button>
-        </div>
+        </>
       )}
 
       {/* Delete User */}
       {selectedAction === "delete" && (
-        <div className="mt-4 bg-white p-4 rounded shadow">
+        <>
           <h2 className="font-semibold text-lg mb-4">Delete User</h2>
 
           {users.map((u) => (
@@ -288,7 +330,7 @@ const ManageUser = () => {
               </button>
             </div>
           ))}
-        </div>
+        </>
       )}
 
       {/* View Users */}

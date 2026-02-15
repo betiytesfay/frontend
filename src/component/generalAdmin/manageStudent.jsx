@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { FaUserPlus, FaUserEdit, FaUserMinus, FaUserCircle, FaSearch, FaFilter, FaEdit, FaTrash } from "react-icons/fa";
 import { toEthiopian } from 'ethiopian-date';
+import { set } from "mongoose";
 
 const BASE = "https://gibi-backend-669108940571.us-central1.run.app";
 
@@ -25,6 +26,7 @@ const ManageStudents = () => {
   const [studentLastName, setStudentLastName] = useState("");
   const [studentEmail, setStudentEmail] = useState("");
   const [studentPhone, setStudentPhone] = useState("");
+  const [studentId, setStudentId] = useState("");
   const [studentGender, setStudentGender] = useState("male");
   const [searchId, setSearchId] = useState("");
   const [page, setPage] = useState(1);
@@ -66,8 +68,29 @@ const ManageStudents = () => {
     setSelectedStudent(student);
     setShowViewPopup(true);
   };
+const searchStudents = async () => {
+  try {
+    const q = new URLSearchParams();
+    if (searchId) q.set('query', searchId); // searchId can be name or ID
+    if (filterName) q.set('name', filterName);
+    if (filterDepartment) q.set('department', filterDepartment);
 
+    const res = await fetch(`${BASE}/student?${q.toString()}`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+    });
 
+    if (!res.ok) return alert('No students found');
+
+    const payload = await res.json();
+    const list = Array.isArray(payload) ? payload : (payload.data || payload.students || []);
+    setStudents(list.map(normalizeStudent));
+  } catch (err) {
+    console.error(err);
+    alert('Search failed');
+  }
+};
 
   // === Action state ===
   const [selectedAction, setSelectedAction] = useState(""); // "add", "edit", "delete"
@@ -98,8 +121,15 @@ const ManageStudents = () => {
     fetchStudents();
   }, []);
   const fetchStudentById = async () => {
+  
+    const search = searchId.trim();
+     if(!search){
+      fetchStudents();
+      return;
+    }
+    const fullId = search.startsWith("UGR-")? search: `UGR-${search}`;    
     try {
-      const res = await fetch(`${BASE}/student/${encodeURIComponent(searchId)}`, {
+      const res = await fetch(`${BASE}/student/${encodeURIComponent(fullId)}`, {
         method: "GET",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -145,6 +175,7 @@ const ManageStudents = () => {
     console.log('handleAddStudent values', {
       studentFirstName,
       studentLastName,
+      studentId,
       studentDepartment,
       studentEmail,
       studentPhone,
@@ -154,12 +185,13 @@ const ManageStudents = () => {
     // trim strings and validate
     const f = (studentFirstName || "").trim();
     const l = (studentLastName || "").trim();
+    const id = (studentId || "").trim();
     const dept = (studentDepartment || "").toString().trim();
     const email = (studentEmail || "").trim();
     const phone = (studentPhone || "").toString().trim();
     const gender = (studentGender || "").toString().trim();
 
-    if (!f || !l || !dept || !email || !phone || !gender) {
+    if (!f || !l || !dept || !email || !phone || !gender || !id) {
       console.warn('Validation failed — missing field', { f, l, dept, email, phone, gender });
       return alert("Please fill out all student info.");
     }
@@ -171,7 +203,10 @@ const ManageStudents = () => {
       (s) => s && ((s.email && s.email === email) || (s.email_address && s.email_address === email)),
     );
     if (dupEmail) return alert('A student with this email already exists.');
-
+    const dupId = studentList.find(
+      (s) => s && ((s.id && s.id === studentId) || (s.student_id && s.student_id === studentId))
+    );
+    if (dupId) return alert('A student with this ID already exists.');
     const dupPhone = studentList.find(
       (s) => s && ((s.phone && s.phone === phone) || (s.phone_number && s.phone_number === phone)),
     );
@@ -182,7 +217,7 @@ const ManageStudents = () => {
     const etDate = `${etYear}-${String(etMonth).padStart(2, '0')}-${String(etDay).padStart(2, '0')}`;
 
     const newStudent = {
-      student_id: `STU-${Date.now()}`,
+      student_id: id,
       first_name: f,
       last_name: l,
       phone_number: phone,
@@ -228,6 +263,7 @@ const ManageStudents = () => {
 
     setStudentFirstName("");
     setStudentLastName("");
+    setStudentId("");
     setStudentPhone("");
     setStudentGender("male");
     setStudentDepartment("");
@@ -304,6 +340,17 @@ const ManageStudents = () => {
     }
   };
 
+const [isSearchActive, setIsSearchActive] = useState(false);
+
+const handleSearchChange = (e) => {
+  setSearchId(e.target.value);
+};
+
+const searchStudentHandler = () => {
+  if (searchId.trim() === "") return; // avoid empty search
+  searchStudent(searchId); // send to backend
+};
+
   // fetch and open view for a single student id (ensures fresh data)
   const fetchStudentAndOpenView = async (id) => {
     try {
@@ -334,45 +381,149 @@ const ManageStudents = () => {
     startIndex,
     startIndex + studentsPerPage
   );
+  const totalPages = Math.ceil(students.length / studentsPerPage);
+
 
   return (
-    <div className="bg-white p-6   max-w-5xl mx-auto flex flex-col justify-center gap-4 mt-8  sm:max-w-lg rounded-xl shadow-md w-full ">
-      {/* Step 2: Select Action */}
-      {!selectedAction && (
+    <div className="bg-white p-6   max-w-7xl mx-auto flex flex-col justify-center gap-4 mt-8  sm:max-w-lg rounded-xl shadow-md w-full ">
+      
+  <div className="flex flex-col gap-3 mb-4 px-2">
+  {/* Search + Filter */}
+  <div className="flex items-center gap-2 w-full relative">
+    <div className="flex-1 relative">
+    <input
+      type="text"
+      placeholder="Enter Id(0000-00)"
+      value={searchId}
+      onFocus={()=> setIsSearchActive(true)}
+      onChange={(e) => setSearchId(e.target.value)}
+      onKeyDown={(e) => e.key === 'Enter' && fetchStudentById()}
+      className="flex-1 border rounded px-3 py-2 pr-10"
+    />
+    
+      </div>
+    <button
+      onClick={() =>
+        { 
+          setShowFilter(!showFilter)}}
+      className="p-2 bg-yellow-600 rounded"
+    >
+      <FaFilter className="w-5 h-5" />
+    </button>
+  </div>
 
-        <>
-          <div className="flex flex-col sm:flex-row justify-center gap-4 mt-4 mb-8">
-            <h2 className="text-xl font-semibold text-center ">Select </h2>
+  {/* Title + Add Button */}
+  <div className="flex justify-between items-center mt-2">
+    <h2 className="font-bold text-lg">Students</h2>
+    <button
+      onClick={() => setShowAddPopup(true)}
+      className="flex items-center gap-1 bg-yellow-500 text-white px-3 py-2 rounded hover:bg-yellow-600"
+    >
+      <FaUserPlus /> Add
+    </button>
+  </div>
+  </div>
+  <div className="flex flex-col gap-3 mt-2 px-2">
+    {/* PC Table View */}
+<div className="hidden sm:block w-full  overflow-x-auto mt-4">
+  <table className="min-w-full w-full border-collapse border border-gray-200 shadow-sm rounded-lg">
+    <thead className="bg-yellow-100">
+      <tr>
+        <th className="px-4 py-2 text-left">#</th>
+        <th className="px-4 py-2 text-left">Name</th>
+        <th className="px-4 py-2 text-left">Gender</th>
+        <th className="px-4 py-2 text-left">Department</th>
+        <th className="px-4 py-2 text-left">Phone</th>
+        <th className="px-4 py-2 text-left">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {paginatedStudents.map((s, index) => (
+        <tr
+          key={s.id}
+          className="hover:bg-yellow-50 transition rounded-lg cursor-pointer"
+          onClick={() => fetchStudentAndOpenView(s.id)}
+        >
+          <td className="px-4 py-2">{index + 1}</td>
+          <td className="px-4 py-2">{s.firstname} {s.lastname}</td>
+          <td className="px-4 py-2">{s.gender}</td>
+          <td className="px-4 py-2">{s.department}</td>
+          <td className="px-4 py-2">{s.phone}</td>
+          <td className="px-4 py-2 flex gap-2">
             <button
-              onClick={() => setSelectedAction("add")}
-              className="flex items-center gap-2 bg-yellow-500 text-white  px-4 py-3 flex-1 rounded w-full sm:w-auto hover:bg-yellow-600 transition"
+              onClick={(e) => { e.stopPropagation(); openEditForm(s); }}
+              className="px-2 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600"
             >
-              <FaUserPlus className="w-5 h-5" /> Add Student
+              Edit
             </button>
             <button
-              onClick={() => setSelectedAction("edit")}
-              className="flex items-center gap-2 bg-yellow-500 text-white px-4 py-3 rounded w-full sm:w-auto hover:bg-yellow-600 transition"
-
+              onClick={(e) => { e.stopPropagation(); openDeleteConfirm(s); }}
+              className="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600"
             >
-              <FaUserEdit className="w-5 h-5" /> Edit Student
+              Delete
             </button>
-            <button
-              onClick={() => setSelectedAction("delete")}
-              className="flex items-center gap-2 bg-yellow-500 text-white px-4 py-3 rounded w-full hover:bg-yellow-600 transition"
-            >
-              <FaUserMinus className="w-5 h-5" /> Delete Student
-            </button>
+          </td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+</div>
+<div className="sm:hidden">
+  {paginatedStudents.map((s) => (
+    <div
+      key={s.id}
+      onClick={() => fetchStudentAndOpenView(s.id)}
+      className="border rounded p-3 flex justify-between items-center shadow bg-white cursor-pointer"
+    >
 
-            <button
-              className="flex items-center gap-2 bg-yellow-500 text-white px-4 py-3 rounded w-full hover:bg-yellow-600 transition"
-              onClick={() => setSelectedAction("view")}
+      <div>
+        <p className="font-semibold">{s.firstname} {s.lastname}</p>
+        <p className="text-sm text-gray-500">{s.id}</p>
+      </div>
 
-            >
-              <FaUserCircle className="w-5 h-5" /> View Student
-            </button>
-          </div>
-        </>
-      )}
+      {/* Right: Edit / Delete */}
+      <div className="sm:hidden mt-2 flex gap-2">
+        <button onClick={(e) => { e.stopPropagation(); openEditForm(s); }} className="text-yellow-500">
+          <FaEdit />
+        </button>
+        <button onClick={(e) => { e.stopPropagation(); openDeleteConfirm(s); }} className="text-red-500">
+          <FaTrash />
+        </button>
+      </div>
+    </div>
+  ))}
+  </div>
+  <div className="flex justify-center gap-2 mt-2 flex-wrap">
+  <button
+    onClick={() => setPage(prev => Math.max(prev - 1, 1))}
+    className="px-3 py-1 rounded bg-gray-200 hover:bg-yellow-400 transition"
+  >
+    Prev
+  </button>
+
+  {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+    <button
+      key={p}
+      onClick={() => setPage(p)}
+      className={`px-3 py-1 rounded ${
+        p === page ? "bg-yellow-500 text-white" : "bg-gray-200 text-gray-700 hover:bg-yellow-400"
+      } transition`}
+    >
+      {p}
+    </button>
+  ))}
+
+  <button
+    onClick={() => setPage(prev => Math.min(prev + 1, totalPages))}
+    className="px-3 py-1 rounded bg-gray-200 hover:bg-yellow-400 transition"
+  >
+    Next
+  </button>
+</div>
+
+</div>
+
+
 
       {/* Add Student Form */}
       {selectedAction === "add" && (
@@ -399,6 +550,16 @@ const ManageStudents = () => {
                 placeholder="Last Name"
                 value={studentLastName}
                 onChange={(e) => setStudentLastName(e.target.value)}
+                className="border rounded h-10 px-2 w-full"
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-medium">ID:</label>
+              <input
+                type="text"
+                placeholder="1234-16"
+                value={studentId}
+                onChange={(e) => setStudentId(e.target.value)}
                 className="border rounded h-10 px-2 w-full"
               />
             </div>
@@ -567,7 +728,6 @@ const ManageStudents = () => {
               </div>
             ))}
           </div>
-
         </div>
       )}
 
@@ -620,6 +780,21 @@ const ManageStudents = () => {
           ))}
         </div>
       )}
+      {selectedAction === "delete" && (
+        <div className="fixed inset-0 bg-black/40 flex justify-center items-center ">
+          <div className="bg-white  flex flex-col p-6 w-full max-w-sm md:w-56 rounded-lg  ">
+            <p className="text-black text-xl font-bold font-sans ">Enter the Id of the student to Delete</p>
+            <br />
+            <div className="flex flex-row">
+              <label className="text-yellow-600 px-2 text-lg font-bold">Enter Id:</label>
+              <input type="text" value={studentId} onChange={(e) => setStudentId(e.target.value)} className="border border-yellow-600 px-2 rounded-lg sm:w-0.5 md:w-2xl lg:w-3xl " />
+            </div>
+            <div className="mt-2 flex flex-row justify-center">
+              <button onClick={handleDeleteStudent} className="px-4 mt-2 py-2 bg-red-600 text-white rounded sm:w-1 ">Delete</button>
+            </div>
+          </div>
+        </div>
+      )}
       {showDeletePopup && selectedStudent && (
         <div className="fixed inset-0 bg-black/40 flex justify-center items-center">
           <div className="bg-white p-6 rounded-lg w-80 shadow-lg">
@@ -654,7 +829,6 @@ const ManageStudents = () => {
       {showEditPopup && selectedStudent && (
         <div className="fixed inset-0 bg-black/40 flex justify-center items-center">
           <div className="bg-white p-6 rounded-lg w-full max-w-sm sm:max-w overflow-hidden  max-h-[90vh] overflow-y-auto shadow-lg">
-
 
             <h2 className="font-semibold text-lg mb-4">Edit Student</h2>
 
