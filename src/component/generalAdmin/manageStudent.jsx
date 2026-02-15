@@ -1,11 +1,10 @@
 import React, { useState } from "react";
 import { FaUserPlus, FaUserEdit, FaUserMinus, FaUserCircle, FaSearch, FaFilter, FaEdit, FaTrash } from "react-icons/fa";
 import { toEthiopian } from 'ethiopian-date';
-import { set } from "mongoose";
+
 
 const BASE = "https://gibi-backend-669108940571.us-central1.run.app";
 
-// normalize/backend -> UI model
 const normalizeStudent = (raw) => {
   if (!raw) return null;
   return {
@@ -52,15 +51,12 @@ const ManageStudents = () => {
 
   const openEditForm = (student) => {
     setSelectedStudent(student);
-
-    // preload fields
     setStudentFirstName(student.firstname);
     setStudentLastName(student.lastname);
     setStudentPhone(student.phone);
     setStudentGender(student.gender);
     setStudentDepartment(student.department);
     setStudentEmail(student.email);
-
     setShowEditPopup(true);
   };
 
