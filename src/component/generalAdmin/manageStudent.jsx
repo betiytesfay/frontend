@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { FaUserPlus, FaUserEdit, FaUserMinus, FaUserCircle, FaSearch, FaFilter, FaEdit, FaTrash } from "react-icons/fa";
+import { FaUserPlus, FaUserEdit, FaArrowLeft, FaUserMinus, FaUserCircle, FaSearch, FaFilter, FaEdit, FaTrash } from "react-icons/fa";
 import { toEthiopian } from 'ethiopian-date';
 
 
@@ -64,29 +64,29 @@ const ManageStudents = () => {
     setSelectedStudent(student);
     setShowViewPopup(true);
   };
-const searchStudents = async () => {
-  try {
-    const q = new URLSearchParams();
-    if (searchId) q.set('query', searchId); // searchId can be name or ID
-    if (filterName) q.set('name', filterName);
-    if (filterDepartment) q.set('department', filterDepartment);
+  const searchStudents = async () => {
+    try {
+      const q = new URLSearchParams();
+      if (searchId) q.set('query', searchId); // searchId can be name or ID
+      if (filterName) q.set('name', filterName);
+      if (filterDepartment) q.set('department', filterDepartment);
 
-    const res = await fetch(`${BASE}/student?${q.toString()}`, {
-      method: 'GET',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-    });
+      const res = await fetch(`${BASE}/student?${q.toString()}`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+      });
 
-    if (!res.ok) return alert('No students found');
+      if (!res.ok) return alert('No students found');
 
-    const payload = await res.json();
-    const list = Array.isArray(payload) ? payload : (payload.data || payload.students || []);
-    setStudents(list.map(normalizeStudent));
-  } catch (err) {
-    console.error(err);
-    alert('Search failed');
-  }
-};
+      const payload = await res.json();
+      const list = Array.isArray(payload) ? payload : (payload.data || payload.students || []);
+      setStudents(list.map(normalizeStudent));
+    } catch (err) {
+      console.error(err);
+      alert('Search failed');
+    }
+  };
 
   // === Action state ===
   const [selectedAction, setSelectedAction] = useState(""); // "add", "edit", "delete"
@@ -117,13 +117,13 @@ const searchStudents = async () => {
     fetchStudents();
   }, []);
   const fetchStudentById = async () => {
-  
+
     const search = searchId.trim();
-     if(!search){
+    if (!search) {
       fetchStudents();
       return;
     }
-    const fullId = search.startsWith("UGR-")? search: `UGR-${search}`;    
+    const fullId = search.startsWith("UGR-") ? search : `UGR-${search}`;
     try {
       const res = await fetch(`${BASE}/student/${encodeURIComponent(fullId)}`, {
         method: "GET",
@@ -336,16 +336,16 @@ const searchStudents = async () => {
     }
   };
 
-const [isSearchActive, setIsSearchActive] = useState(false);
+  const [isSearchActive, setIsSearchActive] = useState(false);
 
-const handleSearchChange = (e) => {
-  setSearchId(e.target.value);
-};
+  const handleSearchChange = (e) => {
+    setSearchId(e.target.value);
+  };
 
-const searchStudentHandler = () => {
-  if (searchId.trim() === "") return; // avoid empty search
-  searchStudent(searchId); // send to backend
-};
+  const searchStudentHandler = () => {
+    if (searchId.trim() === "") return; // avoid empty search
+    searchStudent(searchId); // send to backend
+  };
 
   // fetch and open view for a single student id (ensures fresh data)
   const fetchStudentAndOpenView = async (id) => {
@@ -382,151 +382,169 @@ const searchStudentHandler = () => {
 
   return (
     <div className="bg-white p-6   max-w-7xl mx-auto flex flex-col justify-center gap-4 mt-8  sm:max-w-lg rounded-xl shadow-md w-full ">
-      
-  <div className="flex flex-col gap-3 mb-4 px-2">
-  {/* Search + Filter */}
-  <div className="flex items-center gap-2 w-full relative">
-    <div className="flex-1 relative">
-    <input
-      type="text"
-      placeholder="Enter Id(0000-00)"
-      value={searchId}
-      onFocus={()=> setIsSearchActive(true)}
-      onChange={(e) => setSearchId(e.target.value)}
-      onKeyDown={(e) => e.key === 'Enter' && fetchStudentById()}
-      className="flex-1 border rounded px-3 py-2 pr-10"
-    />
-    
-      </div>
-    <button
-      onClick={() =>
-        { 
-          setShowFilter(!showFilter)}}
-      className="p-2 bg-yellow-600 rounded"
-    >
-      <FaFilter className="w-5 h-5" />
-    </button>
-  </div>
 
-  {/* Title + Add Button */}
-  <div className="flex justify-between items-center mt-2">
-    <h2 className="font-bold text-lg">Students</h2>
-    <button
-      onClick={() => setShowAddPopup(true)}
-      className="flex items-center gap-1 bg-yellow-500 text-white px-3 py-2 rounded hover:bg-yellow-600"
-    >
-      <FaUserPlus /> Add
-    </button>
-  </div>
-  </div>
-  <div className="flex flex-col gap-3 mt-2 px-2">
-    {/* PC Table View */}
-<div className="hidden sm:block w-full  overflow-x-auto mt-4">
-  <table className="min-w-full w-full border-collapse border border-gray-200 shadow-sm rounded-lg">
-    <thead className="bg-yellow-100">
-      <tr>
-        <th className="px-4 py-2 text-left">#</th>
-        <th className="px-4 py-2 text-left">Name</th>
-        <th className="px-4 py-2 text-left">Gender</th>
-        <th className="px-4 py-2 text-left">Department</th>
-        <th className="px-4 py-2 text-left">Phone</th>
-        <th className="px-4 py-2 text-left">Actions</th>
-      </tr>
-    </thead>
-    <tbody>
-      {paginatedStudents.map((s, index) => (
-        <tr
-          key={s.id}
-          className="hover:bg-yellow-50 transition rounded-lg cursor-pointer"
-          onClick={() => fetchStudentAndOpenView(s.id)}
-        >
-          <td className="px-4 py-2">{index + 1}</td>
-          <td className="px-4 py-2">{s.firstname} {s.lastname}</td>
-          <td className="px-4 py-2">{s.gender}</td>
-          <td className="px-4 py-2">{s.department}</td>
-          <td className="px-4 py-2">{s.phone}</td>
-          <td className="px-4 py-2 flex gap-2">
-            <button
-              onClick={(e) => { e.stopPropagation(); openEditForm(s); }}
-              className="px-2 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600"
+      <div className="flex flex-col gap-3 mb-4 px-2">
+        {/* Search + Filter */}
+        <div className="flex items-center gap-2 w-full relative">
+          <div className="flex-1 relative">
+            <input
+              type="text"
+              placeholder="Enter Id(0000-00)"
+              value={searchId}
+              onFocus={() => setIsSearchActive(true)}
+              onChange={(e) => setSearchId(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && fetchStudentById()}
+              className="flex-1 border rounded px-3 py-2 pr-10"
+            />
+
+          </div>
+          <button
+            onClick={() => {
+              setShowFilter(!showFilter)
+            }}
+            className="p-2 bg-yellow-600 rounded"
+          >
+            <FaFilter className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Title + Add Button */}
+        <div className="flex justify-between items-center mt-2">
+          <button
+            onClick={() => window.history.back()}
+            className="flex items-center gap-1 px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
+          >
+            <FaArrowLeft /> Back
+          </button>
+          <h2 className="font-bold text-lg">Students</h2>
+          <button
+            onClick={() => setShowAddPopup(true)}
+            className="flex items-center gap-1 bg-yellow-500 text-white px-3 py-2 rounded hover:bg-yellow-600"
+          >
+            <FaUserPlus /> Add
+          </button>
+        </div>
+      </div>
+      <div className="flex flex-col gap-3 mt-2 px-2">
+        {/* PC Table View */}
+        <div className="hidden sm:block w-full  overflow-x-auto mt-2">
+          <table className="min-w-full w-full border-collapse border border-gray-200 shadow-sm rounded-lg">
+            <thead className="bg-yellow-100">
+              <tr>
+                <th className="px-4 py-2 text-left">#</th>
+                <th className="px-4 py-2 text-left">Name</th>
+                <th className="px-4 py-2 text-left">Gender</th>
+                <th className="px-4 py-2 text-left">Department</th>
+                <th className="px-4 py-2 text-left">Phone</th>
+                <th className="px-4 py-2 text-left">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {paginatedStudents.map((s, index) => (
+                <tr
+                  key={s.id}
+                  className="hover:bg-yellow-50 transition rounded-lg cursor-pointer"
+                  onClick={() => fetchStudentAndOpenView(s.id)}
+                >
+                  <td className="px-4 py-2">{index + 1}</td>
+                  <td className="px-4 py-2">{s.firstname} {s.lastname}</td>
+                  <td className="px-4 py-2">{s.gender}</td>
+                  <td className="px-4 py-2">{s.department}</td>
+                  <td className="px-4 py-2">{s.phone}</td>
+                  <td className="px-4 py-2 flex gap-2">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); openEditForm(s); }}
+                      className="px-2 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); openDeleteConfirm(s); }}
+                      className="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <div className="sm:hidden">
+          {paginatedStudents.map((s) => (
+            <div
+              key={s.id}
+              onClick={() => fetchStudentAndOpenView(s.id)}
+              className="border rounded p-3 flex justify-between items-center shadow bg-white cursor-pointer"
             >
-              Edit
-            </button>
+
+              <div>
+                <p className="font-semibold">{s.firstname} {s.lastname}</p>
+                <p className="text-sm text-gray-500">{s.id}</p>
+              </div>
+
+              {/* Right: Edit / Delete */}
+              <div className="sm:hidden mt-2 flex gap-2">
+                <button onClick={(e) => { e.stopPropagation(); openEditForm(s); }} className="text-yellow-500">
+                  <FaEdit />
+                </button>
+                <button onClick={(e) => { e.stopPropagation(); openDeleteConfirm(s); }} className="text-red-500">
+                  <FaTrash />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="flex justify-center gap-2 mt-4 flex-wrap">
+
+          {/* Prev */}
+          <button
+            onClick={() => setPage(prev => Math.max(prev - 1, 1))}
+            disabled={page === 1}
+            className={`px-3 py-1 rounded transition
+      ${page === 1
+                ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                : "bg-gray-200 hover:bg-yellow-400"}
+    `}
+          >
+            Prev
+          </button>
+
+          {/* Page Numbers */}
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
             <button
-              onClick={(e) => { e.stopPropagation(); openDeleteConfirm(s); }}
-              className="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+              key={p}
+              onClick={() => setPage(p)}
+              className={`px-3 py-1 rounded transition
+        ${p === page
+                  ? "bg-yellow-500 text-white font-semibold"
+                  : "bg-gray-200 text-gray-700 hover:bg-yellow-400"}
+      `}
             >
-              Delete
+              {p}
             </button>
-          </td>
-        </tr>
-      ))}
-    </tbody>
-  </table>
-</div>
-<div className="sm:hidden">
-  {paginatedStudents.map((s) => (
-    <div
-      key={s.id}
-      onClick={() => fetchStudentAndOpenView(s.id)}
-      className="border rounded p-3 flex justify-between items-center shadow bg-white cursor-pointer"
-    >
+          ))}
 
-      <div>
-        <p className="font-semibold">{s.firstname} {s.lastname}</p>
-        <p className="text-sm text-gray-500">{s.id}</p>
+          {/* Next */}
+          <button
+            onClick={() => setPage(prev => Math.min(prev + 1, totalPages))}
+            disabled={page === totalPages}
+            className={`px-3 py-1 rounded transition
+      ${page === totalPages
+                ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                : "bg-gray-200 hover:bg-yellow-400"}
+    `}
+          >
+            Next
+          </button>
+
+        </div>
       </div>
-
-      {/* Right: Edit / Delete */}
-      <div className="sm:hidden mt-2 flex gap-2">
-        <button onClick={(e) => { e.stopPropagation(); openEditForm(s); }} className="text-yellow-500">
-          <FaEdit />
-        </button>
-        <button onClick={(e) => { e.stopPropagation(); openDeleteConfirm(s); }} className="text-red-500">
-          <FaTrash />
-        </button>
-      </div>
-    </div>
-  ))}
-  </div>
-  <div className="flex justify-center gap-2 mt-2 flex-wrap">
-  <button
-    onClick={() => setPage(prev => Math.max(prev - 1, 1))}
-    className="px-3 py-1 rounded bg-gray-200 hover:bg-yellow-400 transition"
-  >
-    Prev
-  </button>
-
-  {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-    <button
-      key={p}
-      onClick={() => setPage(p)}
-      className={`px-3 py-1 rounded ${
-        p === page ? "bg-yellow-500 text-white" : "bg-gray-200 text-gray-700 hover:bg-yellow-400"
-      } transition`}
-    >
-      {p}
-    </button>
-  ))}
-
-  <button
-    onClick={() => setPage(prev => Math.min(prev + 1, totalPages))}
-    className="px-3 py-1 rounded bg-gray-200 hover:bg-yellow-400 transition"
-  >
-    Next
-  </button>
-</div>
-
-</div>
-
-
-
       {/* Add Student Form */}
       {selectedAction === "add" && (
         <>
           <h2 className="font-semibold mb-4 text-xl">Add Student</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-
             <div className="flex flex-col gap-1">
               <label className="text-sm font-medium">First Name:</label>
               <input
@@ -537,7 +555,6 @@ const searchStudentHandler = () => {
                 className="border rounded h-10 px-2 w-full"
               />
             </div>
-
 
             <div className="flex flex-col gap-1">
               <label className="text-sm font-medium">Last Name:</label>
@@ -688,7 +705,7 @@ const searchStudentHandler = () => {
           {/* Cards */}
           <div className="mt-4 space-y-4 w-full max-w-full overflow-hidden">
             {paginatedStudents.map((s) => (
-              <div key={s.id} className="border rounded p-3 shadow bg-white w-full break-words">
+              <div key={s.id} className="border rounded p-3 shadow bg-white w-full wrap-break-words">
                 <div className="flex justify-between items-center">
 
                   {/* Left: Checkbox + ID */}
@@ -776,21 +793,7 @@ const searchStudentHandler = () => {
           ))}
         </div>
       )}
-      {selectedAction === "delete" && (
-        <div className="fixed inset-0 bg-black/40 flex justify-center items-center ">
-          <div className="bg-white  flex flex-col p-6 w-full max-w-sm md:w-56 rounded-lg  ">
-            <p className="text-black text-xl font-bold font-sans ">Enter the Id of the student to Delete</p>
-            <br />
-            <div className="flex flex-row">
-              <label className="text-yellow-600 px-2 text-lg font-bold">Enter Id:</label>
-              <input type="text" value={studentId} onChange={(e) => setStudentId(e.target.value)} className="border border-yellow-600 px-2 rounded-lg sm:w-0.5 md:w-2xl lg:w-3xl " />
-            </div>
-            <div className="mt-2 flex flex-row justify-center">
-              <button onClick={handleDeleteStudent} className="px-4 mt-2 py-2 bg-red-600 text-white rounded sm:w-1 ">Delete</button>
-            </div>
-          </div>
-        </div>
-      )}
+
       {showDeletePopup && selectedStudent && (
         <div className="fixed inset-0 bg-black/40 flex justify-center items-center">
           <div className="bg-white p-6 rounded-lg w-80 shadow-lg">
@@ -935,10 +938,7 @@ const searchStudentHandler = () => {
             <p>Are you sure you want to add:</p>
             <br></br>
             <p className="font-bold mt-2 ring-black">{studentFirstName} {studentLastName}</p>
-
             <p>Phone Number: {studentPhone}</p>
-
-
             <div className="flex justify-between mt-4">
               <button
                 onClick={() => setShowAddPopup(false)}
@@ -960,12 +960,7 @@ const searchStudentHandler = () => {
           </div>
         </div>
       )}
-
-
-
     </div>
-
   );
 };
-
 export default ManageStudents;

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { FaPlus, FaEdit, FaTrash, FaExchangeAlt } from 'react-icons/fa';
+import { FaPlus, FaEdit, FaTrash, FaExchangeAlt, FaArrowLeft, FaUserPlus, FaFilter } from 'react-icons/fa';
 
 const BASE = "https://gibi-backend-669108940571.us-central1.run.app";
 
@@ -19,7 +19,10 @@ const ManageBatches = () => {
   const [selectedAction, setSelectedAction] = useState("");
   const [batches, setBatches] = useState([]);
 
-  // Add/Edit fields
+  const [searchTerm, setSearchTerm] = useState("");
+  const [searchBatch, setSearchBatch] = useState("");
+  const [showFilter, setShowFilter] = useState(false);
+
   const [batchName, setBatchName] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
@@ -37,8 +40,9 @@ const ManageBatches = () => {
       const res = await fetch(`${BASE}/batches`, { credentials: 'include' });
       if (!res.ok) throw new Error(`Failed to fetch batches: ${res.status}`);
       const payload = await res.json();
-      const list = Array.isArray(payload) ? payload : (payload.data || payload.batches || payload);
-      setBatches((list || []).map(normalizeBatch));
+      const list = Array.isArray(payload) ? payload : (payload.data || payload.batches || payload.students_list || []);
+      const normalized = (list || []).map(normalizeBatch);
+      setBatches(normalized);
     } catch (err) {
       console.error(err);
       setBatches([]);
@@ -69,6 +73,13 @@ const ManageBatches = () => {
     setBatchName("");
     setStartDate("");
     setEndDate("");
+  };
+  const handleEditClick = (batch) => {
+    setSelectedBatchId(batch.batch_id);
+    setBatchName(batch.batch_name);
+    setStartDate(batch.start_date);
+    setEndDate(batch.end_date);
+    setShowEdit(true); // we'll define showEdit next
   };
 
   const handleEditBatch = async () => {
@@ -145,42 +156,101 @@ const ManageBatches = () => {
 
   return (
     <div className="bg-white p-6 max-w-5xl mx-auto flex flex-col justify-center gap-4 mt-8 sm:max-w-lg rounded-xl shadow-md w-full">
+      <div className="flex items-center justify-between ">
+        <button
+          onClick={() => window.history.back()}
+          className="flex items-center gap-1 px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
+        >
+          <FaArrowLeft /> Back
+        </button>
+        <h2 className="font-extrabold text-lg">Batches</h2>
+      </div>
+      <div className="mb-4 flex flex-row">
+        <input
+          type="text"
+          placeholder="Search batches..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="border px-3 py-2 rounded w-full"
+        />
 
-      {/* Action Selection */}
-      {!selectedAction && (
-        <>
-          <div className="flex flex-col sm:flex-row justify-center gap-4 mt-4 mb-8">
-            <h2 className="text-xl font-semibold text-center ">Select </h2>
-            <button
-              onClick={() => setSelectedAction("add")}
-              className="flex items-center gap-2 bg-yellow-500 text-white  px-4 py-3 flex-1 rounded w-full sm:w-auto hover:bg-yellow-600 transition"
-            >
-              <FaPlus className="w-5 h-5" /> Add Batch
-            </button>
-            <button
-              onClick={() => setSelectedAction("edit")}
-              className="flex items-center gap-2 bg-yellow-500 text-white px-4 py-3 rounded w-full sm:w-auto hover:bg-yellow-600 transition"
+        <button
+          onClick={() => {
+            setShowFilter(!showFilter)
+          }}
+          className="p-2 bg-yellow-600 rounded"
+        >
+          <FaFilter className="w-5 h-5" />
+        </button>
+      </div>
+      <div className="flex items-center justify-between mb-4 px-2">
+        {/* Left */}
 
-            >
-              <FaEdit className="w-5 h-5" /> Edit Batch
-            </button>
-            <button
-              onClick={() => setSelectedAction("delete")}
-              className="flex items-center gap-2 bg-yellow-500 text-white px-4 py-3 rounded w-full hover:bg-yellow-600 transition"
-            >
-              <FaTrash className="w-5 h-5" /> Delete Batch
-            </button>
 
-            <button
-              className="flex items-center gap-2 bg-yellow-500 text-white px-4 py-3 rounded w-full hover:bg-yellow-600 transition"
-              onClick={() => setSelectedAction("transfer")}
+        {/* Center */}
 
-            >
-              <FaExchangeAlt className="w-5 h-5" /> Transfer Batch
-            </button>
+
+        {/* Right */}
+        <div className="flex gap-2">
+          <button
+            onClick={() => setSelectedAction("add")}
+            className="flex items-center gap-1 bg-yellow-500 text-white px-3 py-2 rounded hover:bg-yellow-600"
+          >
+            <FaUserPlus /> Add
+          </button>
+
+          <button
+            onClick={() => setSelectedAction("transfer")}
+            className="flex items-center gap-1 bg-green-500 text-white px-3 py-2 rounded hover:bg-green-600"
+          >
+            Transfer
+          </button>
+        </div>
+
+
+      </div>
+
+
+      {/* Batch List + Actions */}
+      <div className="flex flex-col gap-4">
+
+
+        {/* Batch Table */}
+        <div className="border rounded-lg overflow-hidden">
+          <div className="grid grid-cols-4 gap-4 bg-gray-100 px-4 py-3 text-sm font-semibold text-gray-700">
+
+            <div>Name</div>
+            <div>Start Date</div>
+            <div>End Date</div>
+            <div>Actions</div>
           </div>
-        </>
-      )}
+
+          {batches
+            .filter((b) => b.batch_name.toLowerCase().includes(searchTerm.toLowerCase()))
+            .map((b) => (
+              <div key={b.batch_id} className="grid grid-cols-4 gap-4 px-4 py-3 border-t items-center text-sm">
+                <div>{b.batch_name}</div>
+                <div>{b.start_date}</div>
+                <div>{b.end_date}</div>
+                <div className="flex gap-2">
+                  <button
+                    className="bg-yellow-500 text-white p-2 rounded hover:bg-yellow-600"
+                    onClick={() => handleEditClick(b)}
+                  >
+                    <FaEdit className="w-3 h-3" />
+                  </button>
+                  <button
+                    className="bg-red-500 text-white p-2 rounded hover:bg-red-600"
+                    onClick={() => handleDeleteBatch(b.batch_id)}
+                  >
+                    <FaTrash className="w-3 h-3" />
+                  </button>
+                </div>
+              </div>
+            ))}
+        </div>
+      </div>
+
 
       {/* Add Batch */}
       {selectedAction === "add" && (
@@ -293,7 +363,6 @@ const ManageBatches = () => {
         </>
       )}
 
-      {/* Transfer Batch */}
       {/* Transfer Batch */}
       {selectedAction === "transfer" && (
         <>
