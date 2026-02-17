@@ -22,6 +22,15 @@ const ManageBatches = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [searchBatch, setSearchBatch] = useState("");
   const [showFilter, setShowFilter] = useState(false);
+  const [modalBatch, setModalBatch] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const batchesPerPage = 10;
+  const indexOfLastBatch = currentPage * batchesPerPage;
+  const indexOfFirstBatch = indexOfLastBatch - batchesPerPage;
+  const currentBatches = batches
+    .filter((b) => b.batch_name.toLowerCase().includes(searchTerm.toLowerCase()))
+    .slice(indexOfFirstBatch, indexOfLastBatch);
+
 
   const [batchName, setBatchName] = useState("");
   const [startDate, setStartDate] = useState("");
@@ -35,19 +44,28 @@ const ManageBatches = () => {
   const [transferMode, setTransferMode] = useState("single");
 
 
-  const fetchBatches = async () => {
+  async function fetchBatches() {
     try {
-      const res = await fetch(`${BASE}/batches`, { credentials: 'include' });
-      if (!res.ok) throw new Error(`Failed to fetch batches: ${res.status}`);
+      const res = await fetch(`${BASE}/batches`);
       const payload = await res.json();
-      const list = Array.isArray(payload) ? payload : (payload.data || payload.batches || payload.students_list || []);
-      const normalized = (list || []).map(normalizeBatch);
+
+      // Extract the batches from the data property
+      const batchesData = payload?.data?.batches || [];
+
+      console.log('BATCH LIST:', batchesData);
+
+      const normalized = batchesData.map(batch => ({
+        ...batch,
+        batch_name: batch.batch_name.toUpperCase(),
+      }));
+
       setBatches(normalized);
     } catch (err) {
       console.error(err);
-      setBatches([]);
     }
-  };
+  }
+
+
 
   useEffect(() => {
     fetchBatches();
@@ -158,7 +176,7 @@ const ManageBatches = () => {
     <div className="bg-white p-6 max-w-5xl mx-auto flex flex-col justify-center gap-4 mt-8 sm:max-w-lg rounded-xl shadow-md w-full">
       <div className="flex items-center justify-between ">
         <button
-          onClick={() => window.history.back()}
+          onClick={() => "/admin"}
           className="flex items-center gap-1 px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
         >
           <FaArrowLeft /> Back
@@ -184,13 +202,7 @@ const ManageBatches = () => {
         </button>
       </div>
       <div className="flex items-center justify-between mb-4 px-2">
-        {/* Left */}
 
-
-        {/* Center */}
-
-
-        {/* Right */}
         <div className="flex gap-2">
           <button
             onClick={() => setSelectedAction("add")}
@@ -207,49 +219,162 @@ const ManageBatches = () => {
           </button>
         </div>
 
-
       </div>
-
 
       {/* Batch List + Actions */}
-      <div className="flex flex-col gap-4">
 
-
-        {/* Batch Table */}
-        <div className="border rounded-lg overflow-hidden">
-          <div className="grid grid-cols-4 gap-4 bg-gray-100 px-4 py-3 text-sm font-semibold text-gray-700">
-
-            <div>Name</div>
-            <div>Start Date</div>
-            <div>End Date</div>
-            <div>Actions</div>
-          </div>
-
-          {batches
-            .filter((b) => b.batch_name.toLowerCase().includes(searchTerm.toLowerCase()))
-            .map((b) => (
-              <div key={b.batch_id} className="grid grid-cols-4 gap-4 px-4 py-3 border-t items-center text-sm">
-                <div>{b.batch_name}</div>
-                <div>{b.start_date}</div>
-                <div>{b.end_date}</div>
-                <div className="flex gap-2">
-                  <button
-                    className="bg-yellow-500 text-white p-2 rounded hover:bg-yellow-600"
-                    onClick={() => handleEditClick(b)}
-                  >
-                    <FaEdit className="w-3 h-3" />
-                  </button>
-                  <button
-                    className="bg-red-500 text-white p-2 rounded hover:bg-red-600"
-                    onClick={() => handleDeleteBatch(b.batch_id)}
-                  >
-                    <FaTrash className="w-3 h-3" />
-                  </button>
-                </div>
+      {/* Mobile Card List */}
+      <div className="flex flex-col gap-2.5  sm:hidden">
+        {currentBatches
+          .filter((b) =>
+            b.batch_name.toLowerCase().includes(searchTerm.toLowerCase())
+          )
+          .map((b) => (
+            <div
+              key={b.batch_id}
+              className="border rounded-lg p-4 shadow-sm hover:shadow-md cursor-pointer flex justify-between items-center sm:hidden"
+            >
+              <div
+                className="flex-1"
+                onClick={() => setModalBatch(b)} // open modal when row clicked
+              >
+                <h3 className="font-bold text-lg">{b.batch_name}</h3>
               </div>
-            ))}
-        </div>
+
+              {/* Actions */}
+              <div className="flex gap-2 ml-2">
+                <button
+                  className="bg-yellow-500 text-white p-2 rounded hover:bg-yellow-600"
+
+                  onClick={() => {
+                    handleEditClick(b);
+                    setSelectedAction("edit");
+                  }}
+                >
+                  <FaEdit className="w-3 h-3" />
+                </button>
+                <button
+                  className="bg-red-500 text-white p-2 rounded hover:bg-red-600"
+                  onClick={() => handleDeleteBatch(b.batch_id)}
+                >
+                  <FaTrash className="w-3 h-3" />
+                </button>
+              </div>
+
+            </div>
+
+          ))}
+        {/* Mobile Modal for batch details */}
+        {modalBatch && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white p-6 rounded-xl max-w-sm w-full shadow-lg " onClick={(e) => e.stopPropagation()}>
+              <h3 className="font-bold text-lg mb-2">{modalBatch.batch_name}</h3>
+              <p><strong>Start Date:</strong> {modalBatch.start_date}</p>
+              <p><strong>End Date:</strong> {modalBatch.end_date}</p>
+              <p><strong>Completed:</strong> {modalBatch.is_completed ? 'Yes' : 'No'}</p>
+              {/* Add any other details you want to show */}
+
+              <div className="flex gap-2 mt-4">
+                <button
+                  className="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600"
+                  onClick={() => {
+                    handleEditClick(modalBatch);
+                    setModalBatch(null); // optionally close modal when editing
+                  }}
+                >
+                  Edit
+                </button>
+                <button
+                  className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+                  onClick={() => {
+                    handleDeleteBatch(modalBatch.batch_id);
+                    setModalBatch(null);
+                  }}
+                >
+                  Delete
+                </button>
+                <button
+                  className="bg-gray-300 px-4 py-2 rounded hover:bg-gray-400"
+                  onClick={() => setModalBatch(null)}
+                >
+                  Close
+                </button>
+              </div>
+
+            </div>
+          </div>
+        )}
+
       </div>
+
+
+      {/* Batch Table */}
+      <div className="border hidden md:block rounded-lg overflow-hidden">
+        <div className="grid grid-cols-4 gap-4 bg-gray-100 px-4 py-3 text-sm font-semibold text-gray-700">
+
+          <div>Name</div>
+          <div>Start Date</div>
+          <div>End Date</div>
+          <div>Actions</div>
+        </div>
+
+        {currentBatches
+          .filter((b) => b.batch_name.toLowerCase().includes(searchTerm.toLowerCase()))
+          .map((b) => (
+            <div key={b.batch_id} className="grid grid-cols-4 gap-4 px-4 py-3 border-t items-center text-sm">
+              <div>{b.batch_name}</div>
+              <div>{b.start_date}</div>
+              <div>{b.end_date}</div>
+              <div className="flex gap-2">
+                <button
+                  className="bg-yellow-500 text-white p-2 rounded hover:bg-yellow-600"
+                  onClick={() => {
+                    handleEditClick(b);
+                    setSelectedAction("edit")
+                  }}
+                >
+                  <FaEdit className="w-3 h-3" />
+                </button>
+                <button
+                  className="bg-red-500 text-white p-2 rounded hover:bg-red-600"
+                  onClick={() => handleDeleteBatch(b.batch_id)}
+                >
+                  <FaTrash className="w-3 h-3" />
+                </button>
+              </div>
+            </div>
+          ))}
+      </div>
+      {/* Pagination */}
+      <div className="flex justify-center items-center gap-2 mt-4">
+        <button
+          className={`px-3 py-1 rounded ${currentPage === 1 ? "bg-gray-300 cursor-not-allowed" : "bg-gray-200 hover:bg-gray-300"}`}
+          disabled={currentPage === 1}
+          onClick={() => setCurrentPage((prev) => prev - 1)}
+        >
+          Prev
+        </button>
+
+        {/* Show page numbers */}
+        {Array.from({ length: Math.ceil(batches.length / batchesPerPage) }, (_, i) => i + 1).map((num) => (
+          <button
+            key={num}
+            className={`px-3 py-1 rounded ${currentPage === num ? "bg-yellow-500 text-white" : "bg-gray-200 hover:bg-gray-300"}`}
+            onClick={() => setCurrentPage(num)}
+          >
+            {num}
+          </button>
+        ))}
+
+        <button
+          className={`px-3 py-1 rounded ${indexOfLastBatch >= batches.length ? "bg-gray-300 cursor-not-allowed" : "bg-gray-200 hover:bg-gray-300"}`}
+          disabled={indexOfLastBatch >= batches.length}
+          onClick={() => setCurrentPage((prev) => prev + 1)}
+        >
+          Next
+        </button>
+      </div>
+
 
 
       {/* Add Batch */}
