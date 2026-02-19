@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { FaUserPlus, FaUserEdit, FaUserMinus, FaUserCircle } from 'react-icons/fa';
-const BASE = "https://attendance-production-d583.up.railway.app";
+import { FaUserPlus, FaEye, FaEyeSlash, FaUserEdit, FaEdit, FaTrash, FaUserMinus, FaUserCircle, FaArrowLeft, FaFilter } from 'react-icons/fa';
+const BASE = "https://gibi-backend-669108940571.us-central1.run.app";
 const ManageUser = () => {
   const [selectedAction, setSelectedAction] = useState("");
   const [users, setUsers] = useState([]);
+  const [showPassword, setShowPassword] = useState(false);
 
   // form fields
   const [username, setUsername] = useState("");
@@ -14,7 +15,14 @@ const ManageUser = () => {
   const [selectedUserId, setSelectedUserId] = useState(null);
   const [showViewPopup, setShowViewPopup] = useState(false);
   const [showEditPopup, setShowEditPopup] = useState(false);
-  const [showDeletePopup, setShowDeletePopup] = useState(false);
+  const [showDeletePopup, setShowDeletePopup] = useState(false); const [searchId, setSearchId] = useState("");
+  const [showFilter, setShowFilter] = useState(false);
+  const [isSearchActive, setIsSearchActive] = useState(false);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const totalPages = Math.ceil(users.length / pageSize);
+  const paginatedUsers = users.slice((page - 1) * pageSize, page * pageSize);
+
 
   const normalizeUser = (raw) => {
     if (!raw) return null;
@@ -27,6 +35,19 @@ const ManageUser = () => {
       raw,
     };
   };
+  const fetchUserById = async () => {
+    try {
+      const res = await fetch(`${BASE}/user/${encodeURIComponent(searchId)}`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        credentials: 'include'
+      });
+      const data = await res.json();
+      console.log("Fetched user by ID:", data);
+    } catch (err) {
+      console.error("Error fetching user by ID:", err);
+    }
+  }
 
   const fetchUsers = async () => {
     try {
@@ -68,12 +89,12 @@ const ManageUser = () => {
     const payload = {
       username,
       student_id: studentId,
-      password,
+      password_hash: password,
       role,
       email
     };
 
-    const res = await fetch(`${BASE}/user`, {
+    const res = await fetch(`${BASE}/user/`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
@@ -82,16 +103,35 @@ const ManageUser = () => {
 
     if (!res.ok) return alert("Failed to add user");
 
-    // refresh canonical list
     await fetchUsers();
     clearForm();
+    setSelectedAction("");
+
+  };
+  const fetchUserAndOpenView = (id) => {
+    setSelectedUserId(id);
+    setShowViewPopup(true);
+  };
+
+  const openEditForm = (user) => {
+    setSelectedUserId(user.user_id);
+    setUsername(user.username);
+    setStudentId(user.student_id);
+    setEmail(user.email);
+    setRole(user.role);
+    setSelectedAction("edit");
+  };
+
+  const openDeleteConfirm = (user) => {
+    setSelectedUserId(user.user_id);
+    setSelectedAction("delete");
   };
 
   const handleEditUser = async () => {
     const payload = {
       username,
       student_id: studentId,
-      password: password || undefined,
+      password_hash: password || undefined,
       role,
       email
     };
@@ -113,6 +153,7 @@ const ManageUser = () => {
 
       await fetchUsers();
       clearForm();
+      setSelectedAction("");
     } catch (err) {
       console.error('Edit user error', err);
       alert('Could not connect to backend');
@@ -143,43 +184,160 @@ const ManageUser = () => {
 
   return (
     <div className="bg-white p-6   max-w-5xl mx-auto flex flex-col justify-center gap-4 mt-8  sm:max-w-lg rounded-xl shadow-md w-full">
+      <div className="flex flex-col gap-3 mb-4 px-2">
+        <div className="flex-1 gap-2 flex items-center">
+          <input
+            type="text"
+            placeholder="Enter Id(0000-00)"
+            value={searchId}
+            onFocus={() => setIsSearchActive(true)}
+            onChange={(e) => setSearchId(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && fetchUserById()}
+            className="flex-1 border rounded px-3 py-2 pr-10"
+          />
 
-      {/* action selection */}
-      {!selectedAction && (
 
-        <>
-          <div className="flex flex-col sm:flex-row justify-center gap-4 mt-4 mb-8">
-            <h2 className="text-xl font-semibold text-center ">Select </h2>
-            <button
-              onClick={() => setSelectedAction("add")}
-              className="flex items-center gap-2 bg-yellow-500 text-white  px-4 py-3 flex-1 rounded w-full sm:w-auto hover:bg-yellow-600 transition"
+          <button
+            onClick={() => {
+              setShowFilter(!showFilter)
+            }}
+            className="p-2 bg-yellow-600 rounded"
+          >
+            <FaFilter className="w-5 h-5" />
+          </button>
+        </div>
+        <div className="flex justify-between items-center mt-2">
+          <button
+            onClick={() => window.history.back()}
+            className="flex items-center gap-1 px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
+          >
+            <FaArrowLeft /> Back
+          </button>
+          <h2 className="font-bold text-lg">Admins</h2>
+          <button
+            onClick={() => setSelectedAction("add")}
+            className="flex items-center gap-1 bg-yellow-500 text-white px-3 py-2 rounded hover:bg-yellow-600"
+          >
+            <FaUserPlus /> Add
+          </button>
+        </div>
+      </div>
+      <div className="flex flex-col gap-3 mt-2 px-2">
+        {/* PC Table View */}
+        <div className="hidden sm:block w-full  overflow-x-auto mt-2">
+          <table className="min-w-full w-full border-collapse border border-gray-200 shadow-sm rounded-lg">
+            <thead className="bg-yellow-100">
+              <tr>
+                <th className="px-4 py-2 text-left">#</th>
+                <th className="px-4 py-2 text-left">Username</th>
+                <th className="px-4 py-2 text-left">student_id</th>
+                <th className="px-4 py-2 text-left">Email</th>
+                <th className="px-4 py-2 text-left">Role</th>
+                <th className="px-4 py-2 text-left">Actions</th>
+
+              </tr>
+            </thead>
+            <tbody>
+              {paginatedUsers.map((s, index) => (
+                <tr
+                  key={s.user_idid}
+                  className="hover:bg-yellow-50 transition rounded-lg cursor-pointer"
+                  onClick={() => fetchUserAndOpenView(s.user_id)}
+                >
+                  <td className="px-4 py-2">{index + 1}</td>
+                  <td className="px-4 py-2">{s.username}</td>
+                  <td className="px-4 py-2">{s.student_id}</td>
+                  <td className="px-4 py-2">{s.email}</td>
+                  <td className="px-4 py-2">{s.role}</td>
+                  <td className="px-4 py-2 flex gap-2">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); openEditForm(s); }}
+                      className="px-2 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); openDeleteConfirm(s); }}
+                      className="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <div className="sm:hidden ">
+          {paginatedUsers.map((s) => (
+            <div
+              key={s.user_id}
+              onClick={() => fetchUserAndOpenView(s.user_id)}
+              className="border rounded-lg p-3 gap-2 flex justify-between items-center shadow bg-white cursor-pointer"
             >
-              <FaUserPlus className="w-5 h-5" /> Add User
-            </button>
-            <button
-              onClick={() => setSelectedAction("edit")}
-              className="flex items-center gap-2 bg-yellow-500 text-white px-4 py-3 rounded w-full sm:w-auto hover:bg-yellow-600 transition"
 
-            >
-              <FaUserEdit className="w-5 h-5" /> Edit User
-            </button>
-            <button
-              onClick={() => setSelectedAction("delete")}
-              className="flex items-center gap-2 bg-yellow-500 text-white px-4 py-3 rounded w-full hover:bg-yellow-600 transition"
-            >
-              <FaUserMinus className="w-5 h-5" /> Delete User
-            </button>
+              <div className="gap-2">
+                <p className="font-semibold">{s.username}</p>
+                <p className="text-sm text-gray-500">{s.student_id}</p>
+              </div>
 
-            <button
-              className="flex items-center gap-2 bg-yellow-500 text-white px-4 py-3 rounded w-full hover:bg-yellow-600 transition"
-              onClick={() => setSelectedAction("view")}
+              {/* Right: Edit / Delete */}
+              <div className="sm:hidden mt-2 flex gap-2">
+                <button onClick={(e) => { e.stopPropagation(); openEditForm(s); }} className="text-yellow-500">
+                  <FaEdit />
+                </button>
+                <button onClick={(e) => { e.stopPropagation(); openDeleteConfirm(s); }} className="text-red-500">
+                  <FaTrash />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="flex justify-center gap-2 mt-4 flex-wrap">
 
+          {/* Prev */}
+          <button
+            onClick={() => setPage(prev => Math.max(prev - 1, 1))}
+            disabled={page === 1}
+            className={`px-3 py-1 rounded transition
+            ${page === 1
+                ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                : "bg-gray-200 hover:bg-yellow-400"}
+          `}
+          >
+            Prev
+          </button>
+
+          {/* Page Numbers */}
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+            <button
+              key={p}
+              onClick={() => setPage(p)}
+              className={`px-3 py-1 rounded transition
+              ${p === page
+                  ? "bg-yellow-500 text-white font-semibold"
+                  : "bg-gray-200 text-gray-700 hover:bg-yellow-400"}
+            `}
             >
-              <FaUserCircle className="w-5 h-5" /> View Users
+              {p}
             </button>
-          </div>
-        </>
-      )}
+          ))}
+
+          {/* Next */}
+          <button
+            onClick={() => setPage(prev => Math.min(prev + 1, totalPages))}
+            disabled={page === totalPages}
+            className={`px-3 py-1 rounded transition
+            ${page === totalPages
+                ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                : "bg-gray-200 hover:bg-yellow-400"}
+          `}
+          >
+            Next
+          </button>
+
+        </div>
+      </div>
 
       {/* Add User */}
       {selectedAction === "add" && (
@@ -202,13 +360,27 @@ const ManageUser = () => {
             onChange={(e) => setStudentId(e.target.value)}
           />
 
-          <input
-            type="password"
-            placeholder="Password"
-            className="border px-3 py-2 rounded w-full mb-2"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
+          <div className="relative w-full">
+            <input
+              type={showPassword ? 'text' : 'password'}
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="border rounded p-2 w-full pr-10 focus:outline-none focus:ring-2 focus:ring-blue-400"
+            />
+
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500"
+            >
+              {showPassword ? (
+                <FaEye className="h-5 w-5" />
+              ) : (
+                <FaEyeSlash className="h-5 w-5" />
+              )}
+            </button>
+          </div>
 
           <select
             className="border px-3 py-2 rounded w-full mb-2"
@@ -250,7 +422,7 @@ const ManageUser = () => {
               setStudentId(u.student_id);
               setRole(u.role);
               setEmail(u.email);
-              setPassword(""); // optional reset
+              setPassword("");
             }}
           >
             <option>Select User</option>
@@ -312,26 +484,43 @@ const ManageUser = () => {
       )}
 
       {/* Delete User */}
-      {selectedAction === "delete" && (
-        <>
-          <h2 className="font-semibold text-lg mb-4">Delete User</h2>
-
-          {users.map((u) => (
-            <div
-              key={u.user_id}
-              className="border p-3 rounded flex justify-between mb-2"
-            >
-              <span>{u.username}</span>
+      {/* Delete Confirmation */}
+      {selectedAction === "delete" && selectedUserId && (
+        <div className="fixed inset-0 bg-black/40 flex justify-center items-center">
+          <div className="bg-white p-6 rounded-lg w-80 shadow-lg">
+            <h2 className="font-semibold text-lg mb-4">Confirm Delete</h2>
+            <p className="mb-4">
+              Are you sure you want to delete user:{" "}
+              <span className="font-bold">
+                {users.find(u => u.user_id === selectedUserId)?.username}
+              </span>
+              ?
+            </p>
+            <div className="flex justify-end gap-2">
               <button
-                className="bg-yellow-500 text-white px-3 py-1 rounded"
-                onClick={() => handleDeleteUser(u.user_id)}
+                className="px-4 py-2 bg-gray-300 rounded"
+                onClick={() => {
+                  setSelectedAction(""); // close popup
+                  setSelectedUserId(null);
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                className="px-4 py-2 bg-red-500 text-white rounded"
+                onClick={async () => {
+                  await handleDeleteUser(selectedUserId);
+                  setSelectedAction(""); // close popup after deletion
+                  setSelectedUserId(null);
+                }}
               >
                 Delete
               </button>
             </div>
-          ))}
-        </>
+          </div>
+        </div>
       )}
+
 
       {/* View Users */}
       {selectedAction === "view" && users.length > 0 && (

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { FaBook, FaEdit, FaTrash, FaPlus, FaEye, FaSearch, FaFilter } from "react-icons/fa";
+import { FaBook, FaEdit, FaTrash, FaPlus, FaEye, FaSearch, FaFilter, FaUserPlus, FaArrowLeft } from "react-icons/fa";
 
-const BASE = "https://attendance-production-d583.up.railway.app";
+const BASE = "https://gibi-backend-669108940571.us-central1.run.app";
 
 const normalizeCourse = (raw) => {
   if (!raw) return null;
@@ -22,12 +22,12 @@ const ManageCourses = () => {
   // === UI States ===
   const [selectedAction, setSelectedAction] = useState(""); // add / edit / delete / view
   const [selectedCourse, setSelectedCourse] = useState(null);
-
   const [showAddPopup, setShowAddPopup] = useState(false);
   const [showEditPopup, setShowEditPopup] = useState(false);
   const [showDeletePopup, setShowDeletePopup] = useState(false);
-  const [showViewPopup, setShowViewPopup] = useState(false);
+
   const [searchId, setSearchId] = useState("");
+  const [activeModal, setActiveModal] = useState(null);
 
   // === Filters ===
 
@@ -42,7 +42,7 @@ const ManageCourses = () => {
   }, [selectedAction]);
 
   // === Search by course id ===
-  const fetchCourseByCode = async () => {
+  const fetchCourseById = async () => {
     try {
       const res = await fetch(`${BASE}/course/${encodeURIComponent(searchId)}`, { credentials: 'include' });
       if (!res.ok) {
@@ -155,44 +155,165 @@ const ManageCourses = () => {
   return (
     <div className="bg-white px-3 mt-8 rounded-lg w-full max-w-3xl ms:max-w-lg mx-auto">
 
-      {/* Action Buttons */}
-      {!selectedAction && (
-        <div className="flex flex-col gap-4 h-[40vh] justify-center items-center">
-          <h2 className="text-bold text-xl">Select</h2>
-          <button
-            onClick={() => setSelectedAction("add")}
-            className="w-full bg-yellow-500 px-4 py-3 rounded text-white"
-          >
-            <FaPlus className="inline-block mr-2" />
-            Add Course
-          </button>
+      <div className="flex flex-col gap-3 mb-4 px-2">
+        {/* Search + Filter */}
+        <div className="flex items-center gap-2 w-full relative">
+          <div className="flex-1 relative">
+            <input
+              type="text"
+              placeholder="Enter course id"
+              value={searchId}
+              onFocus={() => setIsSearchActive(true)}
+              onChange={(e) => setSearchId(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && fetchCourseById()}
+              className="flex-1 border rounded px-3 py-2 pr-10"
+            />
 
+          </div>
           <button
-            onClick={() => setSelectedAction("edit")}
-            className="w-full bg-yellow-500 px-4 py-3 rounded text-white"
+            onClick={() => {
+              setShowFilter(!showFilter)
+            }}
+            className="p-2 bg-yellow-600 rounded"
           >
-            <FaEdit className="inline-block mr-2" />
-            Edit Course
-          </button>
-
-          <button
-            onClick={() => setSelectedAction("delete")}
-            className="w-full bg-yellow-500 px-4 py-3 rounded text-white"
-          >
-            <FaTrash className="inline-block mr-2" />
-            Delete Course
-          </button>
-
-          <button
-            onClick={() => setSelectedAction("view")}
-            className="w-full bg-yellow-500 px-4 py-3 rounded text-white"
-          >
-            <FaEye className="inline-block mr-2" />
-            View Courses
+            <FaFilter className="w-5 h-5" />
           </button>
         </div>
-      )}
 
+        {/* Title + Add Button */}
+        <div className="flex justify-between items-center mt-2">
+          <button
+            onClick={() => "/admin"}
+            className="flex items-center gap-1 px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
+          >
+            <FaArrowLeft /> Back
+          </button>
+          <h2 className="font-bold text-lg">Course</h2>
+          <button
+            onClick={() => setSelectedAction("add")}
+            className="flex items-center gap-1 bg-yellow-500 text-white px-3 py-2 rounded hover:bg-yellow-600"
+          >
+            <FaUserPlus /> Add
+          </button>
+        </div>
+      </div>
+      <div className="flex flex-col gap-3 mt-2 px-2">
+        {/* PC Table View */}
+        <div className="hidden sm:block w-full  overflow-x-auto mt-2">
+          <table className="min-w-full w-full border-collapse border border-gray-200 shadow-sm rounded-lg">
+            <thead className="bg-yellow-100">
+              <tr>
+                <th className="px-4 py-2 text-left">#</th>
+                <th className="px-4 py-2 text-left">course_id</th>
+                <th className="px-4 py-2 text-left">course_name</th>
+                <th className="px-4 py-2 text-left">courseDescription</th>
+
+              </tr>
+            </thead>
+            <tbody>
+              {paginatedCourses.map((c, index) => (
+                <tr
+                  key={c.id}
+                  className="hover:bg-yellow-50 transition rounded-lg cursor-pointer"
+                  onClick={() => fetchCourseAndOpenView(s.id)}
+                >
+                  <td className="px-4 py-2">{index + 1}</td>
+                  <td className="px-4 py-2">{c.id}</td>
+                  <td className="px-4 py-2">{c.name}</td>
+                  <td className="px-4 py-2">{c.description}</td>
+
+                  <td className="px-4 py-2 flex gap-2">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); openEditForm(s); }}
+                      className="px-2 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); openDeleteConfirm(s); }}
+                      className="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <div className="sm:hidden">
+          {paginatedCourses.map((c) => (
+            <div
+              key={c.id}
+              onClick={() => {
+                setSelectedCourse(c);
+                setSelectedAction("detail");
+              }}
+              className="border rounded p-3 flex justify-between items-center shadow bg-white cursor-pointer"
+            >
+
+              <div>
+                <p className="font-semibold">{c.name}</p>
+                <p className="text-sm text-gray-500">{c.id}</p>
+              </div>
+
+              {/* Right: Edit / Delete */}
+              <div className="sm:hidden mt-2 flex gap-2">
+                <button onClick={(e) => { e.stopPropagation(); openEditForm(s); }} className="text-yellow-500">
+                  <FaEdit />
+                </button>
+                <button onClick={(e) => { e.stopPropagation(); openDeleteConfirm(s); }} className="text-red-500">
+                  <FaTrash />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="flex justify-center gap-2 mt-4 flex-wrap">
+
+          {/* Prev */}
+          <button
+            onClick={() => setPage(prev => Math.max(prev - 1, 1))}
+            disabled={page === 1}
+            className={`px-3 py-1 rounded transition
+      ${page === 1
+                ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                : "bg-gray-200 hover:bg-yellow-400"}
+    `}
+          >
+            Prev
+          </button>
+
+          {/* Page Numbers */}
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+            <button
+              key={p}
+              onClick={() => setPage(p)}
+              className={`px-3 py-1 rounded transition
+        ${p === page
+                  ? "bg-yellow-500 text-white font-semibold"
+                  : "bg-gray-200 text-gray-700 hover:bg-yellow-400"}
+      `}
+            >
+              {p}
+            </button>
+          ))}
+
+          {/* Next */}
+          <button
+            onClick={() => setPage(prev => Math.min(prev + 1, totalPages))}
+            disabled={page === totalPages}
+            className={`px-3 py-1 rounded transition
+      ${page === totalPages
+                ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                : "bg-gray-200 hover:bg-yellow-400"}
+    `}
+          >
+            Next
+          </button>
+
+        </div>
+      </div>
       {/* ADD COURSE */}
       {selectedAction === "add" && (
         <div>
@@ -250,23 +371,6 @@ const ManageCourses = () => {
             </button>
           </div>
 
-          {showFilter && (
-            <div className="mt-3 p-3 border rounded bg-white shadow">
-              <input
-                type="text"
-                placeholder="Course Name"
-                value={filterName}
-                onChange={(e) => setFilterName(e.target.value)}
-                className="w-full border px-3 py-2 rounded mb-2"
-              />
-              <button
-                onClick={applyFilter}
-                className="w-full bg-blue-600 text-white px-4 py-2 rounded"
-              >
-                Apply
-              </button>
-            </div>
-          )}
 
           {/* CARDS */}
           <div className="mt-4 space-y-4 flex-1 overflow-y-auto border-t border-b pt-3 pb-4">
@@ -306,7 +410,7 @@ const ManageCourses = () => {
       )}
 
       {/* VIEW */}
-      {selectedAction === "view" && (
+      {selectedAction === "detail" && (
         <div className="mt-4 space-y-4">
           {courses.map((c) => (
             <div key={c.id} className="p-4 rounded bg-white shadow border">
@@ -317,25 +421,23 @@ const ManageCourses = () => {
                 </div>
 
                 <div className="flex gap-2">
-                  <button
-                    onClick={() => {
-                      setSelectedCourse(c);
-                      setShowViewPopup(true);
-                    }}
-                    className="px-2 py-1 bg-blue-600 text-white rounded"
-                  >
-                    View
-                  </button>
 
                   <button
-                    onClick={() => openEditForm(c)}
+                    onClick={() => {
+                      setCourseName(selectedCourse.name);
+                      setCourseDescription(selectedCourse.description);
+                      setSelectedAction("edit");
+                    }}
                     className="px-2 py-1 bg-yellow-600 text-white rounded"
                   >
                     Edit
                   </button>
 
                   <button
-                    onClick={() => openDeleteConfirm(c)}
+                    onClick={() => {
+                      setSelectedCourse(c);
+                      setSelectedAction("delete");
+                    }}
                     className="px-2 py-1 bg-red-600 text-white rounded"
                   >
                     Delete
@@ -380,46 +482,22 @@ const ManageCourses = () => {
       {/* EDIT POPUP */}
       {showEditPopup && selectedCourse && (
         <div className="fixed inset-0 bg-black/40 flex justify-center items-center">
-          <div className="bg-white p-6 rounded-lg w-full max-w-md shadow-lg">
-            <h2 className="font-semibold text-lg mb-4">Edit Course</h2>
-
-            <div className="flex flex-col gap-3">
-              <input
-                type="text"
-                value={courseName}
-                onChange={(e) => setCourseName(e.target.value)}
-                placeholder="Course Name"
-                className="border px-3 py-2 rounded w-full"
-              />
-
-              <input
-                type="text"
-                value={courseDescription}
-                onChange={(e) => setCourseDescription(e.target.value)}
-                placeholder="description.."
-                className="border px-3 py-2 rounded w-full"
-              />
-            </div>
+          <div className="bg-white p-6 rounded w-80">
+            <p className="font-bold">Confirm Edit?</p>
 
             <div className="flex justify-between mt-4">
-              <button
-                onClick={() => setShowEditPopup(false)}
-                className="px-4 py-2 bg-gray-300 rounded"
-              >
+              <button onClick={() => setShowEditPopup(false)}>
                 Cancel
               </button>
 
               <button
                 onClick={async () => {
-                  if (selectedCourse) {
-                    await handleSaveEditCourse(selectedCourse.id);
-                    await fetchCourses();
-                    setShowEditPopup(false);
-                  }
+                  await handleSaveEditCourse(selectedCourse.id);
+                  setShowEditPopup(false);
+                  setSelectedAction("");
                 }}
-                className="px-4 py-2 bg-blue-600 text-white rounded"
               >
-                Save
+                Yes
               </button>
             </div>
           </div>
@@ -449,27 +527,6 @@ const ManageCourses = () => {
                 className="bg-red-600 text-white px-4 py-2 rounded"
               >
                 Delete
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* VIEW POPUP */}
-      {showViewPopup && selectedCourse && (
-        <div className="fixed inset-0 bg-black/40 flex justify-center items-center">
-          <div className="bg-white p-6 rounded w-80 shadow">
-            <h2 className="font-bold text-lg mb-2">Course Details</h2>
-
-            <p><strong>Name:</strong> {selectedCourse.name}</p>
-            <p><strong>Description:</strong> {selectedCourse.description}</p>
-
-            <div className="flex justify-end mt-4">
-              <button
-                onClick={() => setShowViewPopup(false)}
-                className="bg-blue-600 text-white px-4 py-2 rounded"
-              >
-                Close
               </button>
             </div>
           </div>

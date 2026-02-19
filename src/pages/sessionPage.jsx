@@ -8,7 +8,7 @@ import axios from 'axios'
 
 export default function SessionPage() {
   const navigate = useNavigate()
-  const baseURL = "https://attendance-production-d583.up.railway.app";
+  const baseURL = "https://gibi-backend-669108940571.us-central1.run.app";
   const [totalStudent, setTotalStudent] = useState(50)
   const [lastSessionDate, setLastSessionDate] = useState('2025-10-23')
   const [showHistory, setShowHistory] = useState(false)

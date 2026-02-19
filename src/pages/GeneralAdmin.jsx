@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import logo from '../assets/logo.png';
+
 
 import { FaUserGraduate, FaBook, FaLayerGroup, FaUserShield, FaUserCircle, FaUserPlus, FaUserEdit, FaUserMinus, FaEye } from "react-icons/fa";
 
@@ -20,7 +22,7 @@ const GeneralAdmin = () => {
 
   return (
     <div className="min-h-screen grid place-items-center bg-cover bg-center p-8 absolute inset-0 bg-black/70 overflow-x-hidden" style={{ backgroundAttachment: 'fixed', backgroundImage: "url('/gbiphoto.jpg')" }}>
-      <div className="bg-white/50 p-4 min-h-[60vh] sm:p-6 rounded-lg shadow-2xl w-full sm:max-w-md md:max-w-2xl lg:max-w-3xl  backdrop-blur-md mx-auto h-auto  flex flex-col justify-between gap-6 ">
+      <div className="bg-white/50 p-4 min-h-[60vh] sm:p-6 rounded-lg shadow-2xl w-full sm:max-w-md md:max-w-2xl lg:max-h-xl lg:max-w-3xl  backdrop-blur-md mx-auto  flex flex-col justify-between gap-6 ">
 
 
         {!selectedCategory && (
@@ -29,7 +31,8 @@ const GeneralAdmin = () => {
               Welcome Back,<br />
               <span className="font-bold sm:text-2xl md:text-3xl lg:text-4xl">General Admin</span>
             </h1>
-            <FaUserCircle className="w-10 h-10 text-gray-700" />
+            {/* <FaUserCircle className="w-10 h-10 text-gray-700" /> */}
+            <img src={logo} alt="GIBI Logo" className="w-10 h-10 rounded-full object-cover" />
           </div>
         )}
 
@@ -38,11 +41,11 @@ const GeneralAdmin = () => {
         {/* Step 1: Select Category */}
         {!selectedCategory && (
 
-          <div className="bg-white/70 sm:max-w-md md:max-w-lg lg:max-w-xl min-h-[40vh] mx-auto  p-4 rounded-xl shadow-md  max-h-[100vh] overflow-clip backdrop-blur-md w-full">
+          <div className="bg-white/70 sm:max-w-md md:max-w-lg lg:max-w-xl min-h-[40vh] mx-auto  p-4 rounded-xl shadow-md  max-h-screen overflsow-clip backdrop-blur-md w-full">
             <>
-              <h2 className="text-2xl font-bold  text-center  mt-6 mb-4">Manage</h2>
+              <h2 className="text-2xl font-bold  text-center  mt-4 mb-4">Manage</h2>
 
-              <div className="flex flex-col gap-2 sm:gap-3 md:gap-4 max-h-[80vh] overflow-auto">
+              <div className="flex flex-col gap-2 sm:gap-3 md:gap-2 max-h-[80vh] overflow-auto">
                 <button onClick={() => setSelectedCategory("students")}
                   className="flex items-center gap-1 bg-yellow-500  text-white px-4 py-2 font-bold rounded w-full hover:bg-yellow-600 sm:text-3xl md:text-3xl  active:scale-95 transition">
                   <FaUserGraduate className="w-6 h-6" />

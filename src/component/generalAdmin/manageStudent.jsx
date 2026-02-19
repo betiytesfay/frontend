@@ -418,7 +418,7 @@ const ManageStudents = () => {
           </button>
           <h2 className="font-bold text-lg">Students</h2>
           <button
-            onClick={() => setShowAddPopup(true)}
+            onClick={() => setSelectedAction("add")}
             className="flex items-center gap-1 bg-yellow-500 text-white px-3 py-2 rounded hover:bg-yellow-600"
           >
             <FaUserPlus /> Add
@@ -570,7 +570,7 @@ const ManageStudents = () => {
               <label className="text-sm font-medium">ID:</label>
               <input
                 type="text"
-                placeholder="1234-16"
+                placeholder="UGR-1234-16"
                 value={studentId}
                 onChange={(e) => setStudentId(e.target.value)}
                 className="border rounded h-10 px-2 w-full"
