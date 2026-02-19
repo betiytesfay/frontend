@@ -21,33 +21,36 @@ export default function AttendancePage() {
   const [batches, setBatches] = useState([]);
 
 
+  const [currentSession, setCurrentSession] = useState(null);
+
+  const handleStartAttendance = () => {
+    if (!courseDateId || !batchId || !ethDate) {
+      alert('Please fill all fields');
+      return;
+    }
+
+    setCurrentSession({
+      courseDateId,
+      batchId,
+      date: ethDate,
+      students: []
+    });
+
+    setShowAttendanceBox(true);
+  };
+
   useEffect(() => {
-    if (!batchId) return;
+    if (!batchId) {
+      setCourseDates([]);
+      return;
+    }
 
-    const fetchCoursesByBatch = async () => {
-      try {
-        const res = await axios.get(`${BASE_URL}/course`, { withCredentials: true });
-        setCourseDates(res.data.data.courses.filter(c => c.batch_id === batchId));
-      } catch (err) {
-        console.error(err);
-      }
-    };
+    const selectedBatch = batches.find(
+      b => b.batch_id === Number(batchId)
+    );
 
-    fetchCoursesByBatch();
-  }, [batchId]);
-  useEffect(() => {
-    const fetchBatches = async () => {
-      try {
-        const res = await axios.get(`${BASE_URL}/batches`, { withCredentials: true });
-        setBatches(res.data.data.batches);
-      } catch (err) {
-        console.error('Failed to fetch batches', err);
-      }
-    };
-
-    fetchBatches();
-  }, []);
-
+    setCourseDates(selectedBatch?.course_dates || []);
+  }, [batchId, batches]);
 
 
   const [savedSessions, setSavedSessions] = useState(
@@ -98,172 +101,164 @@ export default function AttendancePage() {
       console.error(err);
       alert('Failed to send all sessions. Check your internet connection.');
     }
-  };
-  const handleDoneAttendanceWithPassword = async () => {
 
-    const enteredPassword = prompt('Enter session admin password to complete attendance:');
-    if (!enteredPassword) return;
 
-    const isValid = await verifySessionAdminPassword(enteredPassword);
+    const handleDoneAttendance = () => {
+      if (!currentSession || currentSession.students.length === 0) {
+        alert('No attendance recorded.');
+        return;
+      }
 
-    if (!isValid) {
-      alert('Incorrect password!');
-      return;
-    }
-    handleDoneAttendance();
-  };
+      setSavedSessions(prev => [
+        ...prev,
+        {
+          id: Date.now().toString(),
+          ...currentSession
+        }
+      ]);
 
-  const accessToken = localStorage.getItem('accessToken');
-  const refreshToken = localStorage.getItem('refreshToken');
-  useEffect(() => {
-    if (!batchId) return;
-    const fetchCourseDatesByBatch = async () => {
+      setCurrentSession(null);
+      setShowAttendanceBox(false);
+    };
+
+    const handleDoneAttendanceWithPassword = async () => {
+
+      const enteredPassword = prompt('Enter session admin password to complete attendance:');
+      if (!enteredPassword) return;
+
+      const isValid = await verifySessionAdminPassword(enteredPassword);
+
+      if (!isValid) {
+        alert('Incorrect password!');
+        return;
+      }
+      handleDoneAttendance();
+    };
+
+    const accessToken = localStorage.getItem('accessToken');
+    const refreshToken = localStorage.getItem('refreshToken');
+    useEffect(() => {
+      if (!batchId) return;
+      const fetchCourseDatesByBatch = async () => {
+        try {
+          const res = await axios.get(`${BASE_URL}/course_dates?batch_id=${batchId}`, { withCredentials: true });
+          setCourseDates(res.data);
+        } catch (err) {
+          console.error(err);
+        }
+      };
+
+      fetchCourseDatesByBatch();
+    }, [batchId]);
+
+    useEffect(() => {
+      localStorage.setItem('attendanceSessions', JSON.stringify(savedSessions));
+    }, [savedSessions]);
+    useEffect(() => {
+      if (!batchId) {
+        setCourseDates([]);
+        return;
+      }
+
+      const selectedBatch = batches.find(
+        b => b.batch_id === Number(batchId)
+      );
+
+      setCourseDates(selectedBatch?.course_dates || []);
+    }, [batchId, batches]);
+
+    const handleFetchStudent = async () => {
+      if (!studentId || studentId.length !== 4) {
+        return alert('Enter a valid 4-digit Student ID');
+      }
       try {
-        const res = await axios.get(`${BASE_URL}/course_dates?batch_id=${batchId}`, { withCredentials: true });
-        setCourseDates(res.data);
+
+        const res = await axios.get(
+          `${BASE_URL}/student/${studentId}`,
+          { withCredentials: true }
+        );
+        const fullName = `${res.data.first_name} ${res.data.last_name}`;
+        setStudentData({
+          ...res.data, fullName
+        });
+
       } catch (err) {
-        console.error(err);
+        if (err.response?.status === 401) {
+          try {
+            const refreshRes = await axios.post(
+              `${BASE_URL}/auth/refresh`,
+              {},
+              { headers: { Authorization: `Bearer ${refreshToken}` }, withCredentials: true }
+            );
+
+            const { newAccessToken, newRefreshToken } = refreshRes.data;
+            localStorage.setItem('accessToken', newAccessToken);
+            localStorage.setItem('refreshToken', newRefreshToken);
+
+            const res = await axios.get(
+              `${BASE_URL}/student/${studentId}`,
+              { withCredentials: true }
+            );
+
+            setStudentData(res.data);
+          } catch (refreshErr) {
+            if (refreshErr.response?.data?.message === 'REFRESH_TOKEN_EXPIRED') {
+              alert('Session expired. Please login again.');
+              window.location.href = '/login'; // redirect
+            }
+
+          }
+        } else {
+          alert('Student not found or fetch failed.');
+        }
       }
     };
 
-    fetchCourseDatesByBatch();
-  }, [batchId]);
+    const handleFinishAttendance = () => {
+      if (!studentData) return;
 
-  useEffect(() => {
-    localStorage.setItem('attendanceSessions', JSON.stringify(savedSessions));
-  }, [savedSessions]);
-  useEffect(() => {
-    if (!batchId) {
-      setCourseDates([]);
-      return;
-    }
-
-    const selectedBatch = batches.find(
-      b => b.batch_id === Number(batchId)
-    );
-
-    setCourseDates(selectedBatch?.course_dates || []);
-  }, [batchId, batches]);
-
-  const handleStartAttendance = () => {
-
-    if (!courseDateId || !batchId || !ethDate) {
-      alert('Please fill all fields');
-      return;
-    }
-    setDate(ethDate);
-    setShowAttendanceBox(true);
-  };
-
-
-  const handleFetchStudent = async () => {
-    if (!studentId || studentId.length !== 4) {
-      return alert('Enter a valid 4-digit Student ID');
-    }
-
-    try {
-
-      const res = await axios.get(
-        `${BASE_URL}/student/${studentId}`,
-        { withCredentials: true }
-      );
-      const fullName = `${res.data.first_name} ${res.data.last_name}`;
-      setStudentData({
-        ...res.data, fullName
-      });
-
-    } catch (err) {
-      if (err.response?.status === 401) {
-        try {
-          const refreshRes = await axios.post(
-            `${BASE_URL}/auth/refresh`,
-            {},
-            { headers: { Authorization: `Bearer ${refreshToken}` }, withCredentials: true }
-          );
-
-          const { newAccessToken, newRefreshToken } = refreshRes.data;
-          localStorage.setItem('accessToken', newAccessToken);
-          localStorage.setItem('refreshToken', newRefreshToken);
-
-
-          const res = await axios.get(
-            `${BASE_URL}/student/${studentId}`,
-            { withCredentials: true }
-          );
-
-          setStudentData(res.data);
-        } catch (refreshErr) {
-          if (refreshErr.response?.data?.message === 'REFRESH_TOKEN_EXPIRED') {
-            alert('Session expired. Please login again.');
-            window.location.href = '/login'; // redirect
-          }
-
-        }
-      } else {
-        alert('Student not found or fetch failed.');
-      }
-    }
-  };
-
-  const handleFinishAttendance = () => {
-    if (!studentData) return;
-
-    setRecordedStudents(prev => [...prev, studentData]);
-    setToastMessage(`Attendance recorded for ${studentData.fullName}!`);
-    setShowToast(true);
-    setTimeout(() => setShowToast(false), 4000);
-
-    setStudentId('');
-    setStudentData(null);
-  };
-
-  const handleBackToID = () => {
-    setStudentData(null);
-  };
-  const handleFetchBatch = async () => {
-    try {
-      await axios.get(`${BASE_URL}/batch/${batchId}`, { withCredentials: true });
-    } catch (err) {
-      console.error('failed to fetch batch', err);
-    }
-  }
-
-  const handleSendSessionToBackend = async (session) => {
-    try {
-      await axios.post(
-        `${BASE_URL}/attendance`,
-        {
-          date_id: session.courseDateId,
-          students: session.students
-        },
-        { withCredentials: true }
-      );
-
-      // Remove session from local storage after successful send
-      setSavedSessions(prev => prev.filter(s => s.id !== session.id));
-      setToastMessage('Session sent to backend successfully!');
+      setRecordedStudents(prev => [...prev, studentData]);
+      setToastMessage(`Attendance recorded for ${studentData.fullName}!`);
       setShowToast(true);
       setTimeout(() => setShowToast(false), 4000);
-    } catch (err) {
-      console.error(err);
-      alert('Failed to send session to backend. Check your internet connection.');
-    }
-  };
 
-  const handleDoneAttendance = () => {
-    if (recordedStudents.length === 0) return alert('No attendance to save.');
-    if (!courseDateId || !batchId) return alert('Please select course/date and batch.');
-
-    const newSession = {
-      id: Date.now().toString(), // unique ID
-      courseDateId,
-      batchId,
-      date,
-      students: recordedStudents.map(s => ({
-        student_id: s.student_id,
-        is_present: true
-      })),
+      setStudentId('');
+      setStudentData(null);
     };
+
+    const handleBackToID = () => {
+      setStudentData(null);
+    };
+    const handleFetchBatch = async () => {
+      try {
+        await axios.get(`${BASE_URL}/batch/${batchId}`, { withCredentials: true });
+      } catch (err) {
+        console.error('failed to fetch batch', err);
+      }
+    }
+
+    const handleSendSessionToBackend = async (session) => {
+      try {
+        await axios.post(
+          `${BASE_URL}/attendance`,
+          {
+            date_id: session.courseDateId,
+            students: session.students
+          },
+          { withCredentials: true }
+        );
+
+        // Remove session from local storage after successful send
+        setSavedSessions(prev => prev.filter(s => s.id !== session.id));
+        setToastMessage('Session sent to backend successfully!');
+        setShowToast(true);
+        setTimeout(() => setShowToast(false), 4000);
+      } catch (err) {
+        console.error(err);
+        alert('Failed to send session to backend. Check your internet connection.');
+      }
+    };
+
 
     // Save locally
     setSavedSessions(prev => [...prev, newSession]);
@@ -448,8 +443,6 @@ export default function AttendancePage() {
                     >
                       Done
                     </button>
-
-
                   </div>
                 </>
               )}
