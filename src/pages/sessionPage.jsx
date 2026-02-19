@@ -19,7 +19,7 @@ export default function SessionPage() {
       try {
         const response = await axios.get(`${baseURL}/student`)
         const students = response.data
-        setTotalStudent(students.length) // count the number of students
+        setTotalStudent(students.length)
       } catch (err) {
         console.error("Failed to fetch students:", err)
       }
@@ -47,15 +47,22 @@ export default function SessionPage() {
     fetchLastSession()
   }, [])
 
-  const handleViewHistory = async () => {
-    const dummyData = [
-      { date: '2025-10-20', status: 'Present' },
-      { date: '2025-10-21', status: 'Absent' },
-      { date: '2025-10-22', status: 'Present' },
-    ]
-    setAttendanceHistory(dummyData)
-    setShowHistory(true)
-  }
+  useEffect(() => {
+    const fetchCourseDates = async () => {
+      try {
+        const res = await axios.post(`${BASE_URL}/course_date`, {}, { withCredentials: true });
+        // backend returns { data: { courses: [...] } }
+        const courses = res.data.data.courses;
+        setCourseDates(courses);
+      } catch (err) {
+        console.error('Failed to fetch course dates', err);
+        alert('Could not load courses. Check your internet connection.');
+      }
+    };
+
+    fetchCourseDates();
+  }, []);
+
 
   const handleCloseHistory = () => {
     setShowHistory(false)

@@ -4,7 +4,7 @@ import axios from 'axios';
 
 
 import EthDatePicker from '../component/ethioDate';
-
+const BASE_URL = "https://gibi-backend-669108940571.us-central1.run.app";
 
 export default function AttendancePage() {
   const [batchId, setBatchId] = useState('');
@@ -18,22 +18,34 @@ export default function AttendancePage() {
   const [recordedStudents, setRecordedStudents] = useState([]);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
+  const [batches, setBatches] = useState([]);
+
+
   useEffect(() => {
-    const fetchCourseDates = async () => {
+    if (!batchId) return;
+
+    const fetchCoursesByBatch = async () => {
       try {
-        const res = await axios.post(
-          'https://attendance-production-d583.up.railway.app/course_date',
-          {}, // empty data
-          { withCredentials: true }
-        );
-        setCourseDates(res.data);
+        const res = await axios.get(`${BASE_URL}/course`, { withCredentials: true });
+        setCourseDates(res.data.data.courses.filter(c => c.batch_id === batchId));
       } catch (err) {
-        console.error('Failed to fetch course dates', err);
-        alert('Could not load courses. Check your internet connection.');
+        console.error(err);
       }
     };
 
-    fetchCourseDates();
+    fetchCoursesByBatch();
+  }, [batchId]);
+  useEffect(() => {
+    const fetchBatches = async () => {
+      try {
+        const res = await axios.get(`${BASE_URL}/batches`, { withCredentials: true });
+        setBatches(res.data.data.batches);
+      } catch (err) {
+        console.error('Failed to fetch batches', err);
+      }
+    };
+
+    fetchBatches();
   }, []);
 
 
@@ -44,11 +56,11 @@ export default function AttendancePage() {
   const verifySessionAdminPassword = async (enteredPassword) => {
     try {
       const res = await axios.post(
-        'https://attendance-production-d583.up.railway.app/auth/login',
+        `${BASE_URL}/auth/login`,
         {
           student_id: 'sessionadmin',
           password: enteredPassword,
-          role: 'session'
+          role: 'admin'
         },
         { withCredentials: true }
       );
@@ -63,12 +75,11 @@ export default function AttendancePage() {
       alert('No sessions to send.');
       return;
     }
-
     try {
 
       for (const session of savedSessions) {
         await axios.post(
-          'https://attendance-production-d583.up.railway.app/attendance',
+          `${BASE_URL}/attendance`,
           {
             date_id: session.courseDateId,
             students: session.students
@@ -104,13 +115,37 @@ export default function AttendancePage() {
 
   const accessToken = localStorage.getItem('accessToken');
   const refreshToken = localStorage.getItem('refreshToken');
+  useEffect(() => {
+    if (!batchId) return;
+    const fetchCourseDatesByBatch = async () => {
+      try {
+        const res = await axios.get(`${BASE_URL}/course_dates?batch_id=${batchId}`, { withCredentials: true });
+        setCourseDates(res.data);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    fetchCourseDatesByBatch();
+  }, [batchId]);
 
   useEffect(() => {
     localStorage.setItem('attendanceSessions', JSON.stringify(savedSessions));
   }, [savedSessions]);
+  useEffect(() => {
+    if (!batchId) {
+      setCourseDates([]);
+      return;
+    }
+
+    const selectedBatch = batches.find(
+      b => b.batch_id === Number(batchId)
+    );
+
+    setCourseDates(selectedBatch?.course_dates || []);
+  }, [batchId, batches]);
 
   const handleStartAttendance = () => {
-
 
     if (!courseDateId || !batchId || !ethDate) {
       alert('Please fill all fields');
@@ -120,7 +155,7 @@ export default function AttendancePage() {
     setShowAttendanceBox(true);
   };
 
-  // Fetch student by ID from backend
+
   const handleFetchStudent = async () => {
     if (!studentId || studentId.length !== 4) {
       return alert('Enter a valid 4-digit Student ID');
@@ -129,21 +164,19 @@ export default function AttendancePage() {
     try {
 
       const res = await axios.get(
-        `https://attendance-production-d583.up.railway.app/student/${studentId}`,
+        `${BASE_URL}/student/${studentId}`,
         { withCredentials: true }
       );
       const fullName = `${res.data.first_name} ${res.data.last_name}`;
       setStudentData({
-        ...res.data,
-        fullName,
+        ...res.data, fullName
       });
-
 
     } catch (err) {
       if (err.response?.status === 401) {
         try {
           const refreshRes = await axios.post(
-            'https://attendance-production-d583.up.railway.app/auth/refresh',
+            `${BASE_URL}/auth/refresh`,
             {},
             { headers: { Authorization: `Bearer ${refreshToken}` }, withCredentials: true }
           );
@@ -154,7 +187,7 @@ export default function AttendancePage() {
 
 
           const res = await axios.get(
-            `https://attendance-production-d583.up.railway.app/student/${studentId}`,
+            `${BASE_URL}/student/${studentId}`,
             { withCredentials: true }
           );
 
@@ -187,10 +220,18 @@ export default function AttendancePage() {
   const handleBackToID = () => {
     setStudentData(null);
   };
+  const handleFetchBatch = async () => {
+    try {
+      await axios.get(`${BASE_URL}/batch/${batchId}`, { withCredentials: true });
+    } catch (err) {
+      console.error('failed to fetch batch', err);
+    }
+  }
+
   const handleSendSessionToBackend = async (session) => {
     try {
       await axios.post(
-        'https://attendance-production-d583.up.railway.app/attendance',
+        `${BASE_URL}/attendance`,
         {
           date_id: session.courseDateId,
           students: session.students
@@ -249,6 +290,7 @@ export default function AttendancePage() {
     setShowToast(true);
     setTimeout(() => setShowToast(false), 4000);
   };
+
   const handleExportSession = (id) => {
     const session = savedSessions.find(s => s.id === id);
     if (!session) return;
@@ -292,20 +334,22 @@ export default function AttendancePage() {
           Session Attendance Setup
         </h1>
 
+
         <label>Course & Date:</label>
         <select
           value={courseDateId}
           onChange={e => setCourseDateId(e.target.value)}
           className="border p-2 rounded w-full"
         >
-          <option value="">Select Course & Date</option>
-          {(courseDates || []).map(cd => (
-            <option key={cd.id} value={cd.id}>
-              {cd.course.course_name} - {new Date(cd.class_date).toLocaleDateString()}
+          <option value="">Select Course</option>
+          {courseDates.map(cd => (
+            <option key={cd.date_id} value={cd.date_id}>
+              Course ID: {cd.course_id} - {cd.class_date}
             </option>
           ))}
-
         </select>
+
+
 
 
         <label>Batch:</label>
@@ -315,11 +359,14 @@ export default function AttendancePage() {
           className="border p-2 rounded w-full"
         >
           <option value="">Select Batch</option>
-          <option value="4th/2018">4th/2018</option>
-          <option value="3rd/2018">3rd/2018</option>
-          <option value="2nd/2018">2nd/2018</option>
-          <option value="1st/2018">1st/2018</option>
+          {batches.map(batch => (
+            <option key={batch.batch_id} value={batch.batch_id}>
+              {batch.batch_name}
+            </option>
+          ))}
         </select>
+
+
 
         <label>Date:</label>
 
@@ -362,7 +409,6 @@ export default function AttendancePage() {
                 }}
                 label="← "
               />
-
 
               {!studentData ? (
                 <>
@@ -431,8 +477,10 @@ export default function AttendancePage() {
                   <tr key={session.id}>
                     <td className="border border-gray-300 px-3 py-2">{session.date}</td>
                     <td className="border border-gray-300 px-3 py-2">
-                      {courseDates.find(cd => cd.id === session.courseDateId)?.course.course_name || 'N/A'}
+                      {courseDates.find(cd => cd.course_id === session.courseDateId)?.course_name || 'N/A'}
+
                     </td>
+
 
                     <td className="border border-gray-300 px-3 py-2">{session.batchId}</td>
                     <td className="border border-gray-300 px-3 py-2 flex gap-2">
