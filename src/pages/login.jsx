@@ -14,27 +14,8 @@ export default function Login() {
   const [error, setError] = useState('')
 
   const role = location.state?.role || 'session'
-  // const handleLogin = async () => {
-  //   setLoading(true);
 
-  //   // --- Hard-coded login start ---
-  //   const user = {
-  //     role: role === 'session' ? 'session-admin' : 'super-admin',
-  //     username: username
-  //   };
 
-  //   // Simulate loading delay
-  //   setTimeout(() => {
-  //     if (user.role === "super-admin") {
-  //       navigate("/admin");
-  //     } else if (user.role === "session-admin") {
-  //       navigate("/sessionAdmin");
-  //     } else {
-  //       navigate("/");
-  //     }
-  //     setLoading(false);
-  //   }, 500);
-  // };
 
   const handleLogin = async () => {
     setLoading(true);
@@ -53,6 +34,11 @@ export default function Login() {
         console.error("No user returned from backend");
         return;
       }
+      // Corrected localStorage saving
+      localStorage.setItem('adminId', user.student_id);
+      localStorage.setItem('accessToken', response.data?.data?.accessToken || '');
+      localStorage.setItem('refreshToken', response.data?.data?.refreshToken || '');
+      console.log('Admin ID from localStorage:', localStorage.getItem('adminId'));
 
       if (user.role === "super-admin") {
         navigate("/admin");

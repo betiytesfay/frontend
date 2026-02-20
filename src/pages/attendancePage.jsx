@@ -10,18 +10,58 @@ export default function AttendancePage() {
   const [batchId, setBatchId] = useState('');
   const [ethDate, setEthDate] = useState('');
   const [date, setDate] = useState('');
-  const [courseDates, setCourseDates] = useState([]);
+  const [allCourseDates, setAllCourseDates] = useState([]);
+  const [filteredCourseDates, setFilteredCourseDates] = useState([]);
+
+
   const [courseDateId, setCourseDateId] = useState('');
   const [showAttendanceBox, setShowAttendanceBox] = useState(false);
   const [studentId, setStudentId] = useState('');
   const [studentData, setStudentData] = useState(null);
-  const [recordedStudents, setRecordedStudents] = useState([]);
+
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [batches, setBatches] = useState([]);
+  const [courses, setCourses] = useState([]);
+
+  useEffect(() => {
+    axios.get(`${BASE_URL}/course`)
+      .then(res => setCourses(res.data.data.courses))
+      .catch(err => console.error(err));
+  }, []);
 
 
   const [currentSession, setCurrentSession] = useState(null);
+  useEffect(() => {
+    axios.get(`${BASE_URL}/batches`)
+      .then(res => setBatches(res.data.data.batches));
+  }, []);
+  useEffect(() => {
+    axios
+      .get(`${BASE_URL}/course_date`)
+      .then(res => {
+        setAllCourseDates(res.data.data.course_dates);
+      })
+      .catch(err => console.error(err));
+  }, []);
+
+  // Save current session whenever it changes
+  useEffect(() => {
+    if (currentSession) {
+      localStorage.setItem('currentSession', JSON.stringify(currentSession));
+    } else {
+      localStorage.removeItem('currentSession');
+    }
+  }, [currentSession]);
+
+  // Load it on component mount
+  useEffect(() => {
+    const savedSession = localStorage.getItem('currentSession');
+    if (savedSession) {
+      setCurrentSession(JSON.parse(savedSession));
+      setShowAttendanceBox(true); // show the attendance modal
+    }
+  }, []);
 
   const handleStartAttendance = () => {
     if (!courseDateId || !batchId || !ethDate) {
@@ -39,39 +79,38 @@ export default function AttendancePage() {
     setShowAttendanceBox(true);
   };
 
-  useEffect(() => {
-    if (!batchId) {
-      setCourseDates([]);
-      return;
-    }
-
-    const selectedBatch = batches.find(
-      b => b.batch_id === Number(batchId)
-    );
-
-    setCourseDates(selectedBatch?.course_dates || []);
-  }, [batchId, batches]);
-
 
   const [savedSessions, setSavedSessions] = useState(
     JSON.parse(localStorage.getItem('attendanceSessions')) || []
   );
   const verifySessionAdminPassword = async (enteredPassword) => {
+    const adminId = localStorage.getItem('adminId'); // get current admin ID
+    if (!adminId) {
+      alert('No admin logged in!');
+      return false;
+    }
+
     try {
       const res = await axios.post(
         `${BASE_URL}/auth/login`,
         {
-          student_id: 'sessionadmin',
-          password: enteredPassword,
-          role: 'admin'
+          student_id: adminId,
+          password: enteredPassword
         },
         { withCredentials: true }
       );
-      return res.status === 200;
+
+      const user = res.data?.data?.user;
+      if (!user) return false;
+
+      // Check that the logged-in user is actually an admin
+      return user.role === 'admin';
     } catch (err) {
+      console.error('Password verification failed', err.response?.data || err);
       return false;
     }
   };
+
 
   const handleSendAllSessionsToBackend = async () => {
     if (savedSessions.length === 0) {
@@ -101,182 +140,146 @@ export default function AttendancePage() {
       console.error(err);
       alert('Failed to send all sessions. Check your internet connection.');
     }
+  }
 
-
-    const handleDoneAttendance = () => {
-      if (!currentSession || currentSession.students.length === 0) {
-        alert('No attendance recorded.');
-        return;
-      }
-
-      setSavedSessions(prev => [
-        ...prev,
-        {
-          id: Date.now().toString(),
-          ...currentSession
-        }
-      ]);
-
-      setCurrentSession(null);
-      setShowAttendanceBox(false);
-    };
-
-    const handleDoneAttendanceWithPassword = async () => {
-
-      const enteredPassword = prompt('Enter session admin password to complete attendance:');
-      if (!enteredPassword) return;
-
-      const isValid = await verifySessionAdminPassword(enteredPassword);
-
-      if (!isValid) {
-        alert('Incorrect password!');
-        return;
-      }
-      handleDoneAttendance();
-    };
-
-    const accessToken = localStorage.getItem('accessToken');
-    const refreshToken = localStorage.getItem('refreshToken');
-    useEffect(() => {
-      if (!batchId) return;
-      const fetchCourseDatesByBatch = async () => {
-        try {
-          const res = await axios.get(`${BASE_URL}/course_dates?batch_id=${batchId}`, { withCredentials: true });
-          setCourseDates(res.data);
-        } catch (err) {
-          console.error(err);
-        }
-      };
-
-      fetchCourseDatesByBatch();
-    }, [batchId]);
-
-    useEffect(() => {
-      localStorage.setItem('attendanceSessions', JSON.stringify(savedSessions));
-    }, [savedSessions]);
-    useEffect(() => {
-      if (!batchId) {
-        setCourseDates([]);
-        return;
-      }
-
-      const selectedBatch = batches.find(
-        b => b.batch_id === Number(batchId)
-      );
-
-      setCourseDates(selectedBatch?.course_dates || []);
-    }, [batchId, batches]);
-
-    const handleFetchStudent = async () => {
-      if (!studentId || studentId.length !== 4) {
-        return alert('Enter a valid 4-digit Student ID');
-      }
-      try {
-
-        const res = await axios.get(
-          `${BASE_URL}/student/${studentId}`,
-          { withCredentials: true }
-        );
-        const fullName = `${res.data.first_name} ${res.data.last_name}`;
-        setStudentData({
-          ...res.data, fullName
-        });
-
-      } catch (err) {
-        if (err.response?.status === 401) {
-          try {
-            const refreshRes = await axios.post(
-              `${BASE_URL}/auth/refresh`,
-              {},
-              { headers: { Authorization: `Bearer ${refreshToken}` }, withCredentials: true }
-            );
-
-            const { newAccessToken, newRefreshToken } = refreshRes.data;
-            localStorage.setItem('accessToken', newAccessToken);
-            localStorage.setItem('refreshToken', newRefreshToken);
-
-            const res = await axios.get(
-              `${BASE_URL}/student/${studentId}`,
-              { withCredentials: true }
-            );
-
-            setStudentData(res.data);
-          } catch (refreshErr) {
-            if (refreshErr.response?.data?.message === 'REFRESH_TOKEN_EXPIRED') {
-              alert('Session expired. Please login again.');
-              window.location.href = '/login'; // redirect
-            }
-
-          }
-        } else {
-          alert('Student not found or fetch failed.');
-        }
-      }
-    };
-
-    const handleFinishAttendance = () => {
-      if (!studentData) return;
-
-      setRecordedStudents(prev => [...prev, studentData]);
-      setToastMessage(`Attendance recorded for ${studentData.fullName}!`);
-      setShowToast(true);
-      setTimeout(() => setShowToast(false), 4000);
-
-      setStudentId('');
-      setStudentData(null);
-    };
-
-    const handleBackToID = () => {
-      setStudentData(null);
-    };
-    const handleFetchBatch = async () => {
-      try {
-        await axios.get(`${BASE_URL}/batch/${batchId}`, { withCredentials: true });
-      } catch (err) {
-        console.error('failed to fetch batch', err);
-      }
+  const handleDoneAttendance = () => {
+    if (!currentSession || currentSession.students.length === 0) {
+      alert('No attendance recorded.');
+      return;
     }
 
-    const handleSendSessionToBackend = async (session) => {
-      try {
-        await axios.post(
-          `${BASE_URL}/attendance`,
-          {
-            date_id: session.courseDateId,
-            students: session.students
-          },
-          { withCredentials: true }
-        );
-
-        // Remove session from local storage after successful send
-        setSavedSessions(prev => prev.filter(s => s.id !== session.id));
-        setToastMessage('Session sent to backend successfully!');
-        setShowToast(true);
-        setTimeout(() => setShowToast(false), 4000);
-      } catch (err) {
-        console.error(err);
-        alert('Failed to send session to backend. Check your internet connection.');
+    setSavedSessions(prev => [
+      ...prev,
+      {
+        id: Date.now().toString(),
+        ...currentSession
       }
-    };
+    ]);
+
+    setCurrentSession(null);
+    setShowAttendanceBox(false);
+  };
+
+  const handleDoneAttendanceWithPassword = async () => {
+
+    const enteredPassword = prompt('Enter session admin password to complete attendance:');
+    if (!enteredPassword) return;
+
+    const isValid = await verifySessionAdminPassword(enteredPassword);
+
+    if (!isValid) {
+      alert('Incorrect password!');
+      return;
+    }
+    handleDoneAttendance();
+  };
+
+  const accessToken = localStorage.getItem('accessToken');
+  const refreshToken = localStorage.getItem('refreshToken');
 
 
-    // Save locally
-    setSavedSessions(prev => [...prev, newSession]);
+  useEffect(() => {
+    if (!batchId) {
+      setFilteredCourseDates([]);
+      setCourseDateId('');
+      return;
+    }
 
-    setToastMessage('Attendance saved locally!');
+    const selectedBatch = batches.find(b => b.batch_id === Number(batchId));
+
+    setFilteredCourseDates(selectedBatch?.course_dates || []);
+    setCourseDateId('');
+  }, [batchId, batches]);
+
+
+
+  const handleFetchStudent = async () => {
+    if (!studentId) return alert('Enter a valid Student ID');
+
+    let fullStudentId = studentId.toUpperCase();
+    if (!fullStudentId.startsWith('UGR-')) {
+      fullStudentId = `UGR-${fullStudentId}`;
+    }
+
+    try {
+      const res = await axios.get(`${BASE_URL}/student/${fullStudentId}`, { withCredentials: true });
+
+      const student = res.data?.data; // <-- Important: backend wraps in 'data'
+
+      if (!student || !student.first_name) {
+        alert('No student found with this ID');
+        setStudentData(null);
+        return;
+      }
+
+      setStudentData({
+        ...student,
+        fullName: `${student.first_name} ${student.last_name}`
+      });
+
+    } catch (err) {
+      console.error(err);
+      alert('No student found with this ID or fetch failed.');
+      setStudentData(null);
+    }
+  };
+
+
+  const handleFinishAttendance = () => {
+    if (!studentData || !currentSession) return;
+
+    setCurrentSession(prev => ({
+      ...prev,
+      students: [
+        ...prev.students,
+        {
+          student_id: studentData.student_id,
+          is_present: true
+        }
+      ]
+    }));
+
+    setToastMessage(`Attendance recorded for ${studentData.fullName}!`);
     setShowToast(true);
     setTimeout(() => setShowToast(false), 4000);
 
-    // Clear current attendance
     setStudentId('');
     setStudentData(null);
-    setShowAttendanceBox(false);
-    setRecordedStudents([]);
-    setCourseDateId('');
-    setBatchId('');
-    setDate('');
   };
 
+
+  const handleBackToID = () => {
+    setStudentData(null);
+  };
+  const handleFetchBatch = async () => {
+    try {
+      await axios.get(`${BASE_URL}/batch/${batchId}`, { withCredentials: true });
+    } catch (err) {
+      console.error('failed to fetch batch', err);
+    }
+  }
+
+  const handleSendSessionToBackend = async (session) => {
+    try {
+      await axios.post(
+        `${BASE_URL}/attendance`,
+        {
+          date_id: session.courseDateId,
+          students: session.students
+        },
+        { withCredentials: true }
+      );
+
+      // Remove session from local storage after successful send
+      setSavedSessions(prev => prev.filter(s => s.id !== session.id));
+      setToastMessage('Session sent to backend successfully!');
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 4000);
+    } catch (err) {
+      console.error(err);
+      alert('Failed to send session to backend. Check your internet connection.');
+    }
+  };
 
   const handleDeleteSession = (id) => {
     const updated = savedSessions.filter(s => s.id !== id);
@@ -312,7 +315,7 @@ export default function AttendancePage() {
             const isValid = await verifySessionAdminPassword(enteredPassword);
 
             if (isValid) {
-              // go back normally
+
               if (studentData) {
                 setStudentData(null);
               } else {
@@ -330,28 +333,11 @@ export default function AttendancePage() {
         </h1>
 
 
-        <label>Course & Date:</label>
-        <select
-          value={courseDateId}
-          onChange={e => setCourseDateId(e.target.value)}
-          className="border p-2 rounded w-full"
-        >
-          <option value="">Select Course</option>
-          {courseDates.map(cd => (
-            <option key={cd.date_id} value={cd.date_id}>
-              Course ID: {cd.course_id} - {cd.class_date}
-            </option>
-          ))}
-        </select>
-
-
-
-
         <label>Batch:</label>
         <select
           value={batchId}
           onChange={e => setBatchId(e.target.value)}
-          className="border p-2 rounded w-full"
+          className="border p-2 rounded w-full max-w-full"
         >
           <option value="">Select Batch</option>
           {batches.map(batch => (
@@ -360,8 +346,24 @@ export default function AttendancePage() {
             </option>
           ))}
         </select>
+        <label>Course & Date:</label>
 
+        <select
+          value={courseDateId}
+          onChange={e => setCourseDateId(e.target.value)}
+          className="border p-2 rounded w-full max-w-full truncate"
+        >
 
+          <option value="">Select course</option>
+          {filteredCourseDates.map(cd => {
+            const courseName = courses.find(c => c.course_id === cd.course_id)?.course_name || 'Unknown';
+            return (
+              <option key={cd.date_id} value={cd.date_id}>
+                {courseName}
+              </option>
+            );
+          })}
+        </select>
 
         <label>Date:</label>
 
@@ -369,7 +371,6 @@ export default function AttendancePage() {
           value={ethDate}
           onChange={setEthDate}
         />
-
 
         <button
           onClick={handleStartAttendance}
@@ -394,7 +395,6 @@ export default function AttendancePage() {
                   const isValid = await verifySessionAdminPassword(enteredPassword);
 
                   if (isValid) {
-                    // go back normally
 
                     setShowAttendanceBox(false);
 
@@ -411,11 +411,11 @@ export default function AttendancePage() {
                   <label>Enter Student ID:</label>
                   <input
                     type="text"
-                    placeholder="1234"
+                    placeholder="1234-16"
                     value={studentId}
                     onChange={e => setStudentId(e.target.value)}
                     className="border p-2 rounded w-full"
-                    maxLength={4}
+                    maxLength={7}
                   />
                   <div className="flex gap-4 mt-2">
                     <button
@@ -423,6 +423,12 @@ export default function AttendancePage() {
                       className="bg-[#D4AF35]  text-white py-2 px-4 rounded hover:bg-[#d6aa19] transition flex-1"
                     >
                       Next
+                    </button>
+                    <button
+                      onClick={handleDoneAttendanceWithPassword}
+                      className="bg-[#D4AF35] text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition flex-1 shadow-md"
+                    >
+                      Done
                     </button>
                   </div>
                 </>
@@ -433,16 +439,11 @@ export default function AttendancePage() {
                   <div className="flex flex-col sm:flex-row gap-3 mt-2">
                     <button
                       onClick={handleFinishAttendance}
-                      className="bg-[#D4AF35] text-white py-2 px-4 rounded-lg hover:bg-[#d6aa19] transition flex-1 shadow-md"
+                      className="bg-[#D4AF35] text-white py-2 px-4 mt-2 rounded-lg hover:bg-[#d6aa19] transition flex-1 shadow-md"
                     >
                       Mark as Present
                     </button>
-                    <button
-                      onClick={handleDoneAttendanceWithPassword}
-                      className="bg-[#D4AF35] text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition flex-1 shadow-md"
-                    >
-                      Done
-                    </button>
+
                   </div>
                 </>
               )}
@@ -470,9 +471,11 @@ export default function AttendancePage() {
                   <tr key={session.id}>
                     <td className="border border-gray-300 px-3 py-2">{session.date}</td>
                     <td className="border border-gray-300 px-3 py-2">
-                      {courseDates.find(cd => cd.course_id === session.courseDateId)?.course_name || 'N/A'}
-
+                      {Array.isArray(allCourseDates) && allCourseDates.length > 0
+                        ? allCourseDates.find(cd => cd.date_id === session.courseDateId)?.course_name || 'N/A'
+                        : 'Loading...'}
                     </td>
+
 
 
                     <td className="border border-gray-300 px-3 py-2">{session.batchId}</td>
@@ -517,3 +520,4 @@ export default function AttendancePage() {
     </div>
   );
 }
+
