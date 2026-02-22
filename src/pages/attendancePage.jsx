@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react';
 import { BackButton } from '../component/backButton';
 import axios from 'axios';
-
-
 import EthDatePicker from '../component/ethioDate';
 const BASE_URL = "https://gibi-backend-669108940571.us-central1.run.app";
 
@@ -12,18 +10,15 @@ export default function AttendancePage() {
   const [date, setDate] = useState('');
   const [allCourseDates, setAllCourseDates] = useState([]);
   const [filteredCourseDates, setFilteredCourseDates] = useState([]);
-
-
   const [courseDateId, setCourseDateId] = useState('');
   const [showAttendanceBox, setShowAttendanceBox] = useState(false);
   const [studentId, setStudentId] = useState('');
   const [studentData, setStudentData] = useState(null);
-
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [batches, setBatches] = useState([]);
   const [courses, setCourses] = useState([]);
-
+  const [modalSession, setModalSession] = useState(null);
   useEffect(() => {
     axios.get(`${BASE_URL}/course`)
       .then(res => setCourses(res.data.data.courses))
@@ -45,7 +40,7 @@ export default function AttendancePage() {
       .catch(err => console.error(err));
   }, []);
 
-  // Save current session whenever it changes
+
   useEffect(() => {
     if (currentSession) {
       localStorage.setItem('currentSession', JSON.stringify(currentSession));
@@ -54,12 +49,12 @@ export default function AttendancePage() {
     }
   }, [currentSession]);
 
-  // Load it on component mount
+
   useEffect(() => {
     const savedSession = localStorage.getItem('currentSession');
     if (savedSession) {
       setCurrentSession(JSON.parse(savedSession));
-      setShowAttendanceBox(true); // show the attendance modal
+      setShowAttendanceBox(true);
     }
   }, []);
 
@@ -84,7 +79,7 @@ export default function AttendancePage() {
     JSON.parse(localStorage.getItem('attendanceSessions')) || []
   );
   const verifySessionAdminPassword = async (enteredPassword) => {
-    const adminId = localStorage.getItem('adminId'); // get current admin ID
+    const adminId = localStorage.getItem('adminId');
     if (!adminId) {
       alert('No admin logged in!');
       return false;
@@ -103,7 +98,7 @@ export default function AttendancePage() {
       const user = res.data?.data?.user;
       if (!user) return false;
 
-      // Check that the logged-in user is actually an admin
+
       return user.role === 'admin';
     } catch (err) {
       console.error('Password verification failed', err.response?.data || err);
@@ -111,12 +106,12 @@ export default function AttendancePage() {
     }
   };
 
-
   const handleSendAllSessionsToBackend = async () => {
     if (savedSessions.length === 0) {
       alert('No sessions to send.');
       return;
     }
+
     try {
 
       for (const session of savedSessions) {
@@ -154,6 +149,7 @@ export default function AttendancePage() {
         id: Date.now().toString(),
         ...currentSession
       }
+
     ]);
 
     setCurrentSession(null);
@@ -171,12 +167,12 @@ export default function AttendancePage() {
       alert('Incorrect password!');
       return;
     }
+
     handleDoneAttendance();
   };
 
   const accessToken = localStorage.getItem('accessToken');
   const refreshToken = localStorage.getItem('refreshToken');
-
 
   useEffect(() => {
     if (!batchId) {
@@ -204,7 +200,7 @@ export default function AttendancePage() {
     try {
       const res = await axios.get(`${BASE_URL}/student/${fullStudentId}`, { withCredentials: true });
 
-      const student = res.data?.data; // <-- Important: backend wraps in 'data'
+      const student = res.data?.data;
 
       if (!student || !student.first_name) {
         alert('No student found with this ID');
@@ -227,6 +223,15 @@ export default function AttendancePage() {
 
   const handleFinishAttendance = () => {
     if (!studentData || !currentSession) return;
+
+    const alreadyMarked = currentSession.students.some(
+      s => s.student_id === studentData.student_id
+    );
+
+    if (alreadyMarked) {
+      alert('This student is already marked present for this session.');
+      return;
+    }
 
     setCurrentSession(prev => ({
       ...prev,
@@ -270,7 +275,7 @@ export default function AttendancePage() {
         { withCredentials: true }
       );
 
-      // Remove session from local storage after successful send
+
       setSavedSessions(prev => prev.filter(s => s.id !== session.id));
       setToastMessage('Session sent to backend successfully!');
       setShowToast(true);
@@ -331,7 +336,6 @@ export default function AttendancePage() {
         <h1 className="text-3xl font-bold text-[#D4AF35] mb-4">
           Session Attendance Setup
         </h1>
-
 
         <label>Batch:</label>
         <select
@@ -456,48 +460,109 @@ export default function AttendancePage() {
           <h2 className="text-xl font-bold text-[#D4AF35] mb-2">Saved Attendance Sessions</h2>
           {savedSessions.length === 0 ? (
             <p className="text-gray-600">No saved sessions yet.</p>
-          ) : (
-            <table className="w-full border-collapse border border-gray-300 text-sm">
-              <thead>
-                <tr className="bg-gray-100">
-                  <th className="border border-gray-300 px-3 py-2">Date</th>
-                  <th className="border border-gray-300 px-3 py-2">Course</th>
-                  <th className="border border-gray-300 px-3 py-2">Batch</th>
-                  <th className="border border-gray-300 px-3 py-2">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {savedSessions.map(session => (
-                  <tr key={session.id}>
-                    <td className="border border-gray-300 px-3 py-2">{session.date}</td>
-                    <td className="border border-gray-300 px-3 py-2">
-                      {Array.isArray(allCourseDates) && allCourseDates.length > 0
-                        ? allCourseDates.find(cd => cd.date_id === session.courseDateId)?.course_name || 'N/A'
-                        : 'Loading...'}
-                    </td>
+          ) : (<>
+            {/* Mobile Attendance List */}
+            <div className="flex flex-col gap-2 sm:hidden">
+              {savedSessions.map(session => (
+                <div
+                  key={session.id}
+                  className="border rounded-lg p-4 shadow-sm hover:shadow-md cursor-pointer flex justify-between items-center"
+                  onClick={() => setModalSession(session)}
+                >
+                  <div>
+                    <h3 className="font-bold">{session.date}</h3>
+                    <p className="text-gray-600 text-sm">
+                      Batch: {session.batchId} | Course: {courses.find(c => c.course_id === allCourseDates.find(cd => cd.date_id === session.courseDateId)?.course_id)?.course_name || 'N/A'}
+                    </p>
+                  </div>
+                  <div className="text-gray-400">→</div>
+                </div>
+              ))}
 
+              {/* Modal for session details */}
+              {modalSession && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                  <div className="bg-white p-6 rounded-xl max-w-sm w-full shadow-lg">
+                    <h3 className="font-bold text-lg mb-2">Session: {modalSession.date}</h3>
+                    <p><strong>Batch:</strong> {modalSession.batchId}</p>
+                    <p><strong>Course:</strong> {courses.find(c => c.course_id === allCourseDates.find(cd => cd.date_id === modalSession.courseDateId)?.course_id)?.course_name || 'N/A'}</p>
 
+                    <div className="mt-4">
+                      <h4 className="font-semibold mb-2">Students Present:</h4>
+                      <ul className="max-h-48 overflow-y-auto">
+                        {modalSession.students.map(s => (
+                          <li key={s.student_id} className="border-b py-1">{s.student_id} - Present</li>
+                        ))}
+                      </ul>
+                    </div>
 
-                    <td className="border border-gray-300 px-3 py-2">{session.batchId}</td>
-                    <td className="border border-gray-300 px-3 py-2 flex gap-2">
+                    <div className="flex gap-2 mt-4">
                       <button
-                        onClick={() => handleDeleteSession(session.id)}
-                        className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 transition"
+                        className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
+                        onClick={() => handleSendSessionToBackend(modalSession)}
+                      >
+                        Send
+                      </button>
+                      <button
+                        className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+                        onClick={() => handleDeleteSession(modalSession.id)}
                       >
                         Delete
                       </button>
-                    </td>
-                    <td>
                       <button
-                        onClick={() => handleExportSession(session.id)}
-                        className="bg-red-500 text-white px-3 py-1 rounded hover:bg-green-600 transition"
-                      >export </button>
-                    </td>
+                        className="bg-gray-300 px-4 py-2 rounded hover:bg-gray-400"
+                        onClick={() => setModalSession(null)}
+                      >
+                        Close
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+            <div>
+              <table className="w-full border-collapse border border-gray-300 text-sm">
+                <thead>
+                  <tr className="bg-gray-100">
+                    <th className="border border-gray-300 px-3 py-2">Date</th>
+                    <th className="border border-gray-300 px-3 py-2">Course</th>
+                    <th className="border border-gray-300 px-3 py-2">Batch</th>
+                    <th className="border border-gray-300 px-3 py-2">Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {savedSessions.map(session => (
+                    <tr key={session.id}>
+                      <td className="border border-gray-300 px-3 py-2">{session.date}</td>
+                      <td className="border border-gray-300 px-3 py-2">
+                        {Array.isArray(allCourseDates) && allCourseDates.length > 0
+                          ? allCourseDates.find(cd => cd.date_id === session.courseDateId)?.course_name || 'N/A'
+                          : 'Loading...'}
+                      </td>
 
+
+
+                      <td className="border border-gray-300 px-3 py-2">{session.batchId}</td>
+                      <td className="border border-gray-300 px-3 py-2 flex gap-2">
+                        <button
+                          onClick={() => handleDeleteSession(session.id)}
+                          className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 transition"
+                        >
+                          Delete
+                        </button>
+
+
+                        <button
+                          onClick={() => handleExportSession(session.id)}
+                          className="bg-red-500 text-white px-3 py-1 rounded hover:bg-green-600 transition"
+                        >export </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
           )}
         </div>
         {savedSessions.length > 0 && (
