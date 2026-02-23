@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import bgpicture from './assets/sessionAdminBg.png' // replace with your session admin background
+import bgpicture from './assets/sessionAdminBg.png'
 import { BackButton } from './component/backButton'
 
 

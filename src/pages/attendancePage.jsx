@@ -58,6 +58,7 @@ export default function AttendancePage() {
     }
   }, []);
 
+
   const handleStartAttendance = () => {
     if (!courseDateId || !batchId || !ethDate) {
       alert('Please fill all fields');
@@ -113,16 +114,18 @@ export default function AttendancePage() {
     }
 
     try {
-
       for (const session of savedSessions) {
-        await axios.post(
-          `${BASE_URL}/attendance`,
-          {
-            date_id: session.courseDateId,
-            students: session.students
-          },
-          { withCredentials: true }
-        );
+        for (const student of session.students) {
+          await axios.post(
+            `${BASE_URL}/attendance`,
+            {
+              date_id: Number(session.courseDateId),
+              student_id: student.student_id,
+              is_present: student.is_present,
+            },
+            { withCredentials: true }
+          );
+        }
       }
 
       setSavedSessions([]);
@@ -135,7 +138,7 @@ export default function AttendancePage() {
       console.error(err);
       alert('Failed to send all sessions. Check your internet connection.');
     }
-  }
+  };
 
   const handleDoneAttendance = () => {
     if (!currentSession || currentSession.students.length === 0) {
@@ -153,6 +156,8 @@ export default function AttendancePage() {
     ]);
 
     setCurrentSession(null);
+    setStudentData(null);
+    setStudentId('');
     setShowAttendanceBox(false);
   };
 
@@ -238,7 +243,9 @@ export default function AttendancePage() {
       students: [
         ...prev.students,
         {
-          student_id: studentData.student_id,
+          student_id: studentData.student_id.toUpperCase().startsWith('UGR-')
+            ? studentData.student_id
+            : `UGR-${studentData.student_id}`,
           is_present: true
         }
       ]
@@ -266,15 +273,18 @@ export default function AttendancePage() {
 
   const handleSendSessionToBackend = async (session) => {
     try {
-      await axios.post(
-        `${BASE_URL}/attendance`,
-        {
-          date_id: session.courseDateId,
-          students: session.students
-        },
-        { withCredentials: true }
-      );
-
+      for (const student of session.students) {
+        await axios.post(
+          `${BASE_URL}/attendance`,
+          {
+            date_id: Number(session.courseDateId),
+            student_id: student.student_id,
+            is_present: student.is_present,
+            //maybe the admin
+          },
+          { withCredentials: true }
+        );
+      }
 
       setSavedSessions(prev => prev.filter(s => s.id !== session.id));
       setToastMessage('Session sent to backend successfully!');
@@ -285,7 +295,6 @@ export default function AttendancePage() {
       alert('Failed to send session to backend. Check your internet connection.');
     }
   };
-
   const handleDeleteSession = (id) => {
     const updated = savedSessions.filter(s => s.id !== id);
     setSavedSessions(updated);
@@ -307,7 +316,23 @@ export default function AttendancePage() {
     link.click();
     URL.revokeObjectURL(url);
   };
+  const getCourseNameByDateId = (dateId) => {
+    if (!Array.isArray(allCourseDates) || !Array.isArray(courses)) {
+      return 'Loading...';
+    }
 
+    const courseDate = allCourseDates.find(cd => cd.date_id === dateId);
+    if (!courseDate) return 'N/A';
+
+    const course = courses.find(c => c.course_id === courseDate.course_id);
+    return course?.course_name || 'N/A';
+  };
+  useEffect(() => {
+    localStorage.setItem(
+      'attendanceSessions',
+      JSON.stringify(savedSessions)
+    );
+  }, [savedSessions]);
   return (
     <div className="h-screen w-screen flex items-center justify-center bg-white p-6">
 
@@ -323,6 +348,7 @@ export default function AttendancePage() {
 
               if (studentData) {
                 setStudentData(null);
+                setStudentId('');
               } else {
                 setShowAttendanceBox(false);
               }
@@ -472,7 +498,7 @@ export default function AttendancePage() {
                   <div>
                     <h3 className="font-bold">{session.date}</h3>
                     <p className="text-gray-600 text-sm">
-                      Batch: {session.batchId} | Course: {courses.find(c => c.course_id === allCourseDates.find(cd => cd.date_id === session.courseDateId)?.course_id)?.course_name || 'N/A'}
+                      Batch: {session.batchId} | Course: {getCourseNameByDateId(session.courseDateId)}
                     </p>
                   </div>
                   <div className="text-gray-400">→</div>
@@ -485,8 +511,9 @@ export default function AttendancePage() {
                   <div className="bg-white p-6 rounded-xl max-w-sm w-full shadow-lg">
                     <h3 className="font-bold text-lg mb-2">Session: {modalSession.date}</h3>
                     <p><strong>Batch:</strong> {modalSession.batchId}</p>
-                    <p><strong>Course:</strong> {courses.find(c => c.course_id === allCourseDates.find(cd => cd.date_id === modalSession.courseDateId)?.course_id)?.course_name || 'N/A'}</p>
-
+                    <p>
+                      <strong>Course:</strong> {getCourseNameByDateId(modalSession.courseDateId)}
+                    </p>
                     <div className="mt-4">
                       <h4 className="font-semibold mb-2">Students Present:</h4>
                       <ul className="max-h-48 overflow-y-auto">
@@ -521,7 +548,7 @@ export default function AttendancePage() {
               )}
             </div>
             <div>
-              <table className="w-full border-collapse border border-gray-300 text-sm">
+              <table className="w-full hidden md-table border-collapse border border-gray-300 text-sm">
                 <thead>
                   <tr className="bg-gray-100">
                     <th className="border border-gray-300 px-3 py-2">Date</th>
@@ -535,9 +562,7 @@ export default function AttendancePage() {
                     <tr key={session.id}>
                       <td className="border border-gray-300 px-3 py-2">{session.date}</td>
                       <td className="border border-gray-300 px-3 py-2">
-                        {Array.isArray(allCourseDates) && allCourseDates.length > 0
-                          ? allCourseDates.find(cd => cd.date_id === session.courseDateId)?.course_name || 'N/A'
-                          : 'Loading...'}
+                        {getCourseNameByDateId(session.courseDateId)}
                       </td>
 
 

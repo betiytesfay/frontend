@@ -34,7 +34,7 @@ export default function Login() {
         console.error("No user returned from backend");
         return;
       }
-      // Corrected localStorage saving
+
       localStorage.setItem('adminId', user.student_id);
       localStorage.setItem('accessToken', response.data?.data?.accessToken || '');
       localStorage.setItem('refreshToken', response.data?.data?.refreshToken || '');
