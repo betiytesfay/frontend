@@ -1,11 +1,21 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import {
+  PieChart,
+  Pie,
+  Cell,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from 'recharts';
+
+const COLORS = ['#22c55e', '#ef4444']; // green = Present, red = Absent
 import { BackButton } from '../component/backButton';
 
 export default function sessionHistory() {
   const navigate = useNavigate();
   const [selectedSession, setSelectedSession] = useState(null);
-
+  const URL = "https://gibi-backend-669108940571.us-central1.run.app";
   // Filters
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilterPanel, setShowFilterPanel] = useState(false);
@@ -26,29 +36,56 @@ export default function sessionHistory() {
   const [editDate, setEditDate] = useState('');
   const [editRate, setEditRate] = useState('');
   const [editYear, setEditYear] = useState(new Date().getFullYear());
+  const [sessions, setSessions] = useState([]);
+  const [filteredSessions, setFilteredSessions] = useState([]);
+  const [attendanceData, setAttendanceData] = useState({});
 
-  // Sessions & filtered sessions
-  const [sessions, setSessions] = useState([
-    { id: 1, name: 'Fourth Year students', date: '2024-03-15', rate: '88%', year: 2025 },
-    { id: 2, name: 'Third Year students', date: '2024-03-22', rate: '92%', year: 2025 },
-    { id: 3, name: 'Second Year students', date: '2024-03-29', rate: '78%', year: 2025 },
-    { id: 4, name: 'First Year students', date: '2024-04-05', rate: '90%', year: 2025 },
-  ]);
-  const [filteredSessions, setFilteredSessions] = useState(sessions);
+  useEffect(() => {
+    fetch(`${URL}/attendance`)
+      .then(res => res.json())
+      .then(res => {
+        const records = res.data.attendanceRecords;
 
-  // Attendance Data
-  const attendanceData = {
-    1: [{ name: 'Student 1', status: 'Present', gender: 'female' }, { name: 'Student 2', status: 'Absent', gender: 'female' }],
-    2: [{ name: 'Student 1', status: 'Present', gender: 'male' }, { name: 'Student 2', status: 'Present', gender: 'female' }, { name: 'Student 3', status: 'Present', gender: 'male' }],
-    3: [{ name: 'Student 1', status: 'Absent', gender: 'female' }, { name: 'Student 2', status: 'Present', gender: 'female' }],
-    4: [{ name: 'Student 1', status: 'Present', gender: 'female' }, { name: 'Student 2', status: 'Present', gender: 'female' }],
-  };
+        // Group by course_date.date_id
+        const courseDatesMap = {};
+        const attendanceMap = {};
+
+        records.forEach(r => {
+          const dateId = r.course_date.date_id;
+          if (!courseDatesMap[dateId]) {
+            courseDatesMap[dateId] = {
+              id: dateId,
+              name: r.course_date.course.course_name,
+              batch: r.course_date.batch.batch_name,
+              date: r.course_date.class_date,
+            };
+            attendanceMap[dateId] = [];
+          }
+
+          attendanceMap[dateId].push({
+            studentId: r.student.student_id,
+            name: `${r.student.first_name} ${r.student.last_name}`,
+            status: r.is_present ? 'Present' : 'Absent',
+            gender: r.student.gender || 'Unknown',
+            department: r.student.department,
+            phone: r.student.phone_number,
+          });
+        });
+
+        const courseDatesArr = Object.values(courseDatesMap);
+
+        setSessions(courseDatesArr);
+        setFilteredSessions(courseDatesArr);
+        setAttendanceData(attendanceMap);
+      })
+      .catch(err => console.error(err));
+  }, []);
 
   const getAttendanceSummary = (sessionId) => {
     const data = attendanceData[sessionId] || [];
     const summary = { Present: 0, Absent: 0 };
     data.forEach((student) => {
-      if (summary[student.status] !== undefined) summary[student.status]++;
+      summary[student.status] = (summary[student.status] || 0) + 1;
     });
     return summary;
   };
@@ -61,12 +98,13 @@ export default function sessionHistory() {
     }
   };
 
-  // Apply filters whenever filter/search changes
+
   useEffect(() => {
     let filtered = sessions;
 
     if (filterYearEnabled) {
-      filtered = filtered.filter(s => s.year === filterYear);
+
+      filtered = filtered.filter(s => new Date(s.date).getFullYear() === filterYear);
     }
 
     if (filterGenderEnabled && filterGender !== 'All') {
@@ -82,6 +120,24 @@ export default function sessionHistory() {
     setFilteredSessions(filtered);
   }, [sessions, searchQuery, filterYearEnabled, filterGenderEnabled, filterYear, filterGender]);
 
+  const getPieData = () => {
+    if (!selectedSession) return [];
+
+    const data = attendanceData[selectedSession.id] || [];
+    const filtered = data.filter(
+      (student) => filterGender === 'All' || student.gender.toLowerCase() === filterGender.toLowerCase()
+    );
+
+    const summary = { Present: 0, Absent: 0 };
+    filtered.forEach((student) => {
+      summary[student.status] = (summary[student.status] || 0) + 1;
+    });
+
+    return [
+      { name: 'Present', value: summary.Present },
+      { name: 'Absent', value: summary.Absent },
+    ];
+  };
   return (
     <div className="min-h-screen justify-center bg-[#d1c8c8] text-black flex flex-col items-center p-4 sm:p-8">
       <div className="w-full max-w-6xl justify-center bg-[#ffffff] p-4 sm:p-8 rounded-xl shadow-lg border border-[#e0d9d9]">
@@ -250,6 +306,7 @@ export default function sessionHistory() {
         {/* Sessions Table */}
         <div className="flex flex-col lg:flex-row gap-6">
           <div className="flex-1 bg-[#ffffff] rounded-lg p-4 sm:p-6 border border-[#D4AF35] overflow-x-auto">
+
             <table className="min-w-full text-left border-collapse">
               <thead className="border-b border-black">
                 <tr className="border-b border-black text-[#D4AF35] text-sm sm:text-base">
@@ -283,8 +340,30 @@ export default function sessionHistory() {
           {selectedSession && (
             <div className="flex-1 bg-[#1a1a1a] rounded-lg p-4 sm:p-6 border border-black animate-fadeIn">
               <h2 className="text-base sm:text-lg font-semibold mb-4 text-[#D4AF35]">
-                Attendance for {selectedSession.name} ({selectedSession.year})
+                Attendance for {selectedSession.name} ({new Date(selectedSession.date).getFullYear()})
               </h2>
+              {/* Pie Chart */}
+              <div className="w-full h-64 mt-4">
+                <ResponsiveContainer>
+                  <PieChart>
+                    <Pie
+                      data={getPieData()}
+                      dataKey="value"
+                      nameKey="name"
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={80}
+                      label
+                    >
+                      {getPieData().map((entry, index) => (
+                        <Cell key={index} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
               <div className="flex flex-wrap gap-3 mb-4">
                 {Object.entries(getAttendanceSummary(selectedSession.id)).map(([status, count]) => (
                   <div key={status} className={`px-3 py-1 rounded text-sm font-semibold ${getStatusColor(status)}`}>

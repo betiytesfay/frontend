@@ -5,7 +5,7 @@ export function BackButton({ to = null, label = '← ', className = '', onClick 
 
   const handleClick = () => {
     if (onClick) {
-      // If the parent sends a custom click (like password check)
+
       onClick();
       return;
     }

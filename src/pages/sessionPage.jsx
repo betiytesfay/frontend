@@ -18,7 +18,7 @@ export default function SessionPage() {
     const fetchTotalStudents = async () => {
       try {
         const response = await axios.get(`${baseURL}/student`)
-        const students = response.data
+        const students = response.data.data.students
         setTotalStudent(students.length)
       } catch (err) {
         console.error("Failed to fetch students:", err)
@@ -31,12 +31,12 @@ export default function SessionPage() {
     const fetchLastSession = async () => {
       try {
         const response = await axios.get(`${baseURL}/attendance`)
-        const allRecords = response.data
+        const allRecords = response.data.data.attendance
 
         if (allRecords.length > 0) {
-          // Sort by date descending to get the latest
-          const latest = allRecords.sort((a, b) => new Date(b.date) - new Date(a.date))[0]
-          setLastSessionDate(latest.date)
+
+          const latest = allRecords.sort((a, b) => new Date(b.recorded_at) - new Date(a.recorded_at))[0]
+          setLastSessionDate(latest.recorded_at).toISOString().split('T')[0]
         }
       } catch (err) {
         console.error("Failed to fetch attendance:", err)
@@ -46,22 +46,6 @@ export default function SessionPage() {
 
     fetchLastSession()
   }, [])
-
-  useEffect(() => {
-    const fetchCourseDates = async () => {
-      try {
-        const res = await axios.post(`${BASE_URL}/course_date`, {}, { withCredentials: true });
-        // backend returns { data: { courses: [...] } }
-        const courses = res.data.data.courses;
-        setCourseDates(courses);
-      } catch (err) {
-        console.error('Failed to fetch course dates', err);
-        alert('Could not load courses. Check your internet connection.');
-      }
-    };
-
-    fetchCourseDates();
-  }, []);
 
 
   const handleCloseHistory = () => {
@@ -87,7 +71,6 @@ export default function SessionPage() {
         <h1 className="text-2xl sm:text-3xl font-bold text-green-700">
           Welcome, Session Admin!
         </h1>
-
 
         {/* Stats section */}
         <div className="mt-5 flex flex-row md:flex-row justify-between items-center gap-4">

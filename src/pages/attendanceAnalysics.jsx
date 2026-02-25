@@ -1,29 +1,14 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-
-const sessions = [
-  { id: 1, name: 'Session One', yearLabel: 'First Year', year: 2025, department: 'Accounting' },
-  { id: 2, name: 'Session Two', yearLabel: 'Second Year', year: 2025, department: 'Sociology' },
-  { id: 3, name: 'Session Three', yearLabel: 'First Year', year: 2025, department: 'Economics' },
-  { id: 4, name: 'Session Four', yearLabel: 'First Year', year: 2025, department: 'Logistics' },
-]
-
-const attendanceData = {
-  1: [
-    { id: 101, name: 'Abebe', studentId: '1234', status: 'Present', gender: 'Male', department: 'Accounting', phone: '0912345678' },
-    { id: 102, name: 'Sara', studentId: '2345', status: 'Absent', gender: 'Female', department: 'Accounting', phone: '0912345679' },
-    { id: 103, name: 'Mikael', studentId: '3456', status: 'Present', gender: 'Male', department: 'Accounting', phone: '0912345680' },
-  ],
-  2: [
-    { id: 201, name: 'John', studentId: '4567', status: 'Present', gender: 'Male', department: 'Sociology', phone: '0912345681' },
-  ],
-  3: [
-    { id: 301, name: 'Alice', studentId: '5678', status: 'Absent', gender: 'Female', department: 'Economics', phone: '0912345682' },
-  ],
-  4: [
-    { id: 401, name: 'Eleni', studentId: '6789', status: 'Present', gender: 'Female', department: 'Logistics', phone: '0912345683' },
-  ],
-}
+import {
+  PieChart,
+  Pie,
+  Cell,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from 'recharts'
+const COLORS = ['#22c55e', '#ef4444']
 
 export default function AttendanceAnalysis() {
   const navigate = useNavigate()
@@ -35,7 +20,17 @@ export default function AttendanceAnalysis() {
   const studentsPerPage = 5
 
   const allStudents = Object.values(attendanceData).flat()
-
+  const [sessions, setSessions] = useState([])
+  const [attendanceData, setAttendanceData] = useState({})
+  const URL = "https://gibi-backend-669108940571.us-central1.run.app"
+  useEffect(() => {
+    fetch(`${URL}/attendance`)
+      .then(res => res.json())
+      .then(data => {
+        setSessions(data.sessions)
+        setAttendanceData(data.attendance)
+      })
+  }, [])
   // Default filter: first-year students
   const firstYearStudents = allStudents
     .filter(s =>
@@ -49,10 +44,11 @@ export default function AttendanceAnalysis() {
   // Filtering logic
   let filteredStudents = searchId
     ? allStudents.filter(s => s.studentId === searchId)
-    : firstYearStudents.filter(s =>
+    : allStudents.filter(s =>
       (filterGender === 'All' || s.gender === filterGender) &&
       (filterDepartment === 'All' || s.department === filterDepartment)
     )
+
 
   const indexOfLast = currentPage * studentsPerPage
   const indexOfFirst = indexOfLast - studentsPerPage
@@ -60,7 +56,19 @@ export default function AttendanceAnalysis() {
     ? filteredStudents
     : filteredStudents.slice(indexOfFirst, indexOfLast)
   const totalPages = Math.ceil(filteredStudents.length / studentsPerPage)
+  const attendanceSummary = filteredStudents.reduce(
+    (acc, student) => {
+      if (student.status === 'Present') acc.present += 1
+      else acc.absent += 1
+      return acc
+    },
+    { present: 0, absent: 0 }
+  )
 
+  const pieData = [
+    { name: 'Present', value: attendanceSummary.present },
+    { name: 'Absent', value: attendanceSummary.absent },
+  ]
   const calculateAttendance = (student) => {
     const records = Object.values(attendanceData).flat().filter(st => st.studentId === student.studentId)
     const totalSessions = records.length
@@ -102,7 +110,38 @@ export default function AttendanceAnalysis() {
           )}
         </select>
       </div>
+      {/* Attendance Pie Chart */}
+      <div className="w-full max-w-4xl mb-8 bg-white/10 border border-yellow-400 rounded-lg p-4">
+        <h2 className="text-xl font-semibold text-yellow-400 mb-4 text-center">
+          Attendance (Filtered Students)
+        </h2>
 
+        {filteredStudents.length === 0 ? (
+          <p className="text-center text-gray-400">No data to display</p>
+        ) : (
+          <div className="w-full h-64">
+            <ResponsiveContainer>
+              <PieChart>
+                <Pie
+                  data={pieData}
+                  dataKey="value"
+                  nameKey="name"
+                  cx="50%"
+                  cy="50%"
+                  outerRadius={90}
+                  label
+                >
+                  {pieData.map((_, index) => (
+                    <Cell key={index} fill={COLORS[index]} />
+                  ))}
+                </Pie>
+                <Tooltip />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        )}
+      </div>
       {/* Students List */}
       <div className="w-full max-w-4xl space-y-4">
         {currentStudents.length === 0 && (

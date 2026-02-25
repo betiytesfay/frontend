@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { BackButton } from '../component/backButton';
 import axios from 'axios';
 import EthDatePicker from '../component/ethioDate';
 const BASE_URL = "https://gibi-backend-669108940571.us-central1.run.app";
 
 export default function AttendancePage() {
+  const navigate = useNavigate();
   const [batchId, setBatchId] = useState('');
   const [ethDate, setEthDate] = useState('');
   const [date, setDate] = useState('');
@@ -338,7 +340,9 @@ export default function AttendancePage() {
 
       <div className="p-8 rounded-xl shadow-lg w-full max-w-[700px] flex flex-col gap-6 bg-white">
         <BackButton
+
           onClick={async () => {
+
             const enteredPassword = prompt('Enter session admin password to go back:');
             if (!enteredPassword) return;
 
@@ -349,12 +353,14 @@ export default function AttendancePage() {
               if (studentData) {
                 setStudentData(null);
                 setStudentId('');
+
               } else {
                 setShowAttendanceBox(false);
               }
             } else {
               alert('Incorrect password!');
             }
+            navigate("/sessionAdmin")
           }}
           label="← "
         />
