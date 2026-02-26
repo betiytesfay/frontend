@@ -22,7 +22,7 @@ const GeneralAdmin = () => {
 
   return (
     <div className="min-h-screen grid place-items-center bg-cover bg-center p-8 absolute inset-0 bg-black/70 overflow-x-hidden" style={{ backgroundAttachment: 'fixed', backgroundImage: "url('/gbiphoto.jpg')" }}>
-      <div className="bg-white/50 p-4 min-h-[60vh] sm:p-6 rounded-lg shadow-2xl w-full sm:max-w-md md:max-w-2xl lg:max-h-xl lg:max-w-3xl  backdrop-blur-md mx-auto  flex flex-col justify-between gap-6 ">
+      <div className="bg-white/50 p-4 min-h-[auto] sm:p-6 rounded-lg shadow-2xl w-full sm:max-w-md md:max-w-lg lg:max-h-xl lg:max-w-xl  backdrop-blur-md mx-auto  flex flex-col justify-between gap-6 ">
 
 
         {!selectedCategory && (

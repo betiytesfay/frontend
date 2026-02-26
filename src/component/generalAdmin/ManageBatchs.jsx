@@ -176,7 +176,7 @@ const ManageBatches = () => {
     <div className="bg-white p-6 max-w-5xl mx-auto flex flex-col justify-center gap-4 mt-8 sm:max-w-lg rounded-xl shadow-md w-full">
       <div className="flex items-center justify-between ">
         <button
-          onClick={() => "/admin"}
+          onClick={() => navigate("/admin")}
           className="flex items-center gap-1 px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
         >
           <FaArrowLeft /> Back
@@ -221,14 +221,10 @@ const ManageBatches = () => {
 
       </div>
 
-      {/* Batch List + Actions */}
 
       {/* Mobile Card List */}
       <div className="flex flex-col gap-2.5  sm:hidden">
         {currentBatches
-          .filter((b) =>
-            b.batch_name.toLowerCase().includes(searchTerm.toLowerCase())
-          )
           .map((b) => (
             <div
               key={b.batch_id}
@@ -236,7 +232,7 @@ const ManageBatches = () => {
             >
               <div
                 className="flex-1"
-                onClick={() => setModalBatch(b)} // open modal when row clicked
+                onClick={() => setModalBatch(b)}
               >
                 <h3 className="font-bold text-lg">{b.batch_name}</h3>
               </div>
@@ -279,7 +275,7 @@ const ManageBatches = () => {
                   className="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600"
                   onClick={() => {
                     handleEditClick(modalBatch);
-                    setModalBatch(null); // optionally close modal when editing
+                    setModalBatch(null);
                   }}
                 >
                   Edit
