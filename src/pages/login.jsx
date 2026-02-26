@@ -16,8 +16,8 @@ export default function Login() {
   const role = location.state?.role || 'session'
 
 
-
   const handleLogin = async () => {
+    setError('');
     setLoading(true);
     try {
       const fullStudentId = `UGR-${username}`;
@@ -49,7 +49,12 @@ export default function Login() {
       }
 
     } catch (err) {
-      console.error("Login error:", err.response?.data || err);
+
+      if (err.response && err.response.status === 401) {
+        setError(`Login Error:${err.response.data.message || err.message}`);
+      } else {
+        setError("An unexpected error occurred.");
+      }
     } finally {
       setLoading(false);
     }

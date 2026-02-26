@@ -29,8 +29,8 @@ const Home = () => {
       alert("Invalid credentials");
     }
   };
-   
-  
+
+
   return (
     <div className="flex justify-center items-center min-h-screen bg-gray-900">
       <div
@@ -127,7 +127,7 @@ const Home = () => {
           )}
 
           <p className="text-white mt-2 text-sm cursor-pointer hover:underline">
-            Create an Account?
+            forget password?
           </p>
         </div>
       </div>
