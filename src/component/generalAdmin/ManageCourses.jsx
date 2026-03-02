@@ -29,6 +29,12 @@ const ManageCourses = () => {
   const [searchId, setSearchId] = useState("");
   const [activeModal, setActiveModal] = useState(null);
 
+  const [page, setPage] = useState(1);
+  const itemsPerPage = 10;
+  const totalPages = Math.ceil(courses.length / itemsPerPage);
+
+  const paginatedCourses = courses.slice((page - 1) * itemsPerPage, page * itemsPerPage);
+
   // === Filters ===
 
   const [showFilter, setShowFilter] = useState(false);
