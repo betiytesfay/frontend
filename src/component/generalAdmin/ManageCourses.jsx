@@ -77,8 +77,9 @@ const ManageCourses = () => {
       if (!res.ok) throw new Error("Backend error");
 
       const payload = await res.json();
-      const list = Array.isArray(payload) ? payload : (payload.data || payload.courses || payload);
-      const normalized = (list || []).map(normalizeCourse);
+      const list = Array.isArray(payload?.data?.courses) ? payload.data.courses : [];
+
+      const normalized = list.map(normalizeCourse);
       setCourses(normalized);
       setAllCourses(normalized);
     } catch (err) {
