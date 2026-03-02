@@ -63,9 +63,10 @@ const ManageCourses = () => {
       if (!res.ok) throw new Error("Backend error");
 
       const payload = await res.json();
-      const list = Array.isArray(payload?.data?.courses) ? payload.data.courses : [];
-      setCourses(list.map(normalizeCourse));
-      setAllCourses(list.map(normalizeCourse));
+      const list = payload?.data?.courses || payload?.courses || payload || [];
+      const normalizedList = Array.isArray(list) ? list.map(normalizeCourse).filter(Boolean) : [];
+      setCourses(normalizedList);
+      setAllCourses(normalizedList);
     } catch (err) {
       console.error(err);
       setCourses([]);
@@ -74,6 +75,11 @@ const ManageCourses = () => {
   };
 
   const fetchCourseById = async () => {
+    if (!searchId.trim()) {
+      alert("Please enter a course ID");
+      return;
+    }
+
     try {
       const res = await fetch(`${BASE}/course/${encodeURIComponent(searchId)}`, { credentials: 'include' });
       if (!res.ok) {
@@ -81,9 +87,14 @@ const ManageCourses = () => {
         return;
       }
       const payload = await res.json();
-      const courseArray = Array.isArray(payload?.data?.courses) ? payload.data.courses : [];
-      setCourses(courseArray.map(normalizeCourse));
+      const courseData = payload?.data?.course || payload?.course || payload;
+      if (courseData) {
+        setCourses([normalizeCourse(courseData)].filter(Boolean));
+      } else {
+        alert("Course not found");
+      }
     } catch (err) {
+      console.error(err);
       alert("Backend not reachable");
     }
   };
@@ -106,7 +117,13 @@ const ManageCourses = () => {
     if (!courseName) {
       return alert("Fill all fields");
     }
-
+    if (!courseName.trim()) {
+      return alert("Course name is required");
+    }
+    if (!searchId.trim()) {
+      alert("Please enter a course ID");
+      return;
+    }
     const newCourse = {
       course_name: courseName,
       description: courseDescription,
@@ -148,7 +165,7 @@ const ManageCourses = () => {
       body: JSON.stringify(updated),
       credentials: 'include'
     });
-
+    if (!selectedCourse?.id) return;
     if (!res.ok) return alert("Failed to update");
 
     await fetchCourses();
@@ -163,7 +180,7 @@ const ManageCourses = () => {
 
   const handleDeleteCourse = async (id) => {
     const res = await fetch(`${BASE}/course/${encodeURIComponent(id)}`, { method: "DELETE", credentials: 'include' });
-
+    if (!selectedCourse?.id) return;
     if (!res.ok) return alert("Failed to delete");
 
     await fetchCourses();
@@ -185,7 +202,9 @@ const ManageCourses = () => {
               onKeyDown={(e) => e.key === 'Enter' && fetchCourseById()}
               className="flex-1 border rounded px-3 py-2 pr-10"
             />
-
+            <button onClick={fetchCourseById} className="absolute right-2 top-1/2 transform -translate-y-1/2">
+              <FaSearch />
+            </button>
           </div>
           <button
             onClick={() => {
