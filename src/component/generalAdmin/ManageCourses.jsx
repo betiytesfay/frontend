@@ -52,21 +52,7 @@ const ManageCourses = () => {
     setPage(1);
   }, [courses]);
 
-  // === Search by course id ===
-  const fetchCourseById = async () => {
-    try {
-      const res = await fetch(`${BASE}/course/${encodeURIComponent(searchId)}`, { credentials: 'include' });
-      if (!res.ok) {
-        alert("Course not found");
-        return;
-      }
-      const payload = await res.json();
-      const obj = payload.data || payload || {};
-      setCourses([normalizeCourse(obj)]);
-    } catch (err) {
-      alert("Backend not reachable");
-    }
-  };
+
 
   // === Filter Courses ===
   const [allCourses, setAllCourses] = useState([]);
@@ -78,14 +64,27 @@ const ManageCourses = () => {
 
       const payload = await res.json();
       const list = Array.isArray(payload?.data?.courses) ? payload.data.courses : [];
-
-      const normalized = list.map(normalizeCourse);
-      setCourses(normalized);
-      setAllCourses(normalized);
+      setCourses(list.map(normalizeCourse));
+      setAllCourses(list.map(normalizeCourse));
     } catch (err) {
       console.error(err);
       setCourses([]);
       setAllCourses([]);
+    }
+  };
+
+  const fetchCourseById = async () => {
+    try {
+      const res = await fetch(`${BASE}/course/${encodeURIComponent(searchId)}`, { credentials: 'include' });
+      if (!res.ok) {
+        alert("Course not found");
+        return;
+      }
+      const payload = await res.json();
+      const courseArray = Array.isArray(payload?.data?.courses) ? payload.data.courses : [];
+      setCourses(courseArray.map(normalizeCourse));
+    } catch (err) {
+      alert("Backend not reachable");
     }
   };
   const fetchCourseAndOpenView = (id) => {
