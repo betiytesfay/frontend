@@ -44,9 +44,9 @@ const ManageCourses = () => {
   // === API base is BASE + /course when used ===
 
   useEffect(() => {
-    if (selectedAction === "view") {
-      fetchCourses();
-    }
+
+    fetchCourses();
+
   }, [selectedAction]);
   useEffect(() => {
     setPage(1);
