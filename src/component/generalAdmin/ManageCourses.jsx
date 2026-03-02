@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { FaBook, FaEdit, FaTrash, FaPlus, FaEye, FaSearch, FaFilter, FaUserPlus, FaArrowLeft } from "react-icons/fa";
+import { useNavigate } from 'react-router-dom';
 
 const BASE = "https://gibi-backend-669108940571.us-central1.run.app";
 
@@ -14,7 +15,8 @@ const normalizeCourse = (raw) => {
 };
 
 const ManageCourses = () => {
-  // === Course States ===
+  const navigate = useNavigate();
+
   const [courseName, setCourseName] = useState("");
   const [courseDescription, setCourseDescription] = useState("");
   const [courses, setCourses] = useState([]);
@@ -46,6 +48,9 @@ const ManageCourses = () => {
       fetchCourses();
     }
   }, [selectedAction]);
+  useEffect(() => {
+    setPage(1);
+  }, [courses]);
 
   // === Search by course id ===
   const fetchCourseById = async () => {
@@ -80,6 +85,13 @@ const ManageCourses = () => {
       console.error(err);
       setCourses([]);
       setAllCourses([]);
+    }
+  };
+  const fetchCourseAndOpenView = (id) => {
+    const course = courses.find(c => c.id === id);
+    if (course) {
+      setSelectedCourse(course);
+      setSelectedAction("detail");
     }
   };
 
@@ -169,7 +181,6 @@ const ManageCourses = () => {
               type="text"
               placeholder="Enter course id"
               value={searchId}
-              onFocus={() => setIsSearchActive(true)}
               onChange={(e) => setSearchId(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && fetchCourseById()}
               className="flex-1 border rounded px-3 py-2 pr-10"
@@ -185,11 +196,24 @@ const ManageCourses = () => {
             <FaFilter className="w-5 h-5" />
           </button>
         </div>
-
+        {showFilter && (
+          <div className="flex gap-2 mt-2">
+            <input
+              type="text"
+              placeholder="Filter by name"
+              value={filterName}
+              onChange={(e) => setFilterName(e.target.value)}
+              className="border px-2 py-1 rounded"
+            />
+            <button onClick={applyFilter} className="px-3 py-1 bg-yellow-500 text-white rounded">
+              Apply
+            </button>
+          </div>
+        )}
         {/* Title + Add Button */}
         <div className="flex justify-between items-center mt-2">
           <button
-            onClick={() => "/admin"}
+            onClick={() => navigate('/admin')}
             className="flex items-center gap-1 px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
           >
             <FaArrowLeft /> Back
@@ -221,7 +245,7 @@ const ManageCourses = () => {
                 <tr
                   key={c.id}
                   className="hover:bg-yellow-50 transition rounded-lg cursor-pointer"
-                  onClick={() => fetchCourseAndOpenView(s.id)}
+                  onClick={() => fetchCourseAndOpenView(c.id)}
                 >
                   <td className="px-4 py-2">{index + 1}</td>
                   <td className="px-4 py-2">{c.id}</td>
@@ -230,13 +254,13 @@ const ManageCourses = () => {
 
                   <td className="px-4 py-2 flex gap-2">
                     <button
-                      onClick={(e) => { e.stopPropagation(); openEditForm(s); }}
+                      onClick={(e) => { e.stopPropagation(); openEditForm(c); }}
                       className="px-2 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600"
                     >
                       Edit
                     </button>
                     <button
-                      onClick={(e) => { e.stopPropagation(); openDeleteConfirm(s); }}
+                      onClick={(e) => { e.stopPropagation(); openDeleteConfirm(c); }}
                       className="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600"
                     >
                       Delete
@@ -265,10 +289,10 @@ const ManageCourses = () => {
 
               {/* Right: Edit / Delete */}
               <div className="sm:hidden mt-2 flex gap-2">
-                <button onClick={(e) => { e.stopPropagation(); openEditForm(s); }} className="text-yellow-500">
+                <button onClick={(e) => { e.stopPropagation(); openEditForm(c); }} className="text-yellow-500">
                   <FaEdit />
                 </button>
-                <button onClick={(e) => { e.stopPropagation(); openDeleteConfirm(s); }} className="text-red-500">
+                <button onClick={(e) => { e.stopPropagation(); openDeleteConfirm(c); }} className="text-red-500">
                   <FaTrash />
                 </button>
               </div>
@@ -363,7 +387,7 @@ const ManageCourses = () => {
             />
 
             <button
-              onClick={fetchCourseByCode}
+              onClick={fetchCourseById}
               className="bg-blue-600 text-white px-4 py-2 rounded"
             >
               <FaSearch className="w-4 h-4" />
@@ -441,8 +465,7 @@ const ManageCourses = () => {
 
                   <button
                     onClick={() => {
-                      setSelectedCourse(c);
-                      setSelectedAction("delete");
+                      openDeleteConfirm(c);
                     }}
                     className="px-2 py-1 bg-red-600 text-white rounded"
                   >
