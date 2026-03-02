@@ -114,16 +114,11 @@ const ManageCourses = () => {
   };
   // === Add new course ===
   const handleAddCourse = async () => {
-    if (!courseName) {
-      return alert("Fill all fields");
-    }
+
     if (!courseName.trim()) {
       return alert("Course name is required");
     }
-    if (!searchId.trim()) {
-      alert("Please enter a course ID");
-      return;
-    }
+
     const newCourse = {
       course_name: courseName,
       description: courseDescription,
@@ -151,21 +146,24 @@ const ManageCourses = () => {
     setCourseName(n.name);
     setCourseDescription(n.description);
     setShowEditPopup(true);
+    setSelectedAction("");
   };
 
-  const handleSaveEditCourse = async (id) => {
+  const handleSaveEditCourse = async () => {
+    if (!selectedCourse?.id) return;
+
     const updated = {
       course_name: courseName,
       description: courseDescription,
     };
 
-    const res = await fetch(`${BASE}/course/${encodeURIComponent(id)}`, {
+    const res = await fetch(`${BASE}/course/${encodeURIComponent(selectedCourse.id)}`, {  // ✅ Use selectedCourse.id
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(updated),
       credentials: 'include'
     });
-    if (!selectedCourse?.id) return;
+
     if (!res.ok) return alert("Failed to update");
 
     await fetchCourses();
@@ -178,9 +176,9 @@ const ManageCourses = () => {
     setShowDeletePopup(true);
   };
 
-  const handleDeleteCourse = async (id) => {
-    const res = await fetch(`${BASE}/course/${encodeURIComponent(id)}`, { method: "DELETE", credentials: 'include' });
+  const handleDeleteCourse = async () => {
     if (!selectedCourse?.id) return;
+    const res = await fetch(`${BASE}/course/${encodeURIComponent(selectedCourse.id)}`, { method: "DELETE", credentials: 'include' });
     if (!res.ok) return alert("Failed to delete");
 
     await fetchCourses();
@@ -459,46 +457,48 @@ const ManageCourses = () => {
       )}
 
       {/* VIEW */}
-      {selectedAction === "detail" && (
-        <div className="mt-4 space-y-4">
-          {courses.map((c) => (
-            <div key={c.id} className="p-4 rounded bg-white shadow border">
-              <div className="flex justify-between items-center">
-                <div className="flex items-center gap-2">
-                  <input type="checkbox" />
-                  <span className="font-semibold">ID: {c.id}</span>
-                </div>
 
-                <div className="flex gap-2">
+      {selectedAction === "detail" && selectedCourse && (
+        <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50">
+          <div className="bg-white p-6 rounded-lg w-80 shadow-lg">
+            <h2 className="font-semibold text-lg mb-4">Course Details</h2>
 
-                  <button
-                    onClick={() => {
-                      setCourseName(selectedCourse.name);
-                      setCourseDescription(selectedCourse.description);
-                      setSelectedAction("edit");
-                    }}
-                    className="px-2 py-1 bg-yellow-600 text-white rounded"
-                  >
-                    Edit
-                  </button>
+            <p><strong>ID:</strong> {selectedCourse.id}</p>
+            <p><strong>Name:</strong> {selectedCourse.name}</p>
+            <p><strong>Description:</strong> {selectedCourse.description || 'No description'}</p>
 
-                  <button
-                    onClick={() => {
-                      openDeleteConfirm(c);
-                    }}
-                    className="px-2 py-1 bg-red-600 text-white rounded"
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>
+            <div className="flex gap-2 mt-4">
+              <button
+                onClick={() => {
+                  openEditForm(selectedCourse);
+                  setSelectedAction(""); // Close view popup
+                }}
+                className="flex-1 px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600"
+              >
+                Edit
+              </button>
 
-              <div className="mt-2">
-                <p><strong>Name:</strong> {c.name}</p>
-                <p><strong>Description:</strong> {c.description}</p>
-              </div>
+              <button
+                onClick={() => {
+                  openDeleteConfirm(selectedCourse);
+                  setSelectedAction(""); // Close view popup
+                }}
+                className="flex-1 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+              >
+                Delete
+              </button>
             </div>
-          ))}
+
+            <button
+              onClick={() => {
+                setSelectedAction("");
+                setSelectedCourse(null);
+              }}
+              className="w-full px-4 py-2 bg-gray-300 rounded mt-2 hover:bg-gray-400"
+            >
+              Close
+            </button>
+          </div>
         </div>
       )}
 
@@ -528,24 +528,51 @@ const ManageCourses = () => {
       )}
 
       {/* EDIT POPUP */}
+
       {showEditPopup && selectedCourse && (
-        <div className="fixed inset-0 bg-black/40 flex justify-center items-center">
-          <div className="bg-white p-6 rounded w-80">
-            <p className="font-bold">Confirm Edit?</p>
+        <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50">
+          <div className="bg-white p-6 rounded-lg w-full max-w-sm max-h-[90vh] overflow-y-auto shadow-lg">
+            <h2 className="font-semibold text-lg mb-4">Edit Course</h2>
+
+            <div className="flex flex-col gap-3">
+              <input
+                type="text"
+                value={courseName}
+                onChange={(e) => setCourseName(e.target.value)}
+                placeholder="Course Name"
+                className="border px-3 py-2 rounded w-full"
+              />
+
+              <textarea
+                value={courseDescription}
+                onChange={(e) => setCourseDescription(e.target.value)}
+                placeholder="Description"
+                rows="4"
+                className="border px-3 py-2 rounded w-full"
+              />
+            </div>
 
             <div className="flex justify-between mt-4">
-              <button onClick={() => setShowEditPopup(false)}>
+              <button
+                onClick={() => {
+                  setShowEditPopup(false);
+                  setCourseName("");
+                  setCourseDescription("");
+                  setSelectedCourse(null);
+                }}
+                className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
+              >
                 Cancel
               </button>
 
               <button
                 onClick={async () => {
-                  await handleSaveEditCourse(selectedCourse.id);
+                  await handleSaveEditCourse();
                   setShowEditPopup(false);
-                  setSelectedAction("");
                 }}
+                className="px-4 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700"
               >
-                Yes
+                Save Changes
               </button>
             </div>
           </div>
