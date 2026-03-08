@@ -29,12 +29,20 @@ const ManageStudents = () => {
   const [studentGender, setStudentGender] = useState("male");
   const [searchId, setSearchId] = useState("");
   const [page, setPage] = useState(1);
-  const studentsPerPage = 6;
   const [showFilter, setShowFilter] = useState(false);
   const [filterName, setFilterName] = useState("");
   const [filterDepartment, setFilterDepartment] = useState("");
-
+  const [filteredStudents, setFilteredStudents] = useState([]);
   const [students, setStudents] = useState([]);
+  const [studentForm, setStudentForm] = useState({
+    firstname: "",
+    lastname: "",
+    email: "",
+    phone: "",
+    department: "",
+    gender: "male",
+    id: ""
+  });
 
   const [studentDepartment, setStudentDepartment] = useState("");
   const [showAddPopup, setShowAddPopup] = useState(false);
@@ -67,7 +75,7 @@ const ManageStudents = () => {
   const searchStudents = async () => {
     try {
       const q = new URLSearchParams();
-      if (searchId) q.set('query', searchId); // searchId can be name or ID
+      if (searchId) q.set('query', searchId);
       if (filterName) q.set('name', filterName);
       if (filterDepartment) q.set('department', filterDepartment);
 
@@ -105,20 +113,48 @@ const ManageStudents = () => {
       const list = Array.isArray(payload) ? payload : (payload.data || payload.students || payload.students_list || []);
       const normalized = (list || []).map(normalizeStudent);
       setStudents(normalized);
+      setFilteredStudents(normalized);
 
     } catch (err) {
       console.log("Backend error:", err);
       alert("Cannot fetch students from backend. Please check the server.");
     }
   };
+  const applyFilter = () => {
+    let filtered = [...students];
 
+    if (filterName) {
+      filtered = filtered.filter(s =>
+        `${s.firstname} ${s.lastname}`.toLowerCase().includes(filterName.toLowerCase())
+      );
+    }
 
+    if (filterDepartment) {
+      filtered = filtered.filter(s =>
+        s.department.toLowerCase() === filterDepartment.toLowerCase()
+      );
+    }
+
+    setFilteredStudents(filtered);
+  };
+  React.useEffect(() => {
+    const search = searchId.trim();
+    if (!search) {
+      fetchStudents();
+      return;
+    }
+    const timeoutId = setTimeout(() => {
+      fetchStudentById(search);
+
+    }, 300);
+    return () => clearTimeout(timeoutId);
+  }, [searchId])
   React.useEffect(() => {
     fetchStudents();
   }, []);
-  const fetchStudentById = async () => {
+  const fetchStudentById = async (query) => {
 
-    const search = searchId.trim();
+    const search = query.trim();
     if (!search) {
       fetchStudents();
       return;
@@ -141,33 +177,12 @@ const ManageStudents = () => {
       alert("Cannot fetch student by id");
     }
   };
-  React.useEffect(() => {
-    if (selectedAction === "view") {
-      fetchStudents();
-    }
-  }, [selectedAction]);
 
-
-  const [studetnPerPage, setStudentPerPage] = useState(10)
-  const applyFilter = async () => {
-    try {
-      const q = new URLSearchParams();
-      if (filterName) q.set('name', filterName);
-      if (filterDepartment) q.set('department', filterDepartment);
-      const res = await fetch(`${BASE}/student?${q.toString()}`, { method: 'GET', headers: { 'Content-Type': 'application/json' }, credentials: 'include' });
-      if (!res.ok) return alert('Filter request failed');
-      const payload = await res.json();
-      const list = Array.isArray(payload) ? payload : (payload.data || payload.students || []);
-      setStudents((list || []).map(normalizeStudent));
-    } catch (err) {
-      console.error(err);
-      alert('Cannot apply filter');
-    }
-  };
+  const [studentsPerPage, setStudentsPerPage] = useState(10)
 
   // === Handlers ===
   const handleAddStudent = async () => {
-    // debug: log current form state
+
     console.log('handleAddStudent values', {
       studentFirstName,
       studentLastName,
@@ -224,7 +239,6 @@ const ManageStudents = () => {
       enrollment_date: etDate,
     };
 
-
     try {
       const res = await fetch(`${BASE}/student`, {
         method: "POST",
@@ -245,7 +259,7 @@ const ManageStudents = () => {
       }
 
       const result = await res.json();
-      // try several common response shapes
+
       const created = result.createdStudent || result.data || result.student || result;
       setStudents(prev => [
         ...prev,
@@ -339,10 +353,44 @@ const ManageStudents = () => {
   const handleSearchChange = (e) => {
     setSearchId(e.target.value);
   };
-
+  const StudentForm = ({ student, setStudent, onSubmit, title }) => (
+    <div>
+      <h2 className="font-semibold mb-4 text-xl">{title}</h2>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+        {['FirstName', 'LastName', 'Id', 'Phone', 'Email', 'Department'].map((field) => (
+          <div key={field} className="flex flex-col gap-1">
+            <label className="text-sm font-medium">{field}:</label>
+            <input
+              type={field === 'Email' ? 'email' : 'text'}
+              placeholder={field}
+              value={student[field.toLowerCase()]}
+              onChange={(e) => setStudent(prev => ({ ...prev, [field.toLowerCase()]: e.target.value }))}
+              className="border rounded h-10 px-2 w-full"
+            />
+          </div>
+        ))}
+        <div className="flex flex-col gap-1">
+          <label className="text-sm font-medium">Gender:</label>
+          <select
+            value={student.gender}
+            onChange={(e) => setStudent(prev => ({ ...prev, gender: e.target.value }))}
+            className="border rounded h-10 px-2 w-full"
+          >
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+          </select>
+        </div>
+      </div>
+      <div className="flex justify-center">
+        <button onClick={onSubmit} className="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600 transition">
+          Save
+        </button>
+      </div>
+    </div>
+  );
   const searchStudentHandler = () => {
     if (searchId.trim() === "") return;
-    searchStudent(searchId);
+    searchStudents(searchId);
   };
 
   // fetch and open view for a single student id 
@@ -378,7 +426,7 @@ const ManageStudents = () => {
   const totalPages = Math.ceil(students.length / studentsPerPage);
 
   return (
-    <div className="bg-white p-4 sm:p-6 w-full max-w-full sm:max-w-4xl mx-auto flex flex-col gap-4 mt-4 sm:mt-8 rounded-xl shadow-md overflow-x-hidden">
+    <div className="bg-white p-4 sm:p-6 w-full max-w-full sm:max-w-md mx-auto flex flex-col gap-4 mt-4 sm:mt-8 rounded-xl shadow-md overflow-x-hidden">
 
       < div className="flex flex-col gap-3 mb-4 px-2" >
         {/* Search + Filter */}
@@ -390,13 +438,13 @@ const ManageStudents = () => {
               value={searchId}
               onFocus={() => setIsSearchActive(true)}
               onChange={(e) => setSearchId(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && fetchStudentById()}
               className="flex-1 border rounded px-3 py-2 pr-10"
             />
 
           </div>
           <button
             onClick={() => {
+
               setShowFilter(!showFilter)
             }}
             className="p-2 bg-yellow-600 rounded"
@@ -408,7 +456,13 @@ const ManageStudents = () => {
         {/* Title + Add Button */}
         < div className="flex justify-between items-center mt-2" >
           <button
-            onClick={() => window.history.back()}
+            onClick={() => {
+              setSelectedAction("");
+              setShowViewPopup(false);
+              setShowEditPopup(false);
+              setShowAddPopup(false);
+              setSelectedStudent(null);
+            }}
             className="flex items-center gap-1 px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
           >
             <FaArrowLeft /> Back
@@ -437,7 +491,7 @@ const ManageStudents = () => {
               </tr>
             </thead>
             <tbody>
-              {paginatedStudents.map((s, index) => (
+              {filteredStudents.map((s, index) => (
                 <tr
                   key={s.id}
                   className="hover:bg-yellow-50 transition rounded-lg cursor-pointer"
@@ -468,7 +522,7 @@ const ManageStudents = () => {
           </table>
         </div>
         <div className="sm:hidden">
-          {paginatedStudents.map((s) => (
+          {filteredStudents.map((s) => (
             <div
               key={s.id}
               onClick={() => fetchStudentAndOpenView(s.id)}
@@ -480,7 +534,7 @@ const ManageStudents = () => {
                 <p className="text-sm text-gray-500">{s.id}</p>
               </div>
 
-              {/* Right: Edit / Delete */}
+
               <div className="sm:hidden mt-2 flex gap-2">
                 <button onClick={(e) => { e.stopPropagation(); openEditForm(s); }} className="text-yellow-500">
                   <FaEdit />
@@ -534,7 +588,20 @@ const ManageStudents = () => {
           >
             Next
           </button>
-
+          <label className="flex items-center gap-2">
+            Show:
+            <select
+              value={studentsPerPage}
+              onChange={(e) => setStudentsPerPage(Number(e.target.value))}
+              className="border rounded px-2 py-1"
+            >
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+              <option value={25}>25</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+            </select>
+          </label>
         </div>
       </div>
       {/* Add Student Form */}
