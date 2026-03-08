@@ -36,16 +36,16 @@ const GeneralAdmin = () => {
           </div>
         )}
 
-        {/* Tabs */}
 
-        {/* Step 1: Select Category */}
+
+        {/*tabs  */}
         {!selectedCategory && (
 
-          <div className="bg-white/70 sm:max-w-md md:max-w-lg lg:max-w-xl min-h-[40vh] mx-auto  p-4 rounded-xl shadow-md  max-h-screen overflsow-clip backdrop-blur-md w-full">
+          <div className="bg-white/70 sm:max-w-md md:max-w-lg lg:max-w-xl min-h-[40vh] mx-auto  p-4 rounded-xl shadow-md  max-h-screen overflow-clip backdrop-blur-md w-full">
             <>
               <h2 className="text-2xl font-bold  text-center  mt-4 mb-4">Manage</h2>
 
-              <div className="flex flex-col gap-2 sm:gap-3 md:gap-2 max-h-[80vh] overflow-auto">
+              <div className="flex flex-col gap-2 sm:gap-3 sm:max-w-md md:gap-2 max-h-[80vh] overflow-auto">
                 <button onClick={() => setSelectedCategory("students")}
                   className="flex items-center gap-1 bg-yellow-500  text-white px-4 py-2 font-bold rounded w-full hover:bg-yellow-600 sm:text-3xl md:text-3xl  active:scale-95 transition">
                   <FaUserGraduate className="w-6 h-6" />
