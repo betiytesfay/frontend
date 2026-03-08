@@ -136,6 +136,7 @@ const ManageStudents = () => {
     }
 
     setFilteredStudents(filtered);
+    setPage(1);
   };
   React.useEffect(() => {
     const search = searchId.trim();
@@ -424,7 +425,6 @@ const ManageStudents = () => {
     startIndex + studentsPerPage
   );
   const totalPages = Math.ceil(students.length / studentsPerPage);
-
   return (
     <div className="bg-white p-4 sm:p-6 w-full max-w-full sm:max-w-md mx-auto flex flex-col gap-4 mt-4 sm:mt-8 rounded-xl shadow-md overflow-x-hidden">
 
