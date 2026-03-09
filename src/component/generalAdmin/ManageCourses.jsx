@@ -186,12 +186,12 @@ const ManageCourses = () => {
   };
 
   return (
-    <div className="bg-white px-3 mt-8 rounded-lg w-full max-w-3xl ms:max-w-lg mx-auto">
+    <div className="bg-white p-6 max-w-5xl mx-auto flex flex-col justify-center gap-4 mt-8 rounded-xl shadow-md w-full">
 
       <div className="flex flex-col gap-3 mb-4 px-2">
         {/* Search + Filter */}
         <div className="flex items-center gap-2 w-full relative">
-          <div className="flex-1 relative">
+          <div className="flex flex-row gap-2">
             <input
               type="text"
               placeholder="Enter course id"

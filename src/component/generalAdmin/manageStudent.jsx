@@ -109,7 +109,7 @@ const ManageStudents = () => {
       alert('Search failed');
     }
   };
-
+  const [filterGender, setFilterGender] = useState("");
   // === Action state ===
   const [selectedAction, setSelectedAction] = useState(""); // "add", "edit", "delete"
   // load all students from backend
@@ -148,6 +148,11 @@ const ManageStudents = () => {
         s.department.toLowerCase() === filterDepartment.toLowerCase()
       );
     }
+    if (filterGender) {
+      filtered = filtered.filter(s =>
+        s.gender.toLowerCase() === filterGender.toLowerCase()
+      );
+    }
 
     setFilteredStudents(filtered);
     setPage(1);
@@ -163,7 +168,6 @@ const ManageStudents = () => {
       );
     }
 
-    // Apply additional filters (name/department)
     if (filterName) {
       filtered = filtered.filter(s =>
         `${s.firstname} ${s.lastname}`.toLowerCase().includes(filterName.toLowerCase())
@@ -175,10 +179,15 @@ const ManageStudents = () => {
         s.department.toLowerCase() === filterDepartment.toLowerCase()
       );
     }
+    if (filterGender) {
+      filtered = filtered.filter(s =>
+        s.gender.toLowerCase() === filterGender.toLowerCase()
+      );
+    }
 
     setFilteredStudents(filtered);
     setPage(1);
-  }, [searchId, filterName, filterDepartment, students]);
+  }, [searchId, filterName, filterDepartment, filterGender, students]);
 
   React.useEffect(() => {
     fetchStudents();
@@ -257,7 +266,7 @@ const ManageStudents = () => {
     const now = new Date();
     const [etYear, etMonth, etDay] = toEthiopian(now.getFullYear(), now.getMonth() + 1, now.getDate());
     const etDate = `${etYear}-${String(etMonth).padStart(2, '0')}-${String(etDay).padStart(2, '0')}`;
-
+    const [filterGender, setFilterGender] = useState("");
     const newStudent = {
       student_id: id,
       first_name: f,
@@ -508,6 +517,13 @@ const ManageStudents = () => {
                 <option value="Laws">Laws</option>
                 <option value="other">Other</option>
               </select>
+              <select value={filterGender} onChange={(e) => setFilterGender(e.target.value)}
+                className="w-full border px-3 py-2 rounded mb-2 text-base">
+                <option value="">All Gender</option>
+                <option value="male">male</option>
+                <option value="female">female</option>
+
+              </select>
               <button
                 onClick={applyFilter}
                 className="w-full px-4 py-2 bg-yellow-600 text-white rounded text-base"
@@ -530,14 +546,16 @@ const ManageStudents = () => {
             }}
             className="flex items-center gap-1 px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
           >
-            <FaArrowLeft /> Back
+            <FaArrowLeft />
+            <span className="hidden sm:inline">Back</span>
           </button>
           <h2 className="font-bold text-lg">Students</h2>
           <button
             onClick={() => setSelectedAction("add")}
             className="flex items-center gap-1 bg-yellow-500 text-white px-3 py-2 rounded hover:bg-yellow-600"
           >
-            <FaUserPlus /> Add
+            <FaUserPlus />
+            <span className="hidden sm:inline">Add</span>
           </button>
         </div >
       </div >
