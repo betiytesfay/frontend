@@ -139,17 +139,33 @@ const ManageStudents = () => {
     setPage(1);
   };
   React.useEffect(() => {
-    const search = searchId.trim();
-    if (!search) {
-      fetchStudents();
-      return;
-    }
-    const timeoutId = setTimeout(() => {
-      fetchStudentById(search);
+    const search = searchId.trim().toLowerCase();
+    let filtered = [...students];
 
-    }, 300);
-    return () => clearTimeout(timeoutId);
-  }, [searchId])
+    if (search) {
+      filtered = filtered.filter(s =>
+        s.id.toLowerCase().includes(search) ||
+        `${s.firstname} ${s.lastname}`.toLowerCase().includes(search)
+      );
+    }
+
+    // Apply additional filters (name/department)
+    if (filterName) {
+      filtered = filtered.filter(s =>
+        `${s.firstname} ${s.lastname}`.toLowerCase().includes(filterName.toLowerCase())
+      );
+    }
+
+    if (filterDepartment) {
+      filtered = filtered.filter(s =>
+        s.department.toLowerCase() === filterDepartment.toLowerCase()
+      );
+    }
+
+    setFilteredStudents(filtered);
+    setPage(1);
+  }, [searchId, filterName, filterDepartment, students]);
+
   React.useEffect(() => {
     fetchStudents();
   }, []);
@@ -420,13 +436,13 @@ const ManageStudents = () => {
     }
   };
   const startIndex = (page - 1) * studentsPerPage;
-  const paginatedStudents = students.slice(
+  const paginatedStudents = filteredStudents.slice(
     startIndex,
     startIndex + studentsPerPage
   );
-  const totalPages = Math.ceil(students.length / studentsPerPage);
+  const totalPages = Math.ceil(filteredStudents.length / studentsPerPage);
   return (
-    <div className="bg-white p-4 sm:p-6 w-full max-w-full sm:max-w-md mx-auto flex flex-col gap-4 mt-4 sm:mt-8 rounded-xl shadow-md overflow-x-hidden">
+    <div className="bg-white p-4 sm:p-6 w-full max-w-full sm:max-w-md md:max-w-sm mx-auto flex flex-col gap-4 mt-4 sm:mt-8 rounded-xl shadow-md overflow-x-auto">
 
       < div className="flex flex-col gap-3 mb-4 px-2" >
         {/* Search + Filter */}
@@ -442,9 +458,36 @@ const ManageStudents = () => {
             />
 
           </div>
+          {showFilter && (
+            <div className="mt-2 border p-3 rounded bg-white shadow absolute z-10 w-full sm:w-64 right-0">
+              <input
+                type="text"
+                placeholder="Name…"
+                value={filterName}
+                onChange={(e) => setFilterName(e.target.value)}
+                className="w-full border px-3 py-2 rounded mb-2"
+              />
+              <select
+                value={filterDepartment}
+                onChange={(e) => setFilterDepartment(e.target.value)}
+                className="w-full border px-3 py-2 rounded mb-2"
+              >
+                <option value="">Department</option>
+                <option value="Accounting">Accounting</option>
+                <option value="Computer Science">Computer Science</option>
+                {/* add other departments */}
+              </select>
+              <button
+                onClick={applyFilter}
+                className="w-full px-4 py-2 bg-blue-600 text-white rounded"
+              >
+                Apply
+              </button>
+            </div>
+          )}
           <button
             onClick={() => {
-
+              applyFilter();
               setShowFilter(!showFilter)
             }}
             className="p-2 bg-yellow-600 rounded"
@@ -526,7 +569,7 @@ const ManageStudents = () => {
             <div
               key={s.id}
               onClick={() => fetchStudentAndOpenView(s.id)}
-              className="border rounded p-3 flex justify-between items-center shadow bg-white cursor-pointer"
+              className="border rounded p-3 flex justify-start items-center shadow flex-col bg-white cursor-pointer"
             >
 
               <div>
@@ -535,7 +578,7 @@ const ManageStudents = () => {
               </div>
 
 
-              <div className="sm:hidden mt-2 flex gap-2">
+              <div className="sm:hidden mt-1 flex gap-1">
                 <button onClick={(e) => { e.stopPropagation(); openEditForm(s); }} className="text-yellow-500">
                   <FaEdit />
                 </button>
