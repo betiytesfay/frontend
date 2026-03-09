@@ -228,7 +228,7 @@ const ManageCourses = () => {
           </div>
         )}
         {/* Title + Add Button */}
-        <div className="flex justify-between items-center mt-2">
+        <div className="flex justify-between items-center mt-2 flex-col gap-2.5  sm:hidden">
           <button
             onClick={() => navigate('/admin')}
             className="flex items-center gap-1 px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
@@ -298,18 +298,23 @@ const ManageCourses = () => {
               }}
               className="border rounded p-3 flex justify-between items-center shadow bg-white cursor-pointer"
             >
-
-              <div>
+              <div className="flex-1">
                 <p className="font-semibold">{c.name}</p>
                 <p className="text-sm text-gray-500">{c.id}</p>
               </div>
 
-              {/* Right: Edit / Delete */}
-              <div className="sm:hidden mt-2 flex gap-2">
-                <button onClick={(e) => { e.stopPropagation(); openEditForm(c); }} className="text-yellow-500">
+              <div className="flex gap-2 ml-2">
+                <button
+                  onClick={(e) => { e.stopPropagation(); openEditForm(c); }}
+                  className="text-yellow-500"
+                >
                   <FaEdit />
                 </button>
-                <button onClick={(e) => { e.stopPropagation(); openDeleteConfirm(c); }} className="text-red-500">
+
+                <button
+                  onClick={(e) => { e.stopPropagation(); openDeleteConfirm(c); }}
+                  className="text-red-500"
+                >
                   <FaTrash />
                 </button>
               </div>
