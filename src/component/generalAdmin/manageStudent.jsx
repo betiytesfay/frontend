@@ -56,6 +56,20 @@ const ManageStudents = () => {
     setSelectedStudent(student);
     setShowDeletePopup(true);
   };
+  const [styleTag] = useState(`
+    <style>
+      @media (max-width: 400px) {
+        .fixed.inset-0 .bg-white {
+          width: 95% !important;
+          margin-left: 2.5% !important;
+        }
+        .sm\\:max-w-md {
+          max-width: 100% !important;
+        }
+      }
+        
+    </style>
+  `);
 
   const openEditForm = (student) => {
     setSelectedStudent(student);
@@ -442,59 +456,67 @@ const ManageStudents = () => {
   );
   const totalPages = Math.ceil(filteredStudents.length / studentsPerPage);
   return (
-    <div className="bg-white p-4 sm:p-6 w-full max-w-full sm:max-w-md md:max-w-sm mx-auto flex flex-col gap-4 mt-4 sm:mt-8 rounded-xl shadow-md overflow-x-auto">
+    <div className="bg-white p-3 sm:p-5 md:p-6 w-full max-w-full mx-auto flex flex-col gap-2 sm:gap-3 md:gap-4 mt-2 sm:mt-4 md:mt-8 rounded-xl shadow-md overflow-x-hidden min-h-screen">
 
       < div className="flex flex-col gap-3 mb-4 px-2" >
         {/* Search + Filter */}
-        < div className="flex items-center gap-2 w-full relative" >
-          <div className="flex-1 relative">
+        {/* Search + Filter */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 w-full relative">
+          <div className="w-full sm:flex-1 relative">
             <input
               type="text"
-              placeholder="Enter Id(0000-00)"
+              placeholder="Student ID (0000-00)"
               value={searchId}
               onFocus={() => setIsSearchActive(true)}
               onChange={(e) => setSearchId(e.target.value)}
-              className="flex-1 border rounded px-3 py-2 pr-10"
+              className="w-full border rounded px-3 py-2 sm:py-2.5 text-base"
             />
-
           </div>
+
+          {/* Filter button */}
+          <div className="flex justify-end w-full sm:w-auto">
+            <button
+              onClick={() => {
+                applyFilter();
+                setShowFilter(!showFilter);
+              }}
+              className="p-2.5 sm:p-2 bg-yellow-600 rounded flex items-center justify-center"
+            >
+              <FaFilter className="w-4 h-4 sm:w-5 sm:h-5" />
+            </button>
+          </div>
+
+          {/* Filter dropdown */}
           {showFilter && (
-            <div className="mt-2 border p-3 rounded bg-white shadow absolute z-10 w-full sm:w-64 right-0">
+            <div className="mt-2 border p-3 rounded bg-white shadow absolute z-10 w-full sm:w-64 right-0 top-full">
               <input
                 type="text"
                 placeholder="Name…"
                 value={filterName}
                 onChange={(e) => setFilterName(e.target.value)}
-                className="w-full border px-3 py-2 rounded mb-2"
+                className="w-full border px-3 py-2 rounded mb-2 text-base"
               />
               <select
                 value={filterDepartment}
                 onChange={(e) => setFilterDepartment(e.target.value)}
-                className="w-full border px-3 py-2 rounded mb-2"
+                className="w-full border px-3 py-2 rounded mb-2 text-base"
               >
                 <option value="">Department</option>
                 <option value="Accounting">Accounting</option>
-                <option value="Computer Science">Computer Science</option>
-                {/* add other departments */}
+                <option value="Management">Management</option>
+                <option value="Economics">Economics</option>
+                <option value="Laws">Laws</option>
+                <option value="other">Other</option>
               </select>
               <button
                 onClick={applyFilter}
-                className="w-full px-4 py-2 bg-blue-600 text-white rounded"
+                className="w-full px-4 py-2 bg-yellow-600 text-white rounded text-base"
               >
                 Apply
               </button>
             </div>
           )}
-          <button
-            onClick={() => {
-              applyFilter();
-              setShowFilter(!showFilter)
-            }}
-            className="p-2 bg-yellow-600 rounded"
-          >
-            <FaFilter className="w-5 h-5" />
-          </button>
-        </div >
+        </div>
 
         {/* Title + Add Button */}
         < div className="flex justify-between items-center mt-2" >
@@ -519,7 +541,7 @@ const ManageStudents = () => {
           </button>
         </div >
       </div >
-      <div className="flex flex-col gap-3 mt-2 px-2">
+      <div className="flex flex-col gap-3 mt-2 px-1">
         {/* PC Table View */}
         <div className="hidden sm:block w-full  overflow-x-auto mt-2">
           <table className="min-w-full w-full border-collapse border border-gray-200 shadow-sm rounded-lg">
@@ -569,12 +591,12 @@ const ManageStudents = () => {
             <div
               key={s.id}
               onClick={() => fetchStudentAndOpenView(s.id)}
-              className="border rounded p-3 flex justify-start items-center shadow flex-col bg-white cursor-pointer"
+              className="border rounded p-3 mb-1 flex justify-between items-center shadow  bg-white cursor-pointer"
             >
 
-              <div>
-                <p className="font-semibold">{s.firstname} {s.lastname}</p>
-                <p className="text-sm text-gray-500">{s.id}</p>
+              <div className="flex-1 min-w-0 mr-2">
+                <p className="font-semibold truncate">{s.firstname} {s.lastname}</p>
+                <p className="text-sm text-gray-500 truncate">{s.id}</p>
               </div>
 
 
