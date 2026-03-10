@@ -9,6 +9,7 @@ export default function AttendancePage() {
   const navigate = useNavigate();
   const [batchId, setBatchId] = useState('');
   const [ethDate, setEthDate] = useState('');
+  const [loading, setLoading] = useState(false);
   const [date, setDate] = useState('');
   const [allCourseDates, setAllCourseDates] = useState([]);
   const [filteredCourseDates, setFilteredCourseDates] = useState([]);
@@ -110,36 +111,32 @@ export default function AttendancePage() {
   };
 
   const handleSendAllSessionsToBackend = async () => {
-    if (savedSessions.length === 0) {
-      alert('No sessions to send.');
-      return;
+    setLoading(true);
+
+    const promises = savedSessions.flatMap(session =>
+      session.students.map(student => {
+        const payload = {
+          date_id: Number(session.courseDateId),
+          student_id: student.student_id,
+          is_present: Boolean(student.is_present),
+        };
+        return axios.post(`${BASE_URL}/attendance`, payload, { withCredentials: true });
+      })
+    );
+
+    const results = await Promise.allSettled(promises);
+
+    const failed = results.filter(r => r.status === 'rejected');
+    if (failed.length > 0) {
+      setToastMessage(`${failed.length} students failed to send`);
+    } else {
+      setToastMessage('All students sent successfully!');
     }
 
-    try {
-      for (const session of savedSessions) {
-        for (const student of session.students) {
-          await axios.post(
-            `${BASE_URL}/attendance`,
-            {
-              date_id: Number(session.courseDateId),
-              student_id: student.student_id,
-              is_present: student.is_present,
-            },
-            { withCredentials: true }
-          );
-        }
-      }
+    setShowToast(true);
+    setTimeout(() => setShowToast(false), 4000);
 
-      setSavedSessions([]);
-      localStorage.removeItem('attendanceSessions');
-
-      setToastMessage('All sessions sent to backend successfully!');
-      setShowToast(true);
-      setTimeout(() => setShowToast(false), 4000);
-    } catch (err) {
-      console.error(err);
-      alert('Failed to send all sessions. Check your internet connection.');
-    }
+    setLoading(false);
   };
 
   const handleDoneAttendance = () => {
@@ -282,7 +279,7 @@ export default function AttendancePage() {
             date_id: Number(session.courseDateId),
             student_id: student.student_id,
             is_present: student.is_present,
-            //maybe the admin
+
           },
           { withCredentials: true }
         );
@@ -571,8 +568,6 @@ export default function AttendancePage() {
                         {getCourseNameByDateId(session.courseDateId)}
                       </td>
 
-
-
                       <td className="border border-gray-300 px-3 py-2">{session.batchId}</td>
                       <td className="border border-gray-300 px-3 py-2 flex gap-2">
                         <button
@@ -599,9 +594,10 @@ export default function AttendancePage() {
         {savedSessions.length > 0 && (
           <button
             onClick={handleSendAllSessionsToBackend}
-            className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition mb-4"
+            disabled={loading}
+            className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition mb-4 disabled:opacity-50"
           >
-            Send All Sessions to Backend
+            {loading ? 'Sending...' : 'Send All Sessions to Backend'}
           </button>
         )}
 

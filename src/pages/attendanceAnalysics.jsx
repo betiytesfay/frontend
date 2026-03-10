@@ -1,4 +1,5 @@
-import { useState } from 'react'
+
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   PieChart,
@@ -19,19 +20,43 @@ export default function AttendanceAnalysis() {
   const [currentPage, setCurrentPage] = useState(1)
   const studentsPerPage = 5
 
-  const allStudents = Object.values(attendanceData).flat()
-  const [sessions, setSessions] = useState([])
-  const [attendanceData, setAttendanceData] = useState({})
+
+
   const URL = "https://gibi-backend-669108940571.us-central1.run.app"
+
   useEffect(() => {
-    fetch(`${URL}/attendance`)
-      .then(res => res.json())
-      .then(data => {
-        setSessions(data.sessions)
-        setAttendanceData(data.attendance)
-      })
+    const fetchData = async () => {
+      try {
+        setLoading(true)
+        const [studentsRes, attendanceRes, sessionsRes] = await Promise.all([
+          fetch(`${URL}/student`),
+          fetch(`${URL}/attendance`),
+          fetch(`${URL}/sessions`)
+        ])
+        const studentsData = await studentsRes.json()
+        const attendanceData = await attendanceRes.json()
+        const sessionsData = await sessionsRes.json()
+
+        setStudents(studentsData.data.students || [])
+        setAttendanceData(attendanceData.data.attendance || {})
+        setSessions(sessionsData.data.sessions || [])
+      } catch (err) {
+        console.error("Failed to fetch data:", err)
+        setStudents([])
+        setAttendanceData({})
+        setSessions([])
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchData()
   }, [])
-  // Default filter: first-year students
+  const [students, setStudents] = useState([])
+  const [attendanceData, setAttendanceData] = useState({})
+  const [sessions, setSessions] = useState([])
+  const [loading, setLoading] = useState(true)
+  const allStudents = Object.values(attendanceData).flat()
+
   const firstYearStudents = allStudents
     .filter(s =>
       sessions.find(sess =>
@@ -49,21 +74,29 @@ export default function AttendanceAnalysis() {
       (filterDepartment === 'All' || s.department === filterDepartment)
     )
 
+  const [courseDates, setCourseDates] = useState([]);
+  const [selectedCourseDate, setSelectedCourseDate] = useState(null);
 
+  useEffect(() => {
+    fetch(`${URL}/course_dates`)
+      .then(res => res.json())
+      .then(data => {
+        setCourseDates(data.data.courseDates || []);
+      })
+      .catch(err => console.error(err));
+  }, []);
   const indexOfLast = currentPage * studentsPerPage
   const indexOfFirst = indexOfLast - studentsPerPage
   const currentStudents = searchId
     ? filteredStudents
     : filteredStudents.slice(indexOfFirst, indexOfLast)
   const totalPages = Math.ceil(filteredStudents.length / studentsPerPage)
-  const attendanceSummary = filteredStudents.reduce(
-    (acc, student) => {
-      if (student.status === 'Present') acc.present += 1
-      else acc.absent += 1
-      return acc
-    },
-    { present: 0, absent: 0 }
-  )
+  const attendanceSummary = filteredStudents.reduce((acc, student) => {
+    const percent = calculateAttendance(student)
+    if (percent > 0) acc.present += 1
+    else acc.absent += 1
+    return acc
+  }, { present: 0, absent: 0 })
 
   const pieData = [
     { name: 'Present', value: attendanceSummary.present },
@@ -105,8 +138,10 @@ export default function AttendanceAnalysis() {
           className="p-2 border border-yellow-400 bg-transparent rounded text-white"
         >
           <option value="All">All Departments</option>
-          {[...new Set(allStudents.map(s => s.department))].map(dep =>
-            <option key={dep} value={dep}>{dep}</option>
+          {departments.length === 0 ? (
+            <option value="All">No Departments</option>
+          ) : (
+            departments.map(dep => <option key={dep} value={dep}>{dep}</option>)
           )}
         </select>
       </div>

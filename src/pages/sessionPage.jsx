@@ -9,8 +9,8 @@ import axios from 'axios'
 export default function SessionPage() {
   const navigate = useNavigate()
   const baseURL = "https://gibi-backend-669108940571.us-central1.run.app";
-  const [totalStudent, setTotalStudent] = useState(50)
-  const [lastSessionDate, setLastSessionDate] = useState('2025-10-23')
+  const [totalStudent, setTotalStudent] = useState(null);
+  const [lastSessionDate, setLastSessionDate] = useState(null);
   const [showHistory, setShowHistory] = useState(false)
   const [attendanceHistory, setAttendanceHistory] = useState([])
 
@@ -27,6 +27,40 @@ export default function SessionPage() {
 
     fetchTotalStudents()
   }, [])
+  useEffect(() => {
+    const fetchTotalStudents = async () => {
+      try {
+        const response = await axios.get(`${baseURL}/student`);
+        const students = response.data.data.students;
+        setTotalStudent(students.length); // dynamic
+      } catch (err) {
+        console.error("Failed to fetch students:", err);
+        setTotalStudent(0); // fallback
+      }
+    };
+    fetchTotalStudents();
+  }, []);
+  useEffect(() => {
+    const fetchLastSession = async () => {
+      try {
+        const response = await axios.get(`${baseURL}/attendance`);
+        const allRecords = response.data.data.attendance;
+
+        if (allRecords.length > 0) {
+          const latest = allRecords.sort(
+            (a, b) => new Date(b.recorded_at) - new Date(a.recorded_at)
+          )[0];
+          setLastSessionDate(new Date(latest.recorded_at).toISOString().split('T')[0]);
+        } else {
+          setLastSessionDate('N/A');
+        }
+      } catch (err) {
+        console.error("Failed to fetch attendance:", err);
+        setLastSessionDate('N/A');
+      }
+    };
+    fetchLastSession();
+  }, []);
   useEffect(() => {
     const fetchLastSession = async () => {
       try {
@@ -82,7 +116,7 @@ export default function SessionPage() {
             />
             <div className="text-center sm:text-left">
               <p className="text-base sm:text-lg font-semibold">
-                Total Students: <span className="text-blue-600">{totalStudent}</span>
+                Total Students: <span className="text-blue-600">{totalStudent ?? 'Loading...'}</span>
               </p>
               <p className="text-gray-600">Currently enrolled</p>
             </div>
@@ -102,7 +136,7 @@ export default function SessionPage() {
 
             <div className="text-center sm:text-left">
               <p className="text-base sm:text-lg font-semibold">
-                Last Session: <span className="text-gray-600">{lastSessionDate}</span>
+                Last Session: <span className="text-gray-600">{lastSessionDate ?? 'Loading...'}</span>
               </p>
               <p className="text-gray-600">Attendance Record</p>
             </div>
