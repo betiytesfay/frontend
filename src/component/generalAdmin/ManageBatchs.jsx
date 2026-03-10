@@ -174,12 +174,13 @@ const ManageBatches = () => {
 
   return (
     <div className="bg-white p-6 max-w-5xl mx-auto flex flex-col justify-center gap-4 mt-8 sm:max-w-lg rounded-xl shadow-md w-full">
-      <div className="flex items-center justify-between ">
+      <div className=" items-center justify-between flex">
         <button
           onClick={() => navigate("/admin")}
           className="flex items-center gap-1 px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
         >
-          <FaArrowLeft /> Back
+          <FaArrowLeft />
+          <span className="hidden sm:inline">Back</span>
         </button>
         <h2 className="font-extrabold text-lg">Batches</h2>
       </div>
@@ -196,7 +197,7 @@ const ManageBatches = () => {
           onClick={() => {
             setShowFilter(!showFilter)
           }}
-          className="p-2 bg-yellow-600 rounded"
+          className="p-2 bg-yellow-500 rounded"
         >
           <FaFilter className="w-5 h-5" />
         </button>

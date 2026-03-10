@@ -183,45 +183,48 @@ const ManageUser = () => {
   };
 
   return (
-    <div className="bg-white p-6   max-w-5xl mx-auto flex flex-col justify-center gap-4 mt-8  sm:max-w-lg rounded-xl shadow-md w-full">
-      <div className="flex flex-col gap-3 mb-4 px-2">
-        <div className="flex-1 gap-2 flex items-center">
-          <input
-            type="text"
-            placeholder="Enter Id(0000-00)"
-            value={searchId}
-            onFocus={() => setIsSearchActive(true)}
-            onChange={(e) => setSearchId(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && fetchUserById()}
-            className="flex-1 border rounded px-3 py-2 pr-10"
-          />
-
-
-          <button
-            onClick={() => {
-              setShowFilter(!showFilter)
-            }}
-            className="p-2 bg-yellow-600 rounded"
-          >
-            <FaFilter className="w-5 h-5" />
-          </button>
-        </div>
-        <div className="flex justify-between items-center mt-2">
-          <button
-            onClick={() => window.history.back()}
-            className="flex items-center gap-1 px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
-          >
-            <FaArrowLeft /> Back
-          </button>
-          <h2 className="font-bold text-lg">Admins</h2>
-          <button
-            onClick={() => setSelectedAction("add")}
-            className="flex items-center gap-1 bg-yellow-500 text-white px-3 py-2 rounded hover:bg-yellow-600"
-          >
-            <FaUserPlus /> Add
-          </button>
-        </div>
+    <div className="bg-white p-6 max-w-5xl mx-auto flex flex-col justify-center gap-4 mt-8 sm:max-w-lg rounded-xl shadow-md w-full">
+      <div className="items-center justify-between flex">
+        <button
+          onClick={() => window.history.back()}
+          className="flex items-center gap-1 px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
+        >
+          <FaArrowLeft />
+          <span className="hidden sm:inline">Back</span>
+        </button>
+        <h2 className="font-bold text-lg">Admins</h2>
+        <button
+          onClick={() => setSelectedAction("add")}
+          className="flex items-center gap-1 bg-yellow-500 text-white px-3 py-2 rounded hover:bg-yellow-600"
+        >
+          <FaUserPlus />
+          <span className="hidden sm:inline">Add</span>
+        </button>
       </div>
+
+      <div className="mb-4 flex flex-row">
+        <input
+          type="text"
+          placeholder="Enter Id(0000-00)"
+          value={searchId}
+          onFocus={() => setIsSearchActive(true)}
+          onChange={(e) => setSearchId(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && fetchUserById()}
+          className="border px-3 py-2 rounded w-full"
+        />
+
+
+        <button
+          onClick={() => {
+            setShowFilter(!showFilter)
+          }}
+          className="p-2 bg-yellow-500 rounded"
+        >
+          <FaFilter className="w-5 h-5" />
+        </button>
+      </div>
+
+
       <div className="flex flex-col gap-3 mt-2 px-2">
         {/* PC Table View */}
         <div className="hidden sm:block w-full  overflow-x-auto mt-2">

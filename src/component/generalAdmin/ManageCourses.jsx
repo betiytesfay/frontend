@@ -195,14 +195,16 @@ const ManageCourses = () => {
           onClick={() => navigate('/admin')}
           className="flex items-center gap-1 px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
         >
-          <FaArrowLeft /> Back
+          <FaArrowLeft />
+          <span className="hidden sm:inline">Back</span>
         </button>
         <h2 className="font-bold text-lg">Course</h2>
         <button
           onClick={() => setSelectedAction("add")}
           className="flex items-center gap-1 bg-yellow-500 text-white px-3 py-2 rounded hover:bg-yellow-600"
         >
-          <FaUserPlus /> Add
+          <FaUserPlus />
+          <span className="hidden sm:inline">Add</span>
         </button>
       </div>
 
@@ -216,11 +218,9 @@ const ManageCourses = () => {
           className="border px-3 py-2 rounded w-full"
         />
 
-
-
         <button
-          onClick={() => setShowFilter(!showFilter)}
-          className="p-2 bg-yellow-600 rounded"
+          onClick={() => { }}
+          className="p-2 bg-yellow-500 rounded"
         >
           <FaFilter className="w-5 h-5" />
         </button>
