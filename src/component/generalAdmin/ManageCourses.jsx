@@ -186,66 +186,62 @@ const ManageCourses = () => {
   };
 
   return (
-    <div className="bg-white p-6 max-w-5xl mx-auto flex flex-col gap-4 mt-8 rounded-xl shadow-md w-full">
+    <div className="bg-white p-6 max-w-5xl mx-auto flex flex-col justify-center gap-4 mt-8 sm:max-w-lg rounded-xl shadow-md w-full">
 
-      <div className="flex flex-col gap-3 mb-4 px-2">
-        {/* Search + Filter */}
 
-        <div className="flex items-center gap-2 w-full flex-wrap">
+      {/* Search + Filter */}
+      <div className="items-center justify-between flex">
+        <button
+          onClick={() => navigate('/admin')}
+          className="flex items-center gap-1 px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
+        >
+          <FaArrowLeft /> Back
+        </button>
+        <h2 className="font-bold text-lg">Course</h2>
+        <button
+          onClick={() => setSelectedAction("add")}
+          className="flex items-center gap-1 bg-yellow-500 text-white px-3 py-2 rounded hover:bg-yellow-600"
+        >
+          <FaUserPlus /> Add
+        </button>
+      </div>
+
+      <div className="mb-4 flex flex-row">
+        <input
+          type="text"
+          placeholder="search courses.."
+          value={searchId}
+          onChange={(e) => setSearchId(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && fetchCourseById()}
+          className="border px-3 py-2 rounded w-full"
+        />
+
+
+
+        <button
+          onClick={() => setShowFilter(!showFilter)}
+          className="p-2 bg-yellow-600 rounded"
+        >
+          <FaFilter className="w-5 h-5" />
+        </button>
+      </div>
+      {showFilter && (
+        <div className="flex gap-2 mt-2">
           <input
             type="text"
-            placeholder="Enter course id"
-            value={searchId}
-            onChange={(e) => setSearchId(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && fetchCourseById()}
-            className="flex-1 min-w-0 border rounded px-3 py-2"
+            placeholder="Filter by name"
+            value={filterName}
+            onChange={(e) => setFilterName(e.target.value)}
+            className="border px-2 py-1 rounded"
           />
-
-          <button
-            onClick={fetchCourseById}
-            className="px-3 py-2 bg-gray-200 rounded hover:bg-gray-300"
-          >
-            <FaSearch />
-          </button>
-
-          <button
-            onClick={() => setShowFilter(!showFilter)}
-            className="p-2 bg-yellow-600 rounded text-white"
-          >
-            <FaFilter className="w-5 h-5" />
+          <button onClick={applyFilter} className="px-3 py-1 bg-yellow-500 text-white rounded">
+            Apply
           </button>
         </div>
-        {showFilter && (
-          <div className="flex gap-2 mt-2">
-            <input
-              type="text"
-              placeholder="Filter by name"
-              value={filterName}
-              onChange={(e) => setFilterName(e.target.value)}
-              className="border px-2 py-1 rounded"
-            />
-            <button onClick={applyFilter} className="px-3 py-1 bg-yellow-500 text-white rounded">
-              Apply
-            </button>
-          </div>
-        )}
-        {/* Title + Add Button */}
-        <div className="flex justify-between items-center mt-2 flex-col gap-2.5  sm:hidden">
-          <button
-            onClick={() => navigate('/admin')}
-            className="flex items-center gap-1 px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
-          >
-            <FaArrowLeft /> Back
-          </button>
-          <h2 className="font-bold text-lg">Course</h2>
-          <button
-            onClick={() => setSelectedAction("add")}
-            className="flex items-center gap-1 bg-yellow-500 text-white px-3 py-2 rounded hover:bg-yellow-600"
-          >
-            <FaUserPlus /> Add
-          </button>
-        </div>
-      </div>
+      )}
+      {/* Title + Add Button */}
+
+
       <div className="flex flex-col gap-3 mt-2 px-2">
         {/* PC Table View */}
         <div className="hidden sm:block w-full  overflow-x-auto mt-2">
