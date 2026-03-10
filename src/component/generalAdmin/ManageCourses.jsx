@@ -186,29 +186,31 @@ const ManageCourses = () => {
   };
 
   return (
-    <div className="bg-white p-6 max-w-5xl mx-auto flex flex-col justify-center gap-4 mt-8 rounded-xl shadow-md w-full">
+    <div className="bg-white p-6 max-w-5xl mx-auto flex flex-col gap-4 mt-8 rounded-xl shadow-md w-full">
 
       <div className="flex flex-col gap-3 mb-4 px-2">
         {/* Search + Filter */}
-        <div className="flex items-center gap-2 w-full relative">
-          <div className="flex flex-row gap-2">
-            <input
-              type="text"
-              placeholder="Enter course id"
-              value={searchId}
-              onChange={(e) => setSearchId(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && fetchCourseById()}
-              className="flex-1 border rounded px-3 py-2 pr-10"
-            />
-            <button onClick={fetchCourseById} className="absolute right-2 top-1/2 transform -translate-y-1/2">
-              <FaSearch />
-            </button>
-          </div>
+
+        <div className="flex items-center gap-2 w-full flex-wrap">
+          <input
+            type="text"
+            placeholder="Enter course id"
+            value={searchId}
+            onChange={(e) => setSearchId(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && fetchCourseById()}
+            className="flex-1 min-w-0 border rounded px-3 py-2"
+          />
+
           <button
-            onClick={() => {
-              setShowFilter(!showFilter)
-            }}
-            className="p-2 bg-yellow-600 rounded"
+            onClick={fetchCourseById}
+            className="px-3 py-2 bg-gray-200 rounded hover:bg-gray-300"
+          >
+            <FaSearch />
+          </button>
+
+          <button
+            onClick={() => setShowFilter(!showFilter)}
+            className="p-2 bg-yellow-600 rounded text-white"
           >
             <FaFilter className="w-5 h-5" />
           </button>
