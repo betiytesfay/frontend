@@ -277,7 +277,7 @@ export default function AttendancePage() {
           `${BASE_URL}/attendance`,
           {
             date_id: Number(session.courseDateId),
-            student_id: student.student_id,
+            student_id: student.student_id.toUpperCase().startsWith('UGR-') ? student.student_id : `UGR-${student.student_id}`,
             is_present: student.is_present,
 
           },
