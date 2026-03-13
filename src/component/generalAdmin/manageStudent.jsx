@@ -110,9 +110,9 @@ const ManageStudents = () => {
     }
   };
   const [filterGender, setFilterGender] = useState("");
-  // === Action state ===
-  const [selectedAction, setSelectedAction] = useState(""); // "add", "edit", "delete"
-  // load all students from backend
+  
+  const [selectedAction, setSelectedAction] = useState(""); 
+  
   const fetchStudents = async () => {
     try {
       const res = await fetch(`${BASE}/student`, {
@@ -469,7 +469,7 @@ const ManageStudents = () => {
 
       < div className="flex flex-col gap-3 mb-4 px-2" >
         {/* Search + Filter */}
-        {/* Search + Filter */}
+        
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 w-full relative">
           <div className="w-full sm:flex-1 relative">
             <input

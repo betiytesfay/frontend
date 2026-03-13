@@ -239,7 +239,6 @@ const ManageCourses = () => {
           </button>
         </div>
       )}
-      {/* Title + Add Button */}
 
 
       <div className="flex flex-col gap-3 mt-2 px-2">

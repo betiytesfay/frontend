@@ -75,18 +75,17 @@ const GeneralAdmin = () => {
         {selectedCategory === "admins" && <ManageUser />}
         {selectedCategory === "batches" && <ManageBatchs />}
 
-
         {/* Bottom buttons */}
         <div className="flex justify-center gap-6 mt-3">
 
           <button
             onClick={() => {
               if (selectedAction) {
-                setSelectedAction(""); // go back to category selection
+                setSelectedAction(""); 
               } else if (selectedCategory) {
-                setSelectedCategory(""); // go back to main dashboard
+                setSelectedCategory(""); 
               } else {
-                navigate(-1); // fallback: go back in browser history
+                navigate(-1); 
               }
             }}
             className="w-32 h-10 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 transition"

@@ -111,34 +111,37 @@ export default function AttendancePage() {
   };
 
   const handleSendAllSessionsToBackend = async () => {
+    if (savedSessions.length === 0) return;
+
     setLoading(true);
 
-    const promises = savedSessions.flatMap(session =>
-      session.students.map(student => {
+    try {
+      for (const session of savedSessions) {
+        if (session.students.length === 0) continue;
+
         const payload = {
           date_id: Number(session.courseDateId),
-          student_id: student.student_id,
-          is_present: Boolean(student.is_present),
+          students: session.students.map(s => ({
+            student_id: s.student_id.toUpperCase().startsWith('UGR-') ? s.student_id : `UGR-${s.student_id}`,
+            is_present: Boolean(s.is_present),
+          })),
+          recorded_by_user_id: Number(localStorage.getItem('adminId')) || undefined,
         };
-        return axios.post(`${BASE_URL}/attendance`, payload, { withCredentials: true });
-      })
-    );
 
-    const results = await Promise.allSettled(promises);
+        await axios.post(`${BASE_URL}/attendance`, payload, { withCredentials: true });
+      }
 
-    const failed = results.filter(r => r.status === 'rejected');
-    if (failed.length > 0) {
-      setToastMessage(`${failed.length} students failed to send`);
-    } else {
-      setToastMessage('All students sent successfully!');
+      setToastMessage('All sessions sent successfully!');
+      setSavedSessions([]); // clear after sending
+    } catch (err) {
+      console.error(err);
+      setToastMessage('Some sessions failed to send. Check console.');
+    } finally {
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 4000);
+      setLoading(false);
     }
-
-    setShowToast(true);
-    setTimeout(() => setShowToast(false), 4000);
-
-    setLoading(false);
   };
-
   const handleDoneAttendance = () => {
     if (!currentSession || currentSession.students.length === 0) {
       alert('No attendance recorded.');
@@ -271,29 +274,39 @@ export default function AttendancePage() {
   }
 
   const handleSendSessionToBackend = async (session) => {
+    if (!session.students || session.students.length === 0) {
+      alert('No students to send for this session.');
+      return;
+    }
+
+    setLoading(true);
+
     try {
-      for (const student of session.students) {
-        await axios.post(
-          `${BASE_URL}/attendance`,
-          {
-            date_id: Number(session.courseDateId),
-            student_id: student.student_id.toUpperCase().startsWith('UGR-') ? student.student_id : `UGR-${student.student_id}`,
-            is_present: student.is_present,
+      const payload = {
+        date_id: Number(session.courseDateId),
+        students: session.students.map(s => ({
+          student_id: s.student_id.toUpperCase().startsWith('UGR-') ? s.student_id : `UGR-${s.student_id}`,
+          is_present: Boolean(s.is_present),
+        })),
+        recorded_by_user_id: Number(localStorage.getItem('adminId')) || undefined,
+      };
 
-          },
-          { withCredentials: true }
-        );
-      }
+      await axios.post(`${BASE_URL}/attendance`, payload, { withCredentials: true });
 
+      // Remove session from savedSessions
       setSavedSessions(prev => prev.filter(s => s.id !== session.id));
-      setToastMessage('Session sent to backend successfully!');
-      setShowToast(true);
-      setTimeout(() => setShowToast(false), 4000);
+
+      setToastMessage('Session sent successfully!');
     } catch (err) {
       console.error(err);
-      alert('Failed to send session to backend. Check your internet connection.');
+      setToastMessage('Failed to send session. Check console.');
+    } finally {
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 4000);
+      setLoading(false);
     }
   };
+
   const handleDeleteSession = (id) => {
     const updated = savedSessions.filter(s => s.id !== id);
     setSavedSessions(updated);
