@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { FaBook, FaEdit, FaTrash, FaPlus, FaEye, FaSearch, FaFilter, FaUserPlus, FaArrowLeft } from "react-icons/fa";
-import { useNavigate } from 'react-router-dom';
+
 
 const BASE = "https://gibi-backend-669108940571.us-central1.run.app";
 
@@ -14,8 +14,7 @@ const normalizeCourse = (raw) => {
   };
 };
 
-const ManageCourses = () => {
-  const navigate = useNavigate();
+const ManageCourses = ({ setSelectedCategory }) => {
 
   const [courseName, setCourseName] = useState("");
   const [courseDescription, setCourseDescription] = useState("");
@@ -192,7 +191,27 @@ const ManageCourses = () => {
       {/* Search + Filter */}
       <div className="items-center justify-between flex">
         <button
-          onClick={() => navigate('/admin')}
+          onClick={() => {
+
+            setShowEditPopup(false);
+            setShowAddPopup(false);
+            setShowDeletePopup(false);
+
+
+            setPage(1);
+
+
+            if (selectedAction) {
+              setSelectedAction("");
+            }
+            if (setSelectedCategory) {
+              setSelectedCategory("");
+            }
+
+            else {
+              fetchCourses();
+            }
+          }}
           className="flex items-center gap-1 px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
         >
           <FaArrowLeft />

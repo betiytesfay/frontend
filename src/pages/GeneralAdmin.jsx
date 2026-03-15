@@ -71,9 +71,9 @@ const GeneralAdmin = () => {
           </div>
         )}
         {selectedCategory === "students" && <ManageStudents setSelectedCategory={setSelectedCategory} />}
-        {selectedCategory === "courses" && <ManageCourses />}
-        {selectedCategory === "admins" && <ManageUser />}
-        {selectedCategory === "batches" && <ManageBatchs />}
+        {selectedCategory === "courses" && <ManageCourses setSelectedCategory={setSelectedCategory} />}
+        {selectedCategory === "admins" && <ManageUser setSelectedCategory={setSelectedCategory} />}
+        {selectedCategory === "batches" && <ManageBatchs setSelectedCategory={setSelectedCategory} />}
 
         {/* Bottom buttons */}
         <div className="flex justify-center gap-6 mt-3">
