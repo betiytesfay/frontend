@@ -467,118 +467,117 @@ const ManageStudents = ({ setSelectedCategory }) => {
   return (
     <div className="bg-white p-3 sm:p-5 md:p-6 w-full max-w-full mx-auto flex flex-col gap-2 sm:gap-3 md:gap-4 mt-2 sm:mt-4 md:mt-8 rounded-xl shadow-md overflow-x-hidden min-h-screen">
 
-      < div className="flex flex-col gap-3 mb-4 px-2" >
-        {/* Search + Filter */}
 
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 w-full relative">
-          <div className="w-full sm:flex-1 relative">
-            <input
-              type="text"
-              placeholder="Student ID (0000-00)"
-              value={searchId}
-              onFocus={() => setIsSearchActive(true)}
-              onChange={(e) => setSearchId(e.target.value)}
-              className="w-full border rounded px-3 py-2 sm:py-2.5 text-base"
-            />
-          </div>
+      < div className="flex justify-between items-center mt-2" >
+        <button
+          onClick={() => {
 
-          {/* Filter button */}
-          <div className="flex justify-end w-full sm:w-auto">
-            <button
-              onClick={() => {
-                applyFilter();
-                setShowFilter(!showFilter);
-              }}
-              className="p-2.5 sm:p-2 bg-yellow-600 rounded flex items-center justify-center"
-            >
-              <FaFilter className="w-4 h-4 sm:w-5 sm:h-5" />
-            </button>
-          </div>
-
-          {/* Filter dropdown */}
-          {showFilter && (
-            <div className="mt-2 border p-3 rounded bg-white shadow absolute z-10 w-full sm:w-64 right-0 top-full">
-              <input
-                type="text"
-                placeholder="Name…"
-                value={filterName}
-                onChange={(e) => setFilterName(e.target.value)}
-                className="w-full border px-3 py-2 rounded mb-2 text-base"
-              />
-              <select
-                value={filterDepartment}
-                onChange={(e) => setFilterDepartment(e.target.value)}
-                className="w-full border px-3 py-2 rounded mb-2 text-base"
-              >
-                <option value="">Department</option>
-                <option value="Accounting">Accounting</option>
-                <option value="Management">Management</option>
-                <option value="Economics">Economics</option>
-                <option value="Laws">Laws</option>
-                <option value="other">Other</option>
-              </select>
-              <select value={filterGender} onChange={(e) => setFilterGender(e.target.value)}
-                className="w-full border px-3 py-2 rounded mb-2 text-base">
-                <option value="">All Gender</option>
-                <option value="male">male</option>
-                <option value="female">female</option>
-
-              </select>
-              <button
-                onClick={applyFilter}
-                className="w-full px-4 py-2 bg-yellow-600 text-white rounded text-base"
-              >
-                Apply
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* Title + Add Button */}
-        < div className="flex justify-between items-center mt-2" >
-          <button
-            onClick={() => {
-
-              setShowViewPopup(false);
-              setShowEditPopup(false);
-              setShowAddPopup(false);
-              setShowDeletePopup(false);
-              setSelectedStudent(null);
+            setShowViewPopup(false);
+            setShowEditPopup(false);
+            setShowAddPopup(false);
+            setShowDeletePopup(false);
+            setSelectedStudent(null);
 
 
-              setSearchId("");
-              setFilterName("");
-              setFilterDepartment("");
-              setFilterGender("");
-              setPage(1);
+            setSearchId("");
+            setFilterName("");
+            setFilterDepartment("");
+            setFilterGender("");
+            setPage(1);
 
 
-              if (selectedAction) {
-                setSelectedAction("");
-              }
-              if (setSelectedCategory) {
-                setSelectedCategory("");
-              }
+            if (selectedAction) {
+              setSelectedAction("");
+            }
+            if (setSelectedCategory) {
+              setSelectedCategory("");
+            }
 
-              else {
-                fetchStudents();
-              }
-            }}
-            className="flex items-center gap-1 px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
-          >
-            <FaArrowLeft />
-            <span className="hidden sm:inline">Back</span>
-          </button>
-          <h2 className="font-bold text-lg">Students</h2>
-          <button
-            onClick={() => setSelectedAction("add")}
-            className="flex items-center gap-1 bg-yellow-500 text-white px-3 py-2 rounded hover:bg-yellow-600"
-          >
-            <FaUserPlus />
-            <span className="hidden sm:inline">Add</span>
-          </button>
-        </div >
+            else {
+              fetchStudents();
+            }
+          }}
+          className="flex items-center gap-1 px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
+        >
+          <FaArrowLeft />
+          <span className="hidden sm:inline">Back</span>
+        </button>
+        <h2 className="font-bold text-lg">Students</h2>
+        <button
+          onClick={() => setSelectedAction("add")}
+          className="flex items-center gap-1 bg-yellow-500 text-white px-3 py-2 rounded hover:bg-yellow-600"
+        >
+          <FaUserPlus />
+          <span className="hidden sm:inline">Add</span>
+        </button>
       </div >
+
+      <div className="mb-2 mx-1 flex flex-row mt-2">
+        <input
+          type="text"
+          placeholder="Student ID (0000-00)"
+          value={searchId}
+          onFocus={() => setIsSearchActive(true)}
+          onChange={(e) => setSearchId(e.target.value)}
+          className="border px-3 py-2 rounded w-full"
+        />
+
+
+        {/* Filter button */}
+
+        <button
+          onClick={() => {
+            applyFilter();
+            setShowFilter(!showFilter);
+          }}
+          className="p-2 bg-yellow-500 rounded"
+        >
+          <FaFilter className="w-4 h-4 sm:w-5 sm:h-5" />
+        </button>
+
+      </div>
+
+      {/* Filter dropdown */}
+      {showFilter && (
+        <div className="mt-2 border p-3 rounded bg-white shadow absolute z-10 w-full sm:w-64 right-0 top-full">
+          <input
+            type="text"
+            placeholder="Name…"
+            value={filterName}
+            onChange={(e) => setFilterName(e.target.value)}
+            className="w-full border px-3 py-2 rounded mb-2 text-base"
+          />
+          <select
+            value={filterDepartment}
+            onChange={(e) => setFilterDepartment(e.target.value)}
+            className="w-full border px-3 py-2 rounded mb-2 text-base"
+          >
+            <option value="">Department</option>
+            <option value="Accounting">Accounting</option>
+            <option value="Management">Management</option>
+            <option value="Economics">Economics</option>
+            <option value="Laws">Laws</option>
+            <option value="other">Other</option>
+          </select>
+          <select value={filterGender} onChange={(e) => setFilterGender(e.target.value)}
+            className="w-full border px-3 py-2 rounded mb-2 text-base">
+            <option value="">All Gender</option>
+            <option value="male">male</option>
+            <option value="female">female</option>
+
+          </select>
+          <button
+            onClick={applyFilter}
+            className="w-full px-4 py-2 bg-yellow-600 text-white rounded text-base"
+          >
+            Apply
+          </button>
+        </div>
+      )}
+
+
+
+
       <div className="flex flex-col gap-3 mt-2 px-1">
         {/* PC Table View */}
         <div className="hidden sm:block w-full  overflow-x-auto mt-2">
