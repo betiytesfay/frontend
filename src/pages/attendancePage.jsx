@@ -248,7 +248,10 @@ export default function AttendancePage() {
           student_id: studentData.student_id.toUpperCase().startsWith('UGR-')
             ? studentData.student_id
             : `UGR-${studentData.student_id}`,
-          is_present: true
+          is_present: true,
+          name: studentData.fullName,
+          gender: studentData.gender || 'Unknown',
+          department: studentData.department || 'Unknown'
         }
       ]
     }));
