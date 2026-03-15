@@ -28,7 +28,7 @@ export default function Login() {
       );
 
       const user = response.data?.data?.user;
-      console.log("Logged-in user:", user);
+
 
       if (!user) {
         console.error("No user returned from backend");

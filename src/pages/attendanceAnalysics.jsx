@@ -1,243 +1,289 @@
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { PieChart, Pie, Cell, Tooltip, Legend } from 'recharts';
+import axios from 'axios';
 
-import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
-import {
-  PieChart,
-  Pie,
-  Cell,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-} from 'recharts'
-const COLORS = ['#22c55e', '#ef4444']
+const COLORS = ['#22c55e', '#ef4444'];
+const BASE_URL = "https://gibi-backend-669108940571.us-central1.run.app";
 
-export default function AttendanceAnalysis() {
-  const navigate = useNavigate()
+export default function AttendanceAnalysisPage() {
+  const navigate = useNavigate();
+  const [backendSessions, setBackendSessions] = useState([]);
+  const [allCourseDates, setAllCourseDates] = useState([]);
+  const [allStudents, setAllStudents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [filterPresent, setFilterPresent] = useState(false);
+  const [filterAbsent, setFilterAbsent] = useState(false);
+  const [selectedSessionId, setSelectedSessionId] = useState(null);
 
-  const [searchId, setSearchId] = useState('')
-  const [filterGender, setFilterGender] = useState('All')
-  const [filterDepartment, setFilterDepartment] = useState('All')
-  const [currentPage, setCurrentPage] = useState(1)
-  const studentsPerPage = 5
+  // Admin password verification
+  const verifySessionAdminPassword = async (enteredPassword) => {
+    const adminId = localStorage.getItem('adminId');
+    if (!adminId) {
+      alert('No admin logged in!');
+      return false;
+    }
 
+    try {
+      const res = await axios.post(
+        `${BASE_URL}/auth/login`,
+        { student_id: adminId, password: enteredPassword },
+        { withCredentials: true }
+      );
+      const user = res.data?.data?.user;
+      return user?.role === 'admin';
+    } catch (err) {
+      console.error('Password verification failed', err.response?.data || err);
+      return false;
+    }
+  };
 
-
-  const URL = "https://gibi-backend-669108940571.us-central1.run.app"
-
+  // Fetch all data
   useEffect(() => {
     const fetchData = async () => {
       try {
-        setLoading(true)
-        const [studentsRes, attendanceRes, sessionsRes] = await Promise.all([
-          fetch(`${URL}/student`),
-          fetch(`${URL}/attendance`),
-          fetch(`${URL}/sessions`)
-        ])
-        const studentsData = await studentsRes.json()
-        const attendanceData = await attendanceRes.json()
-        const sessionsData = await sessionsRes.json()
+        setLoading(true);
 
-        setStudents(studentsData.data.students || [])
-        setAttendanceData(attendanceData.data.attendance || {})
-        setSessions(sessionsData.data.sessions || [])
+        const [courseDatesRes, attendanceRes, studentsRes] = await Promise.all([
+          axios.get(`${BASE_URL}/course_date`),
+          axios.get(`${BASE_URL}/attendance`),
+          axios.get(`${BASE_URL}/student`)
+        ]);
+
+        const courseDates = courseDatesRes.data?.data?.courseDates || [];
+        setAllCourseDates(courseDates);
+
+        const students = studentsRes.data?.data || [];
+        setAllStudents(students);
+
+        const attendanceRecords = attendanceRes.data?.data?.attendanceRecords || [];
+
+        const attendanceByDate = {};
+        attendanceRecords.forEach(record => {
+          const dateId = record.date_id;
+          if (!attendanceByDate[dateId]) attendanceByDate[dateId] = [];
+          attendanceByDate[dateId].push({
+            student_id: record.student_id,
+            is_present: record.is_present
+          });
+        });
+
+        const sessionsFormatted = courseDates.map(cd => {
+          const totalStudents = students.length;
+
+          const dateAttendance = attendanceByDate[cd.date_id] || [];
+          const attendanceMap = {};
+          dateAttendance.forEach(r => attendanceMap[r.student_id] = r.is_present);
+
+          const studentsWithAttendance = students.map(student => {
+            const isPresent = attendanceMap[student.student_id];
+
+            return {
+              student_id: student.student_id,
+              name: `${student.first_name} ${student.last_name}`,
+              is_present: isPresent === true, // true if present, false if absent or not marked
+              gender: student.gender || 'N/A',
+              department: student.department || 'N/A'
+            };
+          });
+
+          const present = studentsWithAttendance.filter(s => s.is_present).length;
+          const absent = studentsWithAttendance.filter(s => !s.is_present).length;
+
+          return {
+            id: cd.date_id,
+            date: cd.class_date,
+            batchId: cd.batch_id,
+            courseDateId: cd.date_id,
+            courseName: cd.course?.course_name || 'N/A',
+            students: studentsWithAttendance,
+            stats: {
+              total: totalStudents,
+              present,
+              absent,
+              presentPercentage: totalStudents > 0 ? ((present / totalStudents) * 100).toFixed(1) : 0,
+              absentPercentage: totalStudents > 0 ? ((absent / totalStudents) * 100).toFixed(1) : 0
+            }
+          };
+        });
+
+        setBackendSessions(sessionsFormatted);
       } catch (err) {
-        console.error("Failed to fetch data:", err)
-        setStudents([])
-        setAttendanceData({})
-        setSessions([])
+        console.error('Error fetching data:', err);
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
-    fetchData()
-  }, [])
-  const [students, setStudents] = useState([])
-  const [attendanceData, setAttendanceData] = useState({})
-  const [sessions, setSessions] = useState([])
-  const [loading, setLoading] = useState(true)
-  const allStudents = Object.values(attendanceData).flat()
+    };
 
-  const firstYearStudents = allStudents
-    .filter(s =>
-      sessions.find(sess =>
-        sess.id ===
-        Number(Object.keys(attendanceData).find(id => attendanceData[id].includes(s)))
-      )?.yearLabel === 'First Year'
-    )
-    .sort((a, b) => a.name.localeCompare(b.name))
-
-  // Filtering logic
-  let filteredStudents = searchId
-    ? allStudents.filter(s => s.studentId === searchId)
-    : allStudents.filter(s =>
-      (filterGender === 'All' || s.gender === filterGender) &&
-      (filterDepartment === 'All' || s.department === filterDepartment)
-    )
-
-  const [courseDates, setCourseDates] = useState([]);
-  const [selectedCourseDate, setSelectedCourseDate] = useState(null);
-
-  useEffect(() => {
-    fetch(`${URL}/course_dates`)
-      .then(res => res.json())
-      .then(data => {
-        setCourseDates(data.data.courseDates || []);
-      })
-      .catch(err => console.error(err));
+    fetchData();
   }, []);
-  const indexOfLast = currentPage * studentsPerPage
-  const indexOfFirst = indexOfLast - studentsPerPage
-  const currentStudents = searchId
-    ? filteredStudents
-    : filteredStudents.slice(indexOfFirst, indexOfLast)
-  const totalPages = Math.ceil(filteredStudents.length / studentsPerPage)
-  const attendanceSummary = filteredStudents.reduce((acc, student) => {
-    const percent = calculateAttendance(student)
-    if (percent > 0) acc.present += 1
-    else acc.absent += 1
-    return acc
-  }, { present: 0, absent: 0 })
 
-  const pieData = [
-    { name: 'Present', value: attendanceSummary.present },
-    { name: 'Absent', value: attendanceSummary.absent },
-  ]
-  const calculateAttendance = (student) => {
-    const records = Object.values(attendanceData).flat().filter(st => st.studentId === student.studentId)
-    const totalSessions = records.length
-    const presentCount = records.filter(r => r.status === 'Present').length
-    const percentPresent = totalSessions > 0 ? (presentCount / totalSessions) * 100 : 0
-    return percentPresent.toFixed(1)
-  }
+  const handleBack = async () => {
+    const enteredPassword = prompt('Enter session admin password to go back:');
+    if (!enteredPassword) return;
+    const isValid = await verifySessionAdminPassword(enteredPassword);
+    if (isValid) navigate(-1);
+    else alert('Incorrect password!');
+  };
+
+  const getFilteredStudents = (students) => {
+    if (filterPresent && filterAbsent) return students;
+    if (filterPresent) return students.filter(s => s.is_present);
+    if (filterAbsent) return students.filter(s => !s.is_present);
+    return students;
+  };
+
+  if (loading) return <p className="text-gray-900 p-6">Loading...</p>;
 
   return (
-    <div className="min-h-screen  bg-[#111] text-white flex flex-col items-center p-4 md:p-8">
+    <div className="min-h-screen bg-white text-gray-900 p-6 md:p-8">
+      <button
+        onClick={handleBack}
+        className="mb-4 px-4 py-2 bg-yellow-400 text-black rounded hover:bg-yellow-500"
+      >
+        ← Back
+      </button>
+
       <h1 className="text-3xl font-bold text-yellow-400 mb-6">Attendance Analysis</h1>
 
-      {/* Search and Filters */}
-      <div className="flex flex-col md:flex-row gap-2 mb-6 w-full max-w-4xl">
-        <input
-          type="text"
-          placeholder="Enter student ID"
-          value={searchId}
-          onChange={(e) => { setSearchId(e.target.value); setCurrentPage(1) }}
-          className="p-2 border border-yellow-400 bg-transparent rounded flex-1 text-white placeholder-gray-400"
-        />
-        <select
-          value={filterGender}
-          onChange={(e) => setFilterGender(e.target.value)}
-          className="p-2 border border-yellow-400 bg-transparent rounded text-white"
-        >
-          <option value="All">All Genders</option>
-          <option value="Male">Male</option>
-          <option value="Female">Female</option>
-        </select>
-        <select
-          value={filterDepartment}
-          onChange={(e) => setFilterDepartment(e.target.value)}
-          className="p-2 border border-yellow-400 bg-transparent rounded text-white"
-        >
-          <option value="All">All Departments</option>
-          {departments.length === 0 ? (
-            <option value="All">No Departments</option>
-          ) : (
-            departments.map(dep => <option key={dep} value={dep}>{dep}</option>)
-          )}
-        </select>
-      </div>
-      {/* Attendance Pie Chart */}
-      <div className="w-full max-w-4xl mb-8 bg-white/10 border border-yellow-400 rounded-lg p-4">
-        <h2 className="text-xl font-semibold text-yellow-400 mb-4 text-center">
-          Attendance (Filtered Students)
-        </h2>
+      {backendSessions.length === 0 ? (
+        <p className="text-gray-500">No attendance data available.</p>
+      ) : (
+        backendSessions.map(session => {
+          const { stats } = session;
+          const pieData = [
+            { name: `Present (${stats.presentPercentage}%)`, value: stats.present },
+            { name: `Absent (${stats.absentPercentage}%)`, value: stats.absent }
+          ];
 
-        {filteredStudents.length === 0 ? (
-          <p className="text-center text-gray-400">No data to display</p>
-        ) : (
-          <div className="w-full h-64">
-            <ResponsiveContainer>
-              <PieChart>
-                <Pie
-                  data={pieData}
-                  dataKey="value"
-                  nameKey="name"
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={90}
-                  label
-                >
-                  {pieData.map((_, index) => (
-                    <Cell key={index} fill={COLORS[index]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-        )}
-      </div>
-      {/* Students List */}
-      <div className="w-full max-w-4xl space-y-4">
-        {currentStudents.length === 0 && (
-          <p className="text-gray-400 text-center">No student found.</p>
-        )}
+          const hasData = stats.present > 0 || stats.absent > 0;
+          const filteredStudents = getFilteredStudents(session.students);
 
-        {currentStudents.map((s) => {
-          const percentPresent = calculateAttendance(s)
           return (
-            <div
-              key={s.studentId}
-              className="bg-white/10 border border-yellow-400 rounded-lg p-4 flex flex-col gap-3"
-            >
-              <div className="flex flex-col md:flex-row md:justify-between">
-                <div>
-                  <p className="text-lg font-semibold text-yellow-400">{s.name}</p>
-                  <p className="text-sm text-gray-300">ID: {s.studentId}</p>
+            <div key={session.id} className="mb-6 bg-gray-100 border border-yellow-400 rounded-lg p-4">
+              <h2 className="font-bold text-lg mb-2 text-gray-800">{session.date} - {session.courseName}</h2>
+
+              {/* Stats summary */}
+              <div className="grid grid-cols-3 gap-2 mb-4 text-center">
+                <div className="bg-white p-2 rounded shadow">
+                  <div className="text-xl font-bold text-gray-900">{stats.total}</div>
+                  <div className="text-xs text-gray-500">Total Students</div>
                 </div>
-                <div className="text-sm text-gray-300 mt-2 md:mt-0">
-                  <p>Department: {s.department}</p>
-                  <p>Gender: {s.gender}</p>
-                  <p>Phone: {s.phone}</p>
+                <div className="bg-green-100 p-2 rounded shadow">
+                  <div className="text-xl font-bold text-green-600">{stats.present}</div>
+                  <div className="text-xs text-green-600">{stats.presentPercentage}%</div>
+                </div>
+                <div className="bg-red-100 p-2 rounded shadow">
+                  <div className="text-xl font-bold text-red-600">{stats.absent}</div>
+                  <div className="text-xs text-red-600">{stats.absentPercentage}%</div>
                 </div>
               </div>
 
-              <div className="mt-2">
-                <div className="w-full bg-white/20 h-3 rounded">
-                  <div
-                    className="h-3 rounded bg-green-500 transition-all duration-500"
-                    style={{ width: `${percentPresent}%` }}
-                  ></div>
+              {/* PieChart */}
+              {hasData ? (
+                <div
+                  className="w-full flex justify-center mb-4 cursor-pointer hover:opacity-80 transition-opacity"
+                  onClick={() => setSelectedSessionId(selectedSessionId === session.id ? null : session.id)}
+                >
+                  <PieChart width={300} height={300}>
+                    <Pie
+                      data={pieData}
+                      dataKey="value"
+                      nameKey="name"
+                      cx={150}
+                      cy={150}
+                      outerRadius={100}
+                      label={({ percent }) => `${(percent * 100).toFixed(0)}%`}
+                      labelLine={false}
+                    >
+                      {pieData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      contentStyle={{ backgroundColor: '#fff', color: '#333', border: '1px solid #ddd' }}
+                      formatter={(value, name) => [`${value} students`, name]}
+                    />
+                    <Legend wrapperStyle={{ color: '#333' }} />
+                  </PieChart>
                 </div>
-                <p className="text-sm text-gray-300 mt-1">{percentPresent}% Present</p>
-              </div>
+              ) : (
+                <div className="w-full h-[300px] flex items-center justify-center bg-gray-50 rounded">
+                  <p className="text-gray-500">No attendance records for this session</p>
+                </div>
+              )}
+
+              {/* Filters */}
+              {session.students.length > 0 && (
+                <div className="mt-4 flex gap-2 flex-wrap">
+                  <button
+                    onClick={() => {
+                      setFilterPresent(!filterPresent);
+                      setFilterAbsent(false);
+                    }}
+                    className={`px-3 py-1 text-sm rounded ${filterPresent
+                      ? 'bg-green-500 text-white'
+                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                      }`}
+                  >
+                    Show Present Only ({stats.present})
+                  </button>
+                  <button
+                    onClick={() => {
+                      setFilterAbsent(!filterAbsent);
+                      setFilterPresent(false);
+                    }}
+                    className={`px-3 py-1 text-sm rounded ${filterAbsent
+                      ? 'bg-red-500 text-white'
+                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                      }`}
+                  >
+                    Show Absent Only ({stats.absent})
+                  </button>
+                  {(filterPresent || filterAbsent) && (
+                    <button
+                      onClick={() => {
+                        setFilterPresent(false);
+                        setFilterAbsent(false);
+                      }}
+                      className="px-3 py-1 text-sm rounded bg-yellow-400 text-black hover:bg-yellow-500"
+                    >
+                      Clear Filter
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {selectedSessionId === session.id && (
+                <div className="mt-4">
+                  <h3 className="font-semibold mb-2 text-yellow-600">
+                    Student Attendance {filteredStudents.length !== session.students.length &&
+                      `(Filtered: ${filteredStudents.length} of ${session.students.length})`}
+                  </h3>
+                  {filteredStudents.length > 0 ? (
+                    <div className="max-h-60 overflow-y-auto bg-white rounded shadow-inner p-2">
+                      {filteredStudents.map(s => (
+                        <div key={s.student_id} className="border-b border-gray-200 py-2 text-sm flex justify-between">
+                          <span className="text-gray-700">
+                            {s.name} ({s.student_id})
+                          </span>
+                          <span className={s.is_present ? 'text-green-600 font-medium' : 'text-red-600 font-medium'}>
+                            {s.is_present ? 'Present' : 'Absent'}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-gray-500 text-center py-2 bg-gray-50 rounded">
+                      No students to display
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
-          )
-        })}
-      </div>
-
-      {/* Pagination */}
-      {!searchId && totalPages > 1 && (
-        <div className="flex gap-2 mt-6">
-          {Array.from({ length: totalPages }, (_, i) => (
-            <button
-              key={i}
-              onClick={() => setCurrentPage(i + 1)}
-              className={`px-3 py-1 rounded border border-yellow-400 ${currentPage === i + 1 ? 'bg-yellow-400 text-black' : 'text-yellow-400'
-                }`}
-            >
-              {i + 1}
-            </button>
-          ))}
-        </div>
+          );
+        })
       )}
-
-      <button
-        onClick={() => navigate('/sessionhistory')}
-        className="mt-8 border border-yellow-400 text-yellow-400 px-6 py-2 rounded-md hover:bg-yellow-400 hover:text-black transition"
-      >
-        ← Back To Session History
-      </button>
     </div>
-  )
-} 
+  );
+}

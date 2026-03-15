@@ -10,77 +10,84 @@ export default function SessionPage() {
   const navigate = useNavigate()
   const baseURL = "https://gibi-backend-669108940571.us-central1.run.app";
   const [totalStudent, setTotalStudent] = useState(null);
+  const [lastSessionPresent, setLastSessionPresent] = useState(null);
   const [lastSessionDate, setLastSessionDate] = useState(null);
   const [showHistory, setShowHistory] = useState(false)
   const [attendanceHistory, setAttendanceHistory] = useState([])
+  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchTotalStudents = async () => {
-      try {
-        const response = await axios.get(`${baseURL}/student`)
-        const students = response.data.data.students
-        setTotalStudent(students.length)
-      } catch (err) {
-        console.error("Failed to fetch students:", err)
-      }
-    }
-
-    fetchTotalStudents()
-  }, [])
+  // Fetch total students
   useEffect(() => {
     const fetchTotalStudents = async () => {
       try {
         const response = await axios.get(`${baseURL}/student`);
-        const students = response.data.data.students;
-        setTotalStudent(students.length); // dynamic
+        const students = response.data?.data || [];
+        setTotalStudent(students.length);
       } catch (err) {
         console.error("Failed to fetch students:", err);
-        setTotalStudent(0); // fallback
+        setTotalStudent(0);
       }
     };
     fetchTotalStudents();
   }, []);
-  useEffect(() => {
-    const fetchLastSession = async () => {
-      try {
-        const response = await axios.get(`${baseURL}/attendance`);
-        const allRecords = response.data.data.attendance;
 
-        if (allRecords.length > 0) {
-          const latest = allRecords.sort(
-            (a, b) => new Date(b.recorded_at) - new Date(a.recorded_at)
-          )[0];
-          setLastSessionDate(new Date(latest.recorded_at).toISOString().split('T')[0]);
-        } else {
-          setLastSessionDate('N/A');
+  // Fetch attendance data for last session
+  useEffect(() => {
+    const fetchLastSessionData = async () => {
+      try {
+        setLoading(true);
+
+        // Fetch all required data
+        const [courseDatesRes, attendanceRes, studentsRes] = await Promise.all([
+          axios.get(`${baseURL}/course_date`),
+          axios.get(`${baseURL}/attendance`),
+          axios.get(`${baseURL}/student`)
+        ]);
+
+        const courseDates = courseDatesRes.data?.data?.courseDates || [];
+        const students = studentsRes.data?.data?.students || [];
+        const attendanceRecords = attendanceRes.data?.data?.attendance || [];
+
+        // Get the latest course date
+        const sortedCourseDates = [...courseDates].sort((a, b) => {
+          return b.date_id - a.date_id;
+        });
+
+        const latestCourseDate = sortedCourseDates[0];
+
+        if (!latestCourseDate) {
+          setLastSessionDate('No sessions yet');
+          setLastSessionPresent(0);
+          setLoading(false);
+          return;
         }
+
+        // Set the last session date
+        setLastSessionDate(latestCourseDate.class_date);
+
+        // Filter attendance records for the latest session
+        const lastSessionAttendance = attendanceRecords.filter(
+          record => record.date_id === latestCourseDate.date_id
+        );
+
+        // Count present students in last session
+        const presentCount = lastSessionAttendance.filter(
+          record => record.is_present === true
+        ).length;
+
+        setLastSessionPresent(presentCount);
+
       } catch (err) {
-        console.error("Failed to fetch attendance:", err);
+        console.error("Failed to fetch last session data:", err);
         setLastSessionDate('N/A');
+        setLastSessionPresent(0);
+      } finally {
+        setLoading(false);
       }
     };
-    fetchLastSession();
+
+    fetchLastSessionData();
   }, []);
-  useEffect(() => {
-    const fetchLastSession = async () => {
-      try {
-        const response = await axios.get(`${baseURL}/attendance`)
-        const allRecords = response.data.data.attendance
-
-        if (allRecords.length > 0) {
-
-          const latest = allRecords.sort((a, b) => new Date(b.recorded_at) - new Date(a.recorded_at))[0]
-          setLastSessionDate(latest.recorded_at).toISOString().split('T')[0]
-        }
-      } catch (err) {
-        console.error("Failed to fetch attendance:", err)
-        setLastSessionDate('N/A')
-      }
-    }
-
-    fetchLastSession()
-  }, [])
-
 
   const handleCloseHistory = () => {
     setShowHistory(false)
@@ -112,7 +119,7 @@ export default function SessionPage() {
             <img
               src={contactImage}
               alt="Total Students"
-              className="w-32 h-32 sm:w-40 sm:h-40  rounded-3xl"
+              className="w-32 h-32 sm:w-40 sm:h-40 rounded-3xl"
             />
             <div className="text-center sm:text-left">
               <p className="text-base sm:text-lg font-semibold">
@@ -124,7 +131,7 @@ export default function SessionPage() {
 
           <div className="flex flex-col sm:flex-row items-center gap-4">
             <button
-              onClick={() => navigate('/sessionHistory')}
+              onClick={() => navigate('/last-session-analysis')}
               className="w-32 h-32 sm:w-40 sm:h-40 cursor-pointer"
             >
               <img
@@ -138,10 +145,16 @@ export default function SessionPage() {
               <p className="text-base sm:text-lg font-semibold">
                 Last Session: <span className="text-gray-600">{lastSessionDate ?? 'Loading...'}</span>
               </p>
-              <p className="text-gray-600">Attendance Record</p>
+              <p className="text-gray-600">
+                {loading ? 'Loading...' :
+                  lastSessionPresent !== null ?
+                    `${lastSessionPresent} / ${totalStudent || 0} Present` :
+                    'No attendance data'}
+              </p>
             </div>
           </div>
         </div>
+
         <div className="flex flex-col sm:flex-row justify-center pt-3 pb-3 gap-4 sm:gap-4">
           <button
             onClick={() => navigate('/attendance')}
@@ -151,13 +164,12 @@ export default function SessionPage() {
           </button>
 
           <button
-            onClick={() => navigate('/sessionHistory')}
+            onClick={() => navigate('/attendance-analysis')}
             className="flex-1 h-15 bg-[#D4AF35] text-white px-5 py-3 text-lg rounded-lg border-2 border-yellow-600 hover:bg-[#d6aa19] hover:text-white transition"
           >
             <b>View History</b>
           </button>
         </div>
-
       </div>
 
       {/* History Modal */}
