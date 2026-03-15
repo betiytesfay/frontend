@@ -19,7 +19,7 @@ const normalizeStudent = (raw) => {
   };
 };
 
-const ManageStudents = () => {
+const ManageStudents = ({ setSelectedCategory }) => {
   // === Students State ===
   const [studentFirstName, setStudentFirstName] = useState("");
   const [studentLastName, setStudentLastName] = useState("");
@@ -110,9 +110,9 @@ const ManageStudents = () => {
     }
   };
   const [filterGender, setFilterGender] = useState("");
-  
-  const [selectedAction, setSelectedAction] = useState(""); 
-  
+
+  const [selectedAction, setSelectedAction] = useState("");
+
   const fetchStudents = async () => {
     try {
       const res = await fetch(`${BASE}/student`, {
@@ -469,7 +469,7 @@ const ManageStudents = () => {
 
       < div className="flex flex-col gap-3 mb-4 px-2" >
         {/* Search + Filter */}
-        
+
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 w-full relative">
           <div className="w-full sm:flex-1 relative">
             <input
@@ -538,11 +538,31 @@ const ManageStudents = () => {
         < div className="flex justify-between items-center mt-2" >
           <button
             onClick={() => {
-              setSelectedAction("");
+
               setShowViewPopup(false);
               setShowEditPopup(false);
               setShowAddPopup(false);
+              setShowDeletePopup(false);
               setSelectedStudent(null);
+
+
+              setSearchId("");
+              setFilterName("");
+              setFilterDepartment("");
+              setFilterGender("");
+              setPage(1);
+
+
+              if (selectedAction) {
+                setSelectedAction("");
+              }
+              if (setSelectedCategory) {
+                setSelectedCategory("");
+              }
+
+              else {
+                fetchStudents();
+              }
             }}
             className="flex items-center gap-1 px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
           >

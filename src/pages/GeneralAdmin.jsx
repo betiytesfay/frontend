@@ -70,7 +70,7 @@ const GeneralAdmin = () => {
             </>
           </div>
         )}
-        {selectedCategory === "students" && <ManageStudents />}
+        {selectedCategory === "students" && <ManageStudents setSelectedCategory={setSelectedCategory} />}
         {selectedCategory === "courses" && <ManageCourses />}
         {selectedCategory === "admins" && <ManageUser />}
         {selectedCategory === "batches" && <ManageBatchs />}
@@ -81,11 +81,11 @@ const GeneralAdmin = () => {
           <button
             onClick={() => {
               if (selectedAction) {
-                setSelectedAction(""); 
+                setSelectedAction("");
               } else if (selectedCategory) {
-                setSelectedCategory(""); 
+                setSelectedCategory("");
               } else {
-                navigate(-1); 
+                navigate(-1);
               }
             }}
             className="w-32 h-10 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 transition"
