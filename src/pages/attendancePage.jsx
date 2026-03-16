@@ -24,9 +24,15 @@ export default function AttendancePage() {
   const [courses, setCourses] = useState([]);
   const [modalSession, setModalSession] = useState(null);
   const [currentSession, setCurrentSession] = useState(null);
-  const [savedSessions, setSavedSessions] = useState(
-    JSON.parse(localStorage.getItem('attendanceSessions')) || []
-  );
+  const [savedSessions, setSavedSessions] = useState([]);
+
+  // Load saved sessions and filter out invalid ones
+  useEffect(() => {
+    const saved = JSON.parse(localStorage.getItem('attendanceSessions')) || [];
+    // Filter out sessions without courseDateId
+    const validSessions = saved.filter(s => s.courseDateId);
+    setSavedSessions(validSessions);
+  }, []);
 
   // Fetch initial data
   useEffect(() => {
@@ -43,7 +49,7 @@ export default function AttendancePage() {
   useEffect(() => {
     axios.get(`${BASE_URL}/course_date`)
       .then(res => {
-        setAllCourseDates(res.data.data.course_dates);
+        setAllCourseDates(res.data.data.courseDates);
       })
       .catch(err => console.error(err));
   }, []);
@@ -105,7 +111,6 @@ export default function AttendancePage() {
     }
   };
 
-  // FIXED: Create CourseDate first, then start attendance
   const handleStartAttendance = async () => {
     if (!batchId || !courseId || !ethDate) {
       alert('Please select batch, course, and date');
@@ -115,36 +120,72 @@ export default function AttendancePage() {
     setLoading(true);
 
     try {
-      // First, create the course date
-      const courseDatePayload = {
-        batch_id: Number(batchId),
-        course_id: Number(courseId),
-        class_date: ethDate,
-
-      };
-
-      console.log('Creating course date:', courseDatePayload);
-
-      const courseDateResponse = await axios.post(
-        `${BASE_URL}/course_date`,
-        courseDatePayload,
-        {
-          withCredentials: true,
-          headers: {
-            'Content-Type': 'application/json'
-          }
+      // First, check if this course_date already exists
+      const checkResponse = await axios.get(`${BASE_URL}/course_date`, {
+        params: {
+          batch_id: batchId,
+          course_id: courseId,
+          class_date: ethDate
         }
-      );
+      });
 
-      console.log('Course date response:', courseDateResponse.data);
+      console.log('Check existing course_date:', checkResponse.data);
 
-      // Get the new course date ID from response
-      const newCourseDate = courseDateResponse.data.data;
-      const newCourseDateId = newCourseDate.date_id;
+      let courseDateId = null;
 
-      // Start attendance with the new course date ID
+      // Check if course_date exists
+      if (checkResponse.data?.data?.courseDates?.length > 0) {
+        const exactMatch = checkResponse.data.data.courseDates.find(
+          cd => cd.class_date === ethDate
+        );
+
+        if (exactMatch) {
+          courseDateId = exactMatch.date_id;
+          console.log('✅ Found EXACT matching course_date ID:', courseDateId);
+        }
+      }
+
+      // If no exact match found, create a new one
+      if (!courseDateId) {
+        const courseDatePayload = {
+          batch_id: Number(batchId),
+          course_id: Number(courseId),
+          class_date: ethDate,
+        };
+
+        console.log('Creating NEW course_date with payload:', courseDatePayload);
+
+        const courseDateResponse = await axios.post(
+          `${BASE_URL}/course_date`,
+          courseDatePayload,
+          { withCredentials: true }
+        );
+
+        console.log('Course date creation response:', courseDateResponse.data);
+
+        // FIXED: Get date_id from the correct path
+        courseDateId = courseDateResponse.data?.data?.courseDate?.date_id;
+
+        if (!courseDateId) {
+          console.error('Full response:', courseDateResponse.data);
+          throw new Error('No date_id returned from server');
+        }
+
+        console.log('✅ Created NEW course_date ID:', courseDateId);
+      }
+
+      // Verify the course_date exists
+      try {
+        await axios.get(`${BASE_URL}/course_date/${courseDateId}`);
+        console.log(`✅ Verified course_date ${courseDateId} exists in database`);
+      } catch (verifyErr) {
+        console.error('Verification failed:', verifyErr);
+        throw new Error(`Course date ${courseDateId} was not found after creation`);
+      }
+
+      // Now we have a valid courseDateId
       setCurrentSession({
-        courseDateId: newCourseDateId,
+        courseDateId: courseDateId,
         batchId,
         courseId,
         date: ethDate,
@@ -155,41 +196,14 @@ export default function AttendancePage() {
       setToastMessage('Session started successfully!');
 
     } catch (err) {
-      console.error('Error starting attendance:', err);
+      console.error('Error in handleStartAttendance:', err);
 
       if (err.response) {
         console.log('Error status:', err.response.status);
         console.log('Error data:', err.response.data);
-
-        if (err.response.status === 409) {
-          // Course date already exists - try to find it
-          try {
-            // Find the existing course date
-            const existingDate = allCourseDates.find(
-              cd => cd.batch_id === Number(batchId) &&
-                cd.course_id === Number(courseId) &&
-                cd.class_date === ethDate
-            );
-
-            if (existingDate) {
-              setCurrentSession({
-                courseDateId: existingDate.date_id,
-                batchId,
-                courseId,
-                date: ethDate,
-                students: []
-              });
-              setShowAttendanceBox(true);
-              setToastMessage('Using existing session!');
-            }
-          } catch (findErr) {
-            alert('Session already exists but could not be found.');
-          }
-        } else {
-          alert(`Error: ${err.response.data.message || 'Failed to create session'}`);
-        }
+        alert(`Failed to create session: ${err.response.data?.message || err.message}`);
       } else {
-        alert('Network error. Please try again.');
+        alert(`Error: ${err.message}`);
       }
     } finally {
       setLoading(false);
@@ -198,36 +212,45 @@ export default function AttendancePage() {
     }
   };
 
-  // FIXED: Send attendance with the correct date_id
   const handleSendSessionToBackend = async (session) => {
     if (!session?.students?.length) {
       alert('No students to send for this session.');
       return;
     }
 
+    if (!session.courseDateId) {
+      alert('This session has no valid course date ID. Please create a new session.');
+      return;
+    }
+
     setLoading(true);
 
     try {
-      // Format student IDs correctly
+
+      try {
+        await axios.get(`${BASE_URL}/course_date/${session.courseDateId}`);
+        console.log(`✅ Verified course_date ${session.courseDateId} exists`);
+      } catch (err) {
+        alert(`Course date ID ${session.courseDateId} does not exist in database! Please create the session again.`);
+        return;
+      }
+
+      // Format students - student enters only number, we add UGR-
       const formattedStudents = session.students.map(s => {
-        let studentId = s.student_id;
-        if (!studentId.toUpperCase().startsWith('UGR-')) {
-          studentId = `UGR-${studentId}`;
-        }
+
         return {
-          student_id: studentId.toUpperCase(),
+          student_id: s.student_id,
           is_present: true
         };
       });
 
-      // Payload matching your Attendance DTO
       const payload = {
         date_id: Number(session.courseDateId),
         students: formattedStudents,
-        recorded_by_user_id: Number(localStorage.getItem('adminId')) || undefined,
+        recorded_by_user_id: localStorage.getItem('adminId') ? Number(localStorage.getItem('adminId')) : undefined
       };
 
-      console.log('Sending attendance payload:', JSON.stringify(payload, null, 2));
+      console.log('Sending payload:', JSON.stringify(payload, null, 2));
 
       const response = await axios.post(`${BASE_URL}/attendance`, payload, {
         withCredentials: true,
@@ -253,9 +276,10 @@ export default function AttendancePage() {
         console.log('Error status:', err.response.status);
         console.log('Error data:', err.response.data);
 
+        // Handle 409 Conflict (duplicate entries)
         if (err.response.status === 409) {
           const shouldRemove = window.confirm(
-            'Attendance for this session already exists. Would you like to remove it from your saved list?'
+            'Attendance for this session already exists in the database. Would you like to remove it from your saved list?'
           );
 
           if (shouldRemove) {
@@ -263,13 +287,22 @@ export default function AttendancePage() {
             if (modalSession?.id === session.id) {
               setModalSession(null);
             }
-            setToastMessage('Session removed from saved list.');
+            setToastMessage('Session removed from saved list (already in database).');
           }
-        } else {
-          setToastMessage(`Error: ${err.response.data?.message || 'Failed to send session'}`);
+        }
+        // Handle 400 Bad Request (foreign key constraint)
+        else if (err.response.status === 400) {
+          if (err.response.data?.message?.includes('Foreign key constraint')) {
+            alert('Some students do not exist in the database. Please check student IDs.');
+          } else {
+            alert(`Error: ${err.response.data?.message || 'Bad request'}`);
+          }
+        }
+        else {
+          alert(`Error: ${err.response.data?.message || 'Failed to send session'}`);
         }
       } else {
-        setToastMessage('Network error. Please check your connection.');
+        alert('Network error. Please check your connection.');
       }
     } finally {
       setShowToast(true);
@@ -278,30 +311,45 @@ export default function AttendancePage() {
     }
   };
 
-  // Handle sending all sessions
+  // FIXED: Handle sending all sessions
   const handleSendAllSessionsToBackend = async () => {
     if (savedSessions.length === 0) return;
 
     setLoading(true);
     let successCount = 0;
+    let duplicateCount = 0;
     let failCount = 0;
 
     try {
       for (const session of savedSessions) {
         if (session.students.length === 0) continue;
 
+        // Skip sessions without courseDateId
+        if (!session.courseDateId) {
+          console.log(`Skipping session ${session.id} - no courseDateId`);
+          failCount++;
+          continue;
+        }
+
         try {
+          // First verify course_date exists
+          try {
+            await axios.get(`${BASE_URL}/course_date/${session.courseDateId}`);
+          } catch (err) {
+            console.log(`Skipping session ${session.id} - course_date not found for ID: ${session.courseDateId}`);
+            failCount++;
+            continue;
+          }
+
           const formattedStudents = session.students.map(s => ({
-            student_id: s.student_id.toUpperCase().startsWith('UGR-')
-              ? s.student_id
-              : `UGR-${s.student_id}`,
+            student_id: s.student_id, // Already has UGR-
             is_present: true
           }));
 
           const payload = {
             date_id: Number(session.courseDateId),
             students: formattedStudents,
-            recorded_by_user_id: Number(localStorage.getItem('adminId')) || undefined,
+            recorded_by_user_id: localStorage.getItem('adminId') ? Number(localStorage.getItem('adminId')) : undefined,
           };
 
           await axios.post(`${BASE_URL}/attendance`, payload, {
@@ -312,18 +360,24 @@ export default function AttendancePage() {
           });
 
           successCount++;
+
         } catch (err) {
-          console.error(`Failed to send session ${session.id}:`, err);
-          failCount++;
+          if (err.response?.status === 409) {
+            duplicateCount++;
+            console.log(`Session ${session.id} already exists in database`);
+          } else {
+            console.error(`Failed to send session ${session.id}:`, err);
+            failCount++;
+          }
         }
       }
 
-      if (successCount > 0) {
+      // Remove all sessions that were successfully sent or already existed
+      if (successCount > 0 || duplicateCount > 0) {
         setSavedSessions([]);
-        setToastMessage(`Sent ${successCount} sessions. Failed: ${failCount}`);
-      } else {
-        setToastMessage('Failed to send any sessions.');
       }
+
+      setToastMessage(`✅ Sent: ${successCount}, ⚠️ Already existed: ${duplicateCount}, ❌ Failed: ${failCount}`);
 
     } catch (err) {
       console.error('Error:', err);
@@ -364,7 +418,7 @@ export default function AttendancePage() {
       courseId: currentSession.courseId,
       date: currentSession.date,
       students: currentSession.students.map(s => ({
-        student_id: s.student_id,
+        student_id: s.student_id, // Already has UGR-
         is_present: true,
         name: s.name,
         gender: s.gender,
@@ -395,13 +449,13 @@ export default function AttendancePage() {
     handleDoneAttendance();
   };
 
+  // FIXED: Student only enters the number part, we add UGR- automatically
   const handleFetchStudent = async () => {
     if (!studentId) return alert('Enter a valid Student ID');
 
-    let fullStudentId = studentId.toUpperCase();
-    if (!fullStudentId.startsWith('UGR-')) {
-      fullStudentId = `UGR-${fullStudentId}`;
-    }
+    // Student enters only the number part (e.g., "1326-16")
+    // We add UGR- automatically
+    let fullStudentId = `UGR-${studentId.toUpperCase()}`;
 
     try {
       const res = await axios.get(`${BASE_URL}/student/${fullStudentId}`, { withCredentials: true });
@@ -442,9 +496,7 @@ export default function AttendancePage() {
       students: [
         ...prev.students,
         {
-          student_id: studentData.student_id.toUpperCase().startsWith('UGR-')
-            ? studentData.student_id
-            : `UGR-${studentData.student_id}`,
+          student_id: studentData.student_id, // Already has UGR- from fetch
           is_present: true,
           name: studentData.fullName,
           gender: studentData.gender || 'Unknown',
@@ -590,15 +642,15 @@ export default function AttendancePage() {
               {!studentData ? (
                 <>
                   <h2 className="text-2xl font-bold mb-4">Mark Attendance</h2>
-                  <label>Enter Student ID:</label>
+                  <label>Enter Student ID (number only):</label>
                   <input
                     type="text"
-                    placeholder="1234-16"
+                    placeholder="1326-16"
                     value={studentId}
                     onChange={e => setStudentId(e.target.value)}
                     className="border p-2 rounded w-full"
-                    maxLength={7}
                   />
+
                   <div className="flex gap-4 mt-2">
                     <button
                       onClick={handleFetchStudent}
@@ -666,6 +718,7 @@ export default function AttendancePage() {
                       <p>
                         <strong>Course:</strong> {getCourseNameByDateId(modalSession.courseDateId)}
                       </p>
+                      <p><strong>Date ID:</strong> {modalSession.courseDateId}</p>
                       <div className="mt-4">
                         <h4 className="font-semibold mb-2">Students Present:</h4>
                         <ul className="max-h-48 overflow-y-auto">
