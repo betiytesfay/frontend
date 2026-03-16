@@ -79,7 +79,7 @@ const GeneralAdmin = () => {
 
             <button
               onClick={() => {
-                backButtonHandler();
+
                 if (selectedAction) {
                   setSelectedAction("");
                 } else if (selectedCategory) {
