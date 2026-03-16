@@ -222,7 +222,7 @@ const ManageStudents = ({ setSelectedCategory }) => {
 
   // === Handlers ===
   const handleAddStudent = async () => {
-
+    set
     console.log('handleAddStudent values', {
       studentFirstName,
       studentLastName,
@@ -489,7 +489,7 @@ const ManageStudents = ({ setSelectedCategory }) => {
             if (selectedAction) {
               setSelectedAction("");
             }
-            if (setSelectedCategory) {
+            else if (setSelectedCategory) {
               setSelectedCategory("");
             }
 
@@ -511,201 +511,204 @@ const ManageStudents = ({ setSelectedCategory }) => {
           <span className="hidden sm:inline">Add</span>
         </button>
       </div >
-
-      <div className="mb-2 mx-1 flex flex-row mt-2">
-        <input
-          type="text"
-          placeholder="Student ID (0000-00)"
-          value={searchId}
-          onFocus={() => setIsSearchActive(true)}
-          onChange={(e) => setSearchId(e.target.value)}
-          className="border px-3 py-2 rounded w-full"
-        />
-
-
-        {/* Filter button */}
-
-        <button
-          onClick={() => {
-            applyFilter();
-            setShowFilter(!showFilter);
-          }}
-          className="p-2 bg-yellow-500 rounded"
-        >
-          <FaFilter className="w-4 h-4 sm:w-5 sm:h-5" />
-        </button>
-
-      </div>
-
-      {/* Filter dropdown */}
-      {showFilter && (
-        <div className="mt-2 border p-3 rounded bg-white shadow absolute z-10 w-full sm:w-64 right-0 top-full">
-          <input
-            type="text"
-            placeholder="Name…"
-            value={filterName}
-            onChange={(e) => setFilterName(e.target.value)}
-            className="w-full border px-3 py-2 rounded mb-2 text-base"
-          />
-          <select
-            value={filterDepartment}
-            onChange={(e) => setFilterDepartment(e.target.value)}
-            className="w-full border px-3 py-2 rounded mb-2 text-base"
-          >
-            <option value="">Department</option>
-            <option value="Accounting">Accounting</option>
-            <option value="Management">Management</option>
-            <option value="Economics">Economics</option>
-            <option value="Laws">Laws</option>
-            <option value="other">Other</option>
-          </select>
-          <select value={filterGender} onChange={(e) => setFilterGender(e.target.value)}
-            className="w-full border px-3 py-2 rounded mb-2 text-base">
-            <option value="">All Gender</option>
-            <option value="male">male</option>
-            <option value="female">female</option>
-
-          </select>
-          <button
-            onClick={applyFilter}
-            className="w-full px-4 py-2 bg-yellow-600 text-white rounded text-base"
-          >
-            Apply
-          </button>
-        </div>
-      )}
+      {!selectedAction && (
+        <>
+          <div className="mb-2  flex flex-row mt-2">
+            <input
+              type="text"
+              placeholder="Student ID (0000-00)"
+              value={searchId}
+              onFocus={() => setIsSearchActive(true)}
+              onChange={(e) => setSearchId(e.target.value)}
+              className="border px-3 py-2 rounded w-full"
+            />
 
 
+            {/* Filter button */}
 
-
-      <div className="flex flex-col gap-3 mt-2 px-1">
-        {/* PC Table View */}
-        <div className="hidden sm:block w-full  overflow-x-auto mt-2">
-          <table className="min-w-full w-full border-collapse border border-gray-200 shadow-sm rounded-lg">
-            <thead className="bg-yellow-100">
-              <tr>
-                <th className="px-4 py-2 text-left">#</th>
-                <th className="px-4 py-2 text-left">Name</th>
-                <th className="px-4 py-2 text-left">Gender</th>
-                <th className="px-4 py-2 text-left">Department</th>
-                <th className="px-4 py-2 text-left">Phone</th>
-                <th className="px-4 py-2 text-left">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredStudents.map((s, index) => (
-                <tr
-                  key={s.id}
-                  className="hover:bg-yellow-50 transition rounded-lg cursor-pointer"
-                  onClick={() => fetchStudentAndOpenView(s.id)}
-                >
-                  <td className="px-4 py-2">{index + 1}</td>
-                  <td className="px-4 py-2">{s.firstname} {s.lastname}</td>
-                  <td className="px-4 py-2">{s.gender}</td>
-                  <td className="px-4 py-2">{s.department}</td>
-                  <td className="px-4 py-2">{s.phone}</td>
-                  <td className="px-4 py-2 flex gap-2">
-                    <button
-                      onClick={(e) => { e.stopPropagation(); openEditForm(s); }}
-                      className="px-2 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); openDeleteConfirm(s); }}
-                      className="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600"
-                    >
-                      Delete
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        <div className="sm:hidden">
-          {filteredStudents.map((s) => (
-            <div
-              key={s.id}
-              onClick={() => fetchStudentAndOpenView(s.id)}
-              className="border rounded p-3 mb-1 flex justify-between items-center shadow  bg-white cursor-pointer"
-            >
-
-              <div className="flex-1 min-w-0 mr-2">
-                <p className="font-semibold truncate">{s.firstname} {s.lastname}</p>
-                <p className="text-sm text-gray-500 truncate">{s.id}</p>
-              </div>
-
-
-              <div className="sm:hidden mt-1 flex gap-1">
-                <button onClick={(e) => { e.stopPropagation(); openEditForm(s); }} className="text-yellow-500">
-                  <FaEdit />
-                </button>
-                <button onClick={(e) => { e.stopPropagation(); openDeleteConfirm(s); }} className="text-red-500">
-                  <FaTrash />
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-        <div className="flex justify-center gap-2 mt-4 flex-wrap">
-
-          {/* Prev */}
-          <button
-            onClick={() => setPage(prev => Math.max(prev - 1, 1))}
-            disabled={page === 1}
-            className={`px-3 py-1 rounded transition
-      ${page === 1
-                ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                : "bg-gray-200 hover:bg-yellow-400"}
-    `}
-          >
-            Prev
-          </button>
-
-          {/* Page Numbers */}
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
             <button
-              key={p}
-              onClick={() => setPage(p)}
-              className={`px-3 py-1 rounded transition
-        ${p === page
-                  ? "bg-yellow-500 text-white font-semibold"
-                  : "bg-gray-200 text-gray-700 hover:bg-yellow-400"}
-      `}
+              onClick={() => {
+                applyFilter();
+                setShowFilter(!showFilter);
+              }}
+              className="p-2 bg-yellow-500 rounded"
             >
-              {p}
+              <FaFilter className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
-          ))}
 
-          {/* Next */}
-          <button
-            onClick={() => setPage(prev => Math.min(prev + 1, totalPages))}
-            disabled={page === totalPages}
-            className={`px-3 py-1 rounded transition
-      ${page === totalPages
-                ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                : "bg-gray-200 hover:bg-yellow-400"}
+          </div>
+
+
+          {showFilter && (
+            <div className="mt-2 border p-3 rounded bg-white shadow absolute z-10 w-full sm:w-64 right-0 top-full">
+              <input
+                type="text"
+                placeholder="Name…"
+                value={filterName}
+                onChange={(e) => setFilterName(e.target.value)}
+                className="w-full border px-3 py-2 rounded mb-2 text-base"
+              />
+              <select
+                value={filterDepartment}
+                onChange={(e) => setFilterDepartment(e.target.value)}
+                className="w-full border px-3 py-2 rounded mb-2 text-base"
+              >
+                <option value="">Department</option>
+                <option value="Accounting">Accounting</option>
+                <option value="Management">Management</option>
+                <option value="Economics">Economics</option>
+                <option value="Laws">Laws</option>
+                <option value="other">Other</option>
+              </select>
+              <select value={filterGender} onChange={(e) => setFilterGender(e.target.value)}
+                className="w-full border px-3 py-2 rounded mb-2 text-base">
+                <option value="">All Gender</option>
+                <option value="male">male</option>
+                <option value="female">female</option>
+
+              </select>
+              <button
+                onClick={applyFilter}
+                className="w-full px-4 py-2 bg-yellow-600 text-white rounded text-base"
+              >
+                Apply
+              </button>
+            </div>
+          )}
+
+
+
+
+          <div className="flex flex-col gap-3 mt-2 px-1">
+            {/* PC Table View */}
+            <div className="hidden sm:block w-full  overflow-x-auto mt-2">
+              <table className="min-w-full w-full border-collapse border border-gray-200 shadow-sm rounded-lg">
+                <thead className="bg-yellow-100">
+                  <tr>
+                    <th className="px-4 py-2 text-left">#</th>
+                    <th className="px-4 py-2 text-left">Name</th>
+                    <th className="px-4 py-2 text-left">Gender</th>
+                    <th className="px-4 py-2 text-left">Department</th>
+                    <th className="px-4 py-2 text-left">Phone</th>
+                    <th className="px-4 py-2 text-left">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredStudents.map((s, index) => (
+                    <tr
+                      key={s.id}
+                      className="hover:bg-yellow-50 transition rounded-lg cursor-pointer"
+                      onClick={() => fetchStudentAndOpenView(s.id)}
+                    >
+                      <td className="px-4 py-2">{index + 1}</td>
+                      <td className="px-4 py-2">{s.firstname} {s.lastname}</td>
+                      <td className="px-4 py-2">{s.gender}</td>
+                      <td className="px-4 py-2">{s.department}</td>
+                      <td className="px-4 py-2">{s.phone}</td>
+                      <td className="px-4 py-2 flex gap-2">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); openEditForm(s); }}
+                          className="px-2 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); openDeleteConfirm(s); }}
+                          className="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+                        >
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="sm:hidden">
+              {filteredStudents.map((s) => (
+                <div
+                  key={s.id}
+                  onClick={() => fetchStudentAndOpenView(s.id)}
+                  className="border rounded p-3 mb-1 flex justify-between items-center shadow  bg-white cursor-pointer"
+                >
+
+                  <div className="flex-1 min-w-0 mr-2">
+                    <p className="font-semibold truncate">{s.firstname} {s.lastname}</p>
+                    <p className="text-sm text-gray-500 truncate">{s.id}</p>
+                  </div>
+
+
+                  <div className="sm:hidden mt-1 flex gap-1">
+                    <button onClick={(e) => { e.stopPropagation(); openEditForm(s); }} className="text-yellow-500">
+                      <FaEdit />
+                    </button>
+                    <button onClick={(e) => { e.stopPropagation(); openDeleteConfirm(s); }} className="text-red-500">
+                      <FaTrash />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="flex justify-center gap-2 mt-4 flex-wrap">
+
+              {/* Prev */}
+              <button
+                onClick={() => setPage(prev => Math.max(prev - 1, 1))}
+                disabled={page === 1}
+                className={`px-3 py-1 rounded transition
+      ${page === 1
+                    ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                    : "bg-gray-200 hover:bg-yellow-400"}
     `}
-          >
-            Next
-          </button>
-          <label className="flex items-center gap-2">
-            Show:
-            <select
-              value={studentsPerPage}
-              onChange={(e) => setStudentsPerPage(Number(e.target.value))}
-              className="border rounded px-2 py-1"
-            >
-              <option value={10}>10</option>
-              <option value={20}>20</option>
-              <option value={25}>25</option>
-              <option value={50}>50</option>
-              <option value={100}>100</option>
-            </select>
-          </label>
-        </div>
-      </div>
+              >
+                Prev
+              </button>
+
+              {/* Page Numbers */}
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                <button
+                  key={p}
+                  onClick={() => setPage(p)}
+                  className={`px-3 py-1 rounded transition
+        ${p === page
+                      ? "bg-yellow-500 text-white font-semibold"
+                      : "bg-gray-200 text-gray-700 hover:bg-yellow-400"}
+      `}
+                >
+                  {p}
+                </button>
+              ))}
+
+              {/* Next */}
+              <button
+                onClick={() => setPage(prev => Math.min(prev + 1, totalPages))}
+                disabled={page === totalPages}
+                className={`px-3 py-1 rounded transition
+      ${page === totalPages
+                    ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                    : "bg-gray-200 hover:bg-yellow-400"}
+    `}
+              >
+                Next
+              </button>
+              <label className="flex items-center gap-2">
+                Show:
+                <select
+                  value={studentsPerPage}
+                  onChange={(e) => setStudentsPerPage(Number(e.target.value))}
+                  className="border rounded px-2 py-1"
+                >
+                  <option value={10}>10</option>
+                  <option value={20}>20</option>
+                  <option value={25}>25</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                </select>
+              </label>
+            </div>
+          </div>
+        </>
+      )}
       {/* Add Student Form */}
       {
         selectedAction === "add" && (

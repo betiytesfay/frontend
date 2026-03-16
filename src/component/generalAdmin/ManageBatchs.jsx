@@ -15,7 +15,7 @@ const normalizeBatch = (raw) => {
   };
 };
 
-const ManageBatches = () => {
+const ManageBatches = ({ setSelectedCategory }) => {
   const [selectedAction, setSelectedAction] = useState("");
   const [batches, setBatches] = useState([]);
 
@@ -64,8 +64,6 @@ const ManageBatches = () => {
       console.error(err);
     }
   }
-
-
 
   useEffect(() => {
     fetchBatches();
@@ -176,7 +174,14 @@ const ManageBatches = () => {
     <div className="bg-white p-6 max-w-5xl mx-auto flex flex-col justify-center gap-4 mt-8 sm:max-w-lg rounded-xl shadow-md w-full">
       <div className=" items-center justify-between flex">
         <button
-          onClick={() => navigate("/admin")}
+          onClick={() => {
+
+            setSelectedAction("");
+
+            if (setSelectedCategory) {
+              setSelectedCategory("");
+            }
+          }}
           className="flex items-center gap-1 px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
         >
           <FaArrowLeft />
@@ -192,7 +197,6 @@ const ManageBatches = () => {
           onChange={(e) => setSearchTerm(e.target.value)}
           className="border px-3 py-2 rounded w-full"
         />
-
         <button
           onClick={() => {
             setShowFilter(!showFilter)
@@ -206,14 +210,29 @@ const ManageBatches = () => {
 
         <div className="flex gap-2">
           <button
-            onClick={() => setSelectedAction("add")}
+            onClick={() => {
+              if (selectedAction === "add") {
+                setSelectedAction("");
+              } else {
+                setSelectedAction("add");
+              }
+            }
+            }
             className="flex items-center gap-1 bg-yellow-500 text-white px-3 py-2 rounded hover:bg-yellow-600"
           >
             <FaUserPlus /> Add
           </button>
 
           <button
-            onClick={() => setSelectedAction("transfer")}
+            onClick={() => {
+              if (selectedAction === "transfer") {
+                setSelectedAction("")
+              } else {
+                setSelectedAction("transfer");
+
+
+              }
+            }}
             className="flex items-center gap-1 bg-green-500 text-white px-3 py-2 rounded hover:bg-green-600"
           >
             Transfer

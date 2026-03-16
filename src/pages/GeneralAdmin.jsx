@@ -15,7 +15,6 @@ import axios from "axios";
 
 const GeneralAdmin = () => {
   const navigate = useNavigate();
-
   const [selectedCategory, setSelectedCategory] = useState(""); // "students", "courses", "batches", "admins"
   const [selectedAction, setSelectedAction] = useState("");     // "add", "edit", "delete", "transfer"
 
@@ -35,7 +34,6 @@ const GeneralAdmin = () => {
             <img src={logo} alt="GIBI Logo" className="w-10 h-10 rounded-full object-cover" />
           </div>
         )}
-
 
 
         {/*tabs  */}
@@ -76,24 +74,28 @@ const GeneralAdmin = () => {
         {selectedCategory === "batches" && <ManageBatchs setSelectedCategory={setSelectedCategory} />}
 
         {/* Bottom buttons */}
-        <div className="flex justify-center gap-6 mt-3">
+        {(selectedCategory === "") && (
+          <div className="flex justify-center gap-6 mt-3">
 
-          <button
-            onClick={() => {
-              if (selectedAction) {
-                setSelectedAction("");
-              } else if (selectedCategory) {
-                setSelectedCategory("");
-              } else {
-                navigate(-1);
-              }
-            }}
-            className="w-32 h-10 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 transition"
-          >
-            Back
-          </button>
+            <button
+              onClick={() => {
+                backButtonHandler();
+                if (selectedAction) {
+                  setSelectedAction("");
+                } else if (selectedCategory) {
+                  setSelectedCategory("");
+                }
+                else {
+                  navigate(-1);
+                }
+              }}
+              className="w-32 h-10 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 transition"
+            >
+              Back
+            </button>
 
-        </div>
+          </div>
+        )}
       </div>
     </div>
   )

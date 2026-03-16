@@ -113,7 +113,6 @@ const ManageCourses = ({ setSelectedCategory }) => {
   };
   // === Add new course ===
   const handleAddCourse = async () => {
-
     if (!courseName.trim()) {
       return alert("Course name is required");
     }
@@ -196,15 +195,12 @@ const ManageCourses = ({ setSelectedCategory }) => {
             setShowEditPopup(false);
             setShowAddPopup(false);
             setShowDeletePopup(false);
-
-
             setPage(1);
-
 
             if (selectedAction) {
               setSelectedAction("");
             }
-            if (setSelectedCategory) {
+            else if (setSelectedCategory) {
               setSelectedCategory("");
             }
 
@@ -226,162 +222,165 @@ const ManageCourses = ({ setSelectedCategory }) => {
           <span className="hidden sm:inline">Add</span>
         </button>
       </div>
+      {!selectedAction && (
+        <>
+          <div className="mb-4 flex flex-row">
+            <input
+              type="text"
+              placeholder="search courses.."
+              value={searchId}
+              onChange={(e) => setSearchId(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && fetchCourseById()}
+              className="border px-3 py-2 rounded w-full"
+            />
 
-      <div className="mb-4 flex flex-row">
-        <input
-          type="text"
-          placeholder="search courses.."
-          value={searchId}
-          onChange={(e) => setSearchId(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && fetchCourseById()}
-          className="border px-3 py-2 rounded w-full"
-        />
-
-        <button
-          onClick={() => { }}
-          className="p-2 bg-yellow-500 rounded"
-        >
-          <FaFilter className="w-5 h-5" />
-        </button>
-      </div>
-      {showFilter && (
-        <div className="flex gap-2 mt-2">
-          <input
-            type="text"
-            placeholder="Filter by name"
-            value={filterName}
-            onChange={(e) => setFilterName(e.target.value)}
-            className="border px-2 py-1 rounded"
-          />
-          <button onClick={applyFilter} className="px-3 py-1 bg-yellow-500 text-white rounded">
-            Apply
-          </button>
-        </div>
-      )}
+            <button
+              onClick={() => { }}
+              className="p-2 bg-yellow-500 rounded"
+            >
+              <FaFilter className="w-5 h-5" />
+            </button>
+          </div>
+          {showFilter && (
+            <div className="flex gap-2 mt-2">
+              <input
+                type="text"
+                placeholder="Filter by name"
+                value={filterName}
+                onChange={(e) => setFilterName(e.target.value)}
+                className="border px-2 py-1 rounded"
+              />
+              <button onClick={applyFilter} className="px-3 py-1 bg-yellow-500 text-white rounded">
+                Apply
+              </button>
+            </div>
+          )}
 
 
-      <div className="flex flex-col gap-3 mt-2 px-2">
-        {/* PC Table View */}
-        <div className="hidden sm:block w-full  overflow-x-auto mt-2">
-          <table className="min-w-full w-full border-collapse border border-gray-200 shadow-sm rounded-lg">
-            <thead className="bg-yellow-100">
-              <tr>
-                <th className="px-4 py-2 text-left">#</th>
-                <th className="px-4 py-2 text-left">course_id</th>
-                <th className="px-4 py-2 text-left">course_name</th>
-                <th className="px-4 py-2 text-left">courseDescription</th>
+          <div className="flex flex-col gap-3 mt-2 px-2">
+            {/* PC Table View */}
+            <div className="hidden sm:block w-full  overflow-x-auto mt-2">
+              <table className="min-w-full w-full border-collapse border border-gray-200 shadow-sm rounded-lg">
+                <thead className="bg-yellow-100">
+                  <tr>
+                    <th className="px-4 py-2 text-left">#</th>
+                    <th className="px-4 py-2 text-left">course_id</th>
+                    <th className="px-4 py-2 text-left">course_name</th>
+                    <th className="px-4 py-2 text-left">courseDescription</th>
 
-              </tr>
-            </thead>
-            <tbody>
-              {paginatedCourses.map((c, index) => (
-                <tr
+                  </tr>
+                </thead>
+                <tbody>
+                  {paginatedCourses.map((c, index) => (
+                    <tr
+                      key={c.id}
+                      className="hover:bg-yellow-50 transition rounded-lg cursor-pointer"
+                      onClick={() => fetchCourseAndOpenView(c.id)}
+                    >
+                      <td className="px-4 py-2">{index + 1}</td>
+                      <td className="px-4 py-2">{c.id}</td>
+                      <td className="px-4 py-2">{c.name}</td>
+                      <td className="px-4 py-2">{c.description}</td>
+
+                      <td className="px-4 py-2 flex gap-2">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); openEditForm(c); }}
+                          className="px-2 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); openDeleteConfirm(c); }}
+                          className="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+                        >
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="sm:hidden">
+              {paginatedCourses.map((c) => (
+                <div
                   key={c.id}
-                  className="hover:bg-yellow-50 transition rounded-lg cursor-pointer"
-                  onClick={() => fetchCourseAndOpenView(c.id)}
+                  onClick={() => {
+                    setSelectedCourse(c);
+                    setSelectedAction("detail");
+                  }}
+                  className="border rounded p-3 flex justify-between items-center shadow bg-white cursor-pointer"
                 >
-                  <td className="px-4 py-2">{index + 1}</td>
-                  <td className="px-4 py-2">{c.id}</td>
-                  <td className="px-4 py-2">{c.name}</td>
-                  <td className="px-4 py-2">{c.description}</td>
+                  <div className="flex-1">
+                    <p className="font-semibold">{c.name}</p>
+                    <p className="text-sm text-gray-500">{c.id}</p>
+                  </div>
 
-                  <td className="px-4 py-2 flex gap-2">
+                  <div className="flex gap-2 ml-2">
                     <button
                       onClick={(e) => { e.stopPropagation(); openEditForm(c); }}
-                      className="px-2 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600"
+                      className="text-yellow-500"
                     >
-                      Edit
+                      <FaEdit />
                     </button>
+
                     <button
                       onClick={(e) => { e.stopPropagation(); openDeleteConfirm(c); }}
-                      className="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+                      className="text-red-500"
                     >
-                      Delete
+                      <FaTrash />
                     </button>
-                  </td>
-                </tr>
+                  </div>
+                </div>
               ))}
-            </tbody>
-          </table>
-        </div>
-        <div className="sm:hidden">
-          {paginatedCourses.map((c) => (
-            <div
-              key={c.id}
-              onClick={() => {
-                setSelectedCourse(c);
-                setSelectedAction("detail");
-              }}
-              className="border rounded p-3 flex justify-between items-center shadow bg-white cursor-pointer"
-            >
-              <div className="flex-1">
-                <p className="font-semibold">{c.name}</p>
-                <p className="text-sm text-gray-500">{c.id}</p>
-              </div>
-
-              <div className="flex gap-2 ml-2">
-                <button
-                  onClick={(e) => { e.stopPropagation(); openEditForm(c); }}
-                  className="text-yellow-500"
-                >
-                  <FaEdit />
-                </button>
-
-                <button
-                  onClick={(e) => { e.stopPropagation(); openDeleteConfirm(c); }}
-                  className="text-red-500"
-                >
-                  <FaTrash />
-                </button>
-              </div>
             </div>
-          ))}
-        </div>
-        <div className="flex justify-center gap-2 mt-4 flex-wrap">
+            <div className="flex justify-center gap-2 mt-4 flex-wrap">
 
-          {/* Prev */}
-          <button
-            onClick={() => setPage(prev => Math.max(prev - 1, 1))}
-            disabled={page === 1}
-            className={`px-3 py-1 rounded transition
+              {/* Prev */}
+              <button
+                onClick={() => setPage(prev => Math.max(prev - 1, 1))}
+                disabled={page === 1}
+                className={`px-3 py-1 rounded transition
       ${page === 1
-                ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                : "bg-gray-200 hover:bg-yellow-400"}
+                    ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                    : "bg-gray-200 hover:bg-yellow-400"}
     `}
-          >
-            Prev
-          </button>
+              >
+                Prev
+              </button>
 
-          {/* Page Numbers */}
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-            <button
-              key={p}
-              onClick={() => setPage(p)}
-              className={`px-3 py-1 rounded transition
+              {/* Page Numbers */}
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                <button
+                  key={p}
+                  onClick={() => setPage(p)}
+                  className={`px-3 py-1 rounded transition
         ${p === page
-                  ? "bg-yellow-500 text-white font-semibold"
-                  : "bg-gray-200 text-gray-700 hover:bg-yellow-400"}
+                      ? "bg-yellow-500 text-white font-semibold"
+                      : "bg-gray-200 text-gray-700 hover:bg-yellow-400"}
       `}
-            >
-              {p}
-            </button>
-          ))}
+                >
+                  {p}
+                </button>
+              ))}
 
-          {/* Next */}
-          <button
-            onClick={() => setPage(prev => Math.min(prev + 1, totalPages))}
-            disabled={page === totalPages}
-            className={`px-3 py-1 rounded transition
+              {/* Next */}
+              <button
+                onClick={() => setPage(prev => Math.min(prev + 1, totalPages))}
+                disabled={page === totalPages}
+                className={`px-3 py-1 rounded transition
       ${page === totalPages
-                ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                : "bg-gray-200 hover:bg-yellow-400"}
+                    ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                    : "bg-gray-200 hover:bg-yellow-400"}
     `}
-          >
-            Next
-          </button>
+              >
+                Next
+              </button>
 
-        </div>
-      </div>
+            </div>
+          </div>
+        </>
+      )}
       {/* ADD COURSE */}
       {selectedAction === "add" && (
         <div>
