@@ -3,33 +3,32 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../App.css";
 
-
 const Home = () => {
   const [showLoginForm, setShowLoginForm] = useState(false);
-  const [showSessionForm, setShowSessionForm] = useState(false);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
 
   const navigate = useNavigate();
 
-  const handleGeneralAdminClick = () => {
+  // Single button click handler
+  const handleLoginClick = () => {
     setShowLoginForm(true);
-    setShowSessionForm(false);
   };
 
-  const handleSessionAdminClick = () => {
-    setShowSessionForm(true);
-    setShowLoginForm(false);
-  };
-
-  const handleGeneralAdminLogin = () => {
-    if (username === "admin" && password === "1234") {
+  // Single login handler for both roles
+  const handleLogin = () => {
+    // Check credentials for General Admin
+    if (username === "general" && password === "1234") {
       navigate("/general-admin");
-    } else {
+    }
+    // Check credentials for Session Admin
+    else if (username === "session" && password === "1234") {
+      navigate("/session-admin");
+    }
+    else {
       alert("Invalid credentials");
     }
   };
-
 
   return (
     <div className="flex justify-center items-center min-h-screen bg-gray-900">
@@ -56,45 +55,38 @@ const Home = () => {
             Simplifying attendance tracking with speed, security, and style.
           </p>
 
+          {/* SINGLE LOGIN BUTTON - NOT TWO */}
           <div className="flex flex-col md:flex-row gap-4 mt-6">
             <button
-              onClick={handleGeneralAdminClick}
+              onClick={handleLoginClick}
               className="w-[304px] h-[49px] bg-gradient-to-r from-yellow-400 to-orange-500 
                          hover:from-yellow-500 hover:to-orange-600 text-white font-semibold rounded-md
                          transition-all duration-300 ease-linear shadow-md transform hover:scale-105 hover:shadow-xl"
             >
-              Login As General Admin
-            </button>
-
-            <button
-              onClick={handleSessionAdminClick}
-              className="w-[304px] h-[49px] bg-gray-800 hover:bg-gray-900 text-white font-semibold rounded-md
-                     transition-all duration-300 ease-linear shadow-md"
-            >
-              Login As Session Admin
+              Login
             </button>
           </div>
 
-          {/* General Admin Login Form */}
+          {/* SINGLE LOGIN FORM */}
           {showLoginForm && (
             <div className="flex flex-col items-center space-y-4 mt-4">
               <div className="flex flex-col space-y-4 w-[304px]">
                 <input
                   type="text"
-                  placeholder="Username or Email"
+                  placeholder="Username (general or session)"
                   className="w-full h-12 px-4 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-yellow-400"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                 />
                 <input
                   type="password"
-                  placeholder="Password"
+                  placeholder="Password (1234)"
                   className="w-full h-12 px-4 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-yellow-400"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
                 <button
-                  onClick={handleGeneralAdminLogin}
+                  onClick={handleLogin}
                   className="w-full h-12 bg-yellow-500 hover:bg-yellow-600 text-white font-semibold rounded-md
                         transition-all duration-300 ease-linear shadow-md transform hover:scale-105 hover:shadow-xl"
                 >
@@ -104,30 +96,8 @@ const Home = () => {
             </div>
           )}
 
-          {/* Session Admin Login Form */}
-          {showSessionForm && (
-            <div className="flex flex-col items-center space-y-4 mt-4">
-              <div className="flex flex-col space-y-4 w-[304px]">
-                <input
-                  type="text"
-                  placeholder="Username or Email"
-                  className="w-full h-12 px-4 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                />
-                <input
-                  type="password"
-                  placeholder="Password"
-                  className="w-full h-12 px-4 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                />
-                <button className="w-full h-12 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-md
-                        transition-all duration-300 ease-linear shadow-md transform hover:scale-105 hover:shadow-xl">
-                  Login
-                </button>
-              </div>
-            </div>
-          )}
-
           <p className="text-white mt-2 text-sm cursor-pointer hover:underline">
-            forget password?
+            Forget password?
           </p>
         </div>
       </div>
@@ -136,4 +106,3 @@ const Home = () => {
 };
 
 export default Home;
-
