@@ -91,10 +91,10 @@ export default function CombinedLogin() {
           <div className="relative w-full">
             <input
               type={showPassword ? 'text' : 'password'}
-              placeholder="Password"
+              placeholder="eg., 0000-16"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="border border-gray-300 rounded p-2 w-full pr-10 focus:outline-none focus:ring-2 focus:ring-[#D7B450] bg-white/90"
+              className="border border-gray-300 rounded p-2 w-full pr-10 focus:outline-none focus:ring-2 focus:ring-[#D7B450] bg-white/90 backdrop-blur-sm"
               onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
             />
             <button
@@ -120,10 +120,9 @@ export default function CombinedLogin() {
         >
           {loading ? 'Logging in...' : 'Login'}
         </button>
-
-        <p className="text-white text-sm mt-2 cursor-pointer hover:underline">
-          Create Account
-        </p>
+        <div className="flex justify-between w-full mt-2">
+          <a href="#" className="text-white text-sm hover:underline">Forgot Password?</a>
+        </div>
       </div>
     </div>
   )
