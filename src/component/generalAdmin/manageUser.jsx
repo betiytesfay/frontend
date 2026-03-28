@@ -195,7 +195,7 @@ const ManageUser = () => {
         <h2 className="font-bold text-lg">Admins</h2>
         <button
           onClick={() => setSelectedAction("add")}
-          className="flex items-center gap-1 bg-yellow-500 text-white px-3 py-2 rounded hover:bg-yellow-600"
+          className="flex items-center gap-1 bg-[#D7B450] text-white px-3 py-2 rounded hover:bg-yellow-600"
         >
           <FaUserPlus />
           <span className="hidden sm:inline">Add</span>
@@ -218,7 +218,7 @@ const ManageUser = () => {
           onClick={() => {
             setShowFilter(!showFilter)
           }}
-          className="p-2 bg-yellow-500 rounded"
+          className="p-2 bg-[#D7B450] rounded"
         >
           <FaFilter className="w-5 h-5" />
         </button>
@@ -255,7 +255,7 @@ const ManageUser = () => {
                   <td className="px-4 py-2 flex gap-2">
                     <button
                       onClick={(e) => { e.stopPropagation(); openEditForm(s); }}
-                      className="px-2 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600"
+                      className="px-2 py-1 bg-[#D7B450] text-white rounded hover:bg-yellow-600"
                     >
                       Edit
                     </button>
@@ -305,7 +305,7 @@ const ManageUser = () => {
             className={`px-3 py-1 rounded transition
             ${page === 1
                 ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                : "bg-gray-200 hover:bg-yellow-400"}
+                : "bg-gray-200 hover:bg-[#D7B450]"}
           `}
           >
             Prev
@@ -318,7 +318,7 @@ const ManageUser = () => {
               onClick={() => setPage(p)}
               className={`px-3 py-1 rounded transition
               ${p === page
-                  ? "bg-yellow-500 text-white font-semibold"
+                  ? "bg-[#D7B450] text-white font-semibold"
                   : "bg-gray-200 text-gray-700 hover:bg-yellow-400"}
             `}
             >
@@ -403,7 +403,7 @@ const ManageUser = () => {
           />
 
           <button
-            className="bg-yellow-500 text-white px-4 py-2 rounded"
+            className="bg-[#D7B450] text-white px-4 py-2 rounded"
             onClick={handleAddUser}
           >
             Save
@@ -478,7 +478,7 @@ const ManageUser = () => {
           />
 
           <button
-            className="bg-yellow-500 text-white px-4 py-2 rounded"
+            className="bg-[#D7B450] text-white px-4 py-2 rounded"
             onClick={handleEditUser}
           >
             Update
@@ -503,7 +503,7 @@ const ManageUser = () => {
               <button
                 className="px-4 py-2 bg-gray-300 rounded"
                 onClick={() => {
-                  setSelectedAction(""); // close popup
+                  setSelectedAction("");
                   setSelectedUserId(null);
                 }}
               >
@@ -513,7 +513,7 @@ const ManageUser = () => {
                 className="px-4 py-2 bg-red-500 text-white rounded"
                 onClick={async () => {
                   await handleDeleteUser(selectedUserId);
-                  setSelectedAction(""); // close popup after deletion
+                  setSelectedAction("");
                   setSelectedUserId(null);
                 }}
               >
@@ -561,7 +561,7 @@ const ManageUser = () => {
                       setEmail(user.email);
                       setShowEditPopup(true);
                     }}
-                    className="px-2 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600"
+                    className="px-2 py-1 bg-[#D7B450] text-white rounded hover:bg-yellow-600"
                   >
                     Edit
                   </button>

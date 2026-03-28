@@ -95,7 +95,7 @@ const ManageBatches = ({ setSelectedCategory }) => {
     setBatchName(batch.batch_name);
     setStartDate(batch.start_date);
     setEndDate(batch.end_date);
-    setShowEdit(true); // we'll define showEdit next
+    setShowEdit(true);
   };
 
   const handleEditBatch = async () => {
@@ -201,7 +201,7 @@ const ManageBatches = ({ setSelectedCategory }) => {
           onClick={() => {
             setShowFilter(!showFilter)
           }}
-          className="p-2 bg-yellow-500 rounded"
+          className="p-2 bg-[#D7B450] rounded"
         >
           <FaFilter className="w-5 h-5" />
         </button>
@@ -218,7 +218,7 @@ const ManageBatches = ({ setSelectedCategory }) => {
               }
             }
             }
-            className="flex items-center gap-1 bg-yellow-500 text-white px-3 py-2 rounded hover:bg-yellow-600"
+            className="flex items-center gap-1 bg-[#D7B450] text-white px-3 py-2 rounded hover:bg-yellow-600"
           >
             <FaUserPlus /> Add
           </button>
@@ -260,7 +260,7 @@ const ManageBatches = ({ setSelectedCategory }) => {
               {/* Actions */}
               <div className="flex gap-2 ml-2">
                 <button
-                  className="bg-yellow-500 text-white p-2 rounded hover:bg-yellow-600"
+                  className="bg-[#D7B450] text-white p-2 rounded hover:bg-yellow-600"
 
                   onClick={() => {
                     handleEditClick(b);
@@ -292,7 +292,7 @@ const ManageBatches = ({ setSelectedCategory }) => {
 
               <div className="flex gap-2 mt-4">
                 <button
-                  className="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600"
+                  className="bg-[#D7B450] text-white px-4 py-2 rounded hover:bg-yellow-600"
                   onClick={() => {
                     handleEditClick(modalBatch);
                     setModalBatch(null);
@@ -343,7 +343,7 @@ const ManageBatches = ({ setSelectedCategory }) => {
               <div>{b.end_date}</div>
               <div className="flex gap-2">
                 <button
-                  className="bg-yellow-500 text-white p-2 rounded hover:bg-yellow-600"
+                  className="bg-[#D7B450] text-white p-2 rounded hover:bg-yellow-600"
                   onClick={() => {
                     handleEditClick(b);
                     setSelectedAction("edit")
@@ -421,7 +421,7 @@ const ManageBatches = ({ setSelectedCategory }) => {
           />
 
           <button
-            className="bg-yellow-500 text-white px-4 py-2 rounded"
+            className="bg-[#D7B450] text-white px-4 py-2 rounded"
             onClick={handleAddBatch}
           >
             Save
@@ -474,7 +474,7 @@ const ManageBatches = ({ setSelectedCategory }) => {
           />
 
           <button
-            className="bg-yellow-500 text-white px-4 py-2 rounded"
+            className="bg-[#D7B450] text-white px-4 py-2 rounded"
             onClick={handleEditBatch}
           >
             Update
@@ -494,7 +494,7 @@ const ManageBatches = ({ setSelectedCategory }) => {
             >
               <span>{b.batch_name}</span>
               <button
-                className="bg-yellow-500 text-white px-3 py-1 rounded"
+                className="bg-[#D7B450] text-white px-3 py-1 rounded"
                 onClick={() => handleDeleteBatch(b.batch_id)}
               >
                 Delete
@@ -512,13 +512,13 @@ const ManageBatches = ({ setSelectedCategory }) => {
           {/* Mode selector */}
           <div className="flex gap-4 mb-4 flex-wrap">
             <button
-              className={`px-4 py-2 rounded ${transferMode === "single" ? "bg-yellow-500 text-white" : "bg-gray-200"}`}
+              className={`px-4 py-2 rounded ${transferMode === "single" ? "bg-[#D7B450] text-white" : "bg-gray-200"}`}
               onClick={() => setTransferMode("single")}
             >
               Single Student
             </button>
             <button
-              className={`px-4 py-2 rounded ${transferMode === "all" ? "bg-yellow-500 text-white" : "bg-gray-200"}`}
+              className={`px-4 py-2 rounded ${transferMode === "all" ? "bg-[#D7B450] text-white" : "bg-gray-200"}`}
               onClick={() => setTransferMode("all")}
             >
               All Students
@@ -560,7 +560,7 @@ const ManageBatches = ({ setSelectedCategory }) => {
           </select>
 
           <button
-            className="bg-yellow-500 text-white px-4 py-2 rounded"
+            className="bg-[#D7B450] text-white px-4 py-2 rounded"
             onClick={handleTransfer}
           >
             {transferMode === "single" ? "Transfer Student" : "Transfer All"}

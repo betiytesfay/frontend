@@ -247,7 +247,7 @@ const ManageStudents = ({ setSelectedCategory }) => {
       return alert("Please fill out all student info.");
     }
 
-    // check duplicates (email and phone) against loaded students
+    // check duplicates 
     const studentList = Array.isArray(students) ? students : [];
     console.log('existing students count', studentList.length);
     const dupEmail = studentList.find(
@@ -422,7 +422,7 @@ const ManageStudents = ({ setSelectedCategory }) => {
         </div>
       </div>
       <div className="flex justify-center">
-        <button onClick={onSubmit} className="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600 transition">
+        <button onClick={onSubmit} className="bg-[#D7B450] text-white px-4 py-2 rounded hover:bg-yellow-600 transition">
           Save
         </button>
       </div>
@@ -505,7 +505,7 @@ const ManageStudents = ({ setSelectedCategory }) => {
         <h2 className="font-bold text-lg">Students</h2>
         <button
           onClick={() => setSelectedAction("add")}
-          className="flex items-center gap-1 bg-yellow-500 text-white px-3 py-2 rounded hover:bg-yellow-600"
+          className="flex items-center gap-1 bg-[#D7B450] text-white px-3 py-2 rounded hover:bg-yellow-600"
         >
           <FaUserPlus />
           <span className="hidden sm:inline">Add</span>
@@ -531,7 +531,7 @@ const ManageStudents = ({ setSelectedCategory }) => {
                 applyFilter();
                 setShowFilter(!showFilter);
               }}
-              className="p-2 bg-yellow-500 rounded"
+              className="p-2 bg-[#D7B450] rounded"
             >
               <FaFilter className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
@@ -569,7 +569,7 @@ const ManageStudents = ({ setSelectedCategory }) => {
               </select>
               <button
                 onClick={applyFilter}
-                className="w-full px-4 py-2 bg-yellow-600 text-white rounded text-base"
+                className="w-full px-4 py-2 bg-[#D7B450] text-white rounded text-base"
               >
                 Apply
               </button>
@@ -608,7 +608,7 @@ const ManageStudents = ({ setSelectedCategory }) => {
                       <td className="px-4 py-2 flex gap-2">
                         <button
                           onClick={(e) => { e.stopPropagation(); openEditForm(s); }}
-                          className="px-2 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600"
+                          className="px-2 py-1 bg-[#D7B450] text-white rounded hover:bg-yellow-600"
                         >
                           Edit
                         </button>
@@ -639,7 +639,7 @@ const ManageStudents = ({ setSelectedCategory }) => {
 
 
                   <div className="sm:hidden mt-1 flex gap-1">
-                    <button onClick={(e) => { e.stopPropagation(); openEditForm(s); }} className="text-yellow-500">
+                    <button onClick={(e) => { e.stopPropagation(); openEditForm(s); }} className="text-[#D7B450]">
                       <FaEdit />
                     </button>
                     <button onClick={(e) => { e.stopPropagation(); openDeleteConfirm(s); }} className="text-red-500">
@@ -658,7 +658,7 @@ const ManageStudents = ({ setSelectedCategory }) => {
                 className={`px-3 py-1 rounded transition
       ${page === 1
                     ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                    : "bg-gray-200 hover:bg-yellow-400"}
+                    : "bg-gray-200 hover:bg-[#D7B450]"}
     `}
               >
                 Prev
@@ -671,8 +671,8 @@ const ManageStudents = ({ setSelectedCategory }) => {
                   onClick={() => setPage(p)}
                   className={`px-3 py-1 rounded transition
         ${p === page
-                      ? "bg-yellow-500 text-white font-semibold"
-                      : "bg-gray-200 text-gray-700 hover:bg-yellow-400"}
+                      ? "bg-[#D7B450] text-white font-semibold"
+                      : "bg-gray-200 text-gray-700 hover:bg-[#D7B450]"}
       `}
                 >
                   {p}
@@ -686,7 +686,7 @@ const ManageStudents = ({ setSelectedCategory }) => {
                 className={`px-3 py-1 rounded transition
       ${page === totalPages
                     ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                    : "bg-gray-200 hover:bg-yellow-400"}
+                    : "bg-gray-200 hover:bg-[#D7B450]"}
     `}
               >
                 Next
@@ -803,7 +803,7 @@ const ManageStudents = ({ setSelectedCategory }) => {
               <button
                 onClick={() => setShowAddPopup(true)}
 
-                className="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600 transition"
+                className="bg-[#D7B450] text-white px-4 py-2 rounded hover:bg-yellow-600 transition"
               >
                 + Add Student
               </button>
@@ -941,7 +941,7 @@ const ManageStudents = ({ setSelectedCategory }) => {
 
                     <button
                       onClick={() => openEditForm(s)}
-                      className="px-2 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600"
+                      className="px-2 py-1 bg-[#D7B450] text-white rounded hover:bg-yellow-600"
                     >
                       Edit
                     </button>
@@ -1076,7 +1076,7 @@ const ManageStudents = ({ setSelectedCategory }) => {
                     await fetchStudents();
                     setShowEditPopup(false);
                   }}
-                  className="px-4 py-2 bg-yellow-600 text-white rounded"
+                  className="px-4 py-2 bg-[#D7B450] text-white rounded"
                 >
                   Save
                 </button>

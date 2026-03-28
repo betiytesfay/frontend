@@ -64,7 +64,7 @@ export default function CombinedLogin() {
       style={{ backgroundImage: `url(${bgImage})` }}
     >
       <div
-        className="flex flex-col items-center gap-6 w-[400px] p-8 backdrop-blur-md rounded-xl text-center"
+        className="flex flex-col m-5 items-center gap-6 w-[400px] p-8 backdrop-blur-md rounded-xl text-center"
         style={{ backgroundColor: 'rgba(255, 255, 255, 0.2)' }}
       >
         <img src={logo} alt="Logo" className="w-40 h-40 object-contain mb-4" />
@@ -78,7 +78,7 @@ export default function CombinedLogin() {
           <label className="text-white text-sm mb-1 block">Student ID:</label>
           <input
             type="text"
-            placeholder="1234-16"
+            placeholder="eg., 1234-16"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             className="border border-gray-300 rounded p-2 w-full focus:outline-none focus:ring-2 focus:ring-[#D7B450] bg-white/90"
@@ -91,7 +91,7 @@ export default function CombinedLogin() {
           <div className="relative w-full">
             <input
               type={showPassword ? 'text' : 'password'}
-              placeholder="eg., 0000-16"
+              placeholder="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="border border-gray-300 rounded p-2 w-full pr-10 focus:outline-none focus:ring-2 focus:ring-[#D7B450] bg-white/90 backdrop-blur-sm"
@@ -120,7 +120,7 @@ export default function CombinedLogin() {
         >
           {loading ? 'Logging in...' : 'Login'}
         </button>
-        <div className="flex justify-between w-full mt-2">
+        <div className="flex justify-center w-full mt-2">
           <a href="#" className="text-white text-sm hover:underline">Forgot Password?</a>
         </div>
       </div>

@@ -236,7 +236,7 @@ const ManageCourses = ({ setSelectedCategory }) => {
 
             <button
               onClick={() => { }}
-              className="p-2 bg-yellow-500 rounded"
+              className="p-2 bg-[#D7B450] rounded"
             >
               <FaFilter className="w-5 h-5" />
             </button>
@@ -250,7 +250,7 @@ const ManageCourses = ({ setSelectedCategory }) => {
                 onChange={(e) => setFilterName(e.target.value)}
                 className="border px-2 py-1 rounded"
               />
-              <button onClick={applyFilter} className="px-3 py-1 bg-yellow-500 text-white rounded">
+              <button onClick={applyFilter} className="px-3 py-1 bg-[#D7B450] text-white rounded">
                 Apply
               </button>
             </div>
@@ -261,7 +261,7 @@ const ManageCourses = ({ setSelectedCategory }) => {
             {/* PC Table View */}
             <div className="hidden sm:block w-full  overflow-x-auto mt-2">
               <table className="min-w-full w-full border-collapse border border-gray-200 shadow-sm rounded-lg">
-                <thead className="bg-yellow-100">
+                <thead className="bg-[#D7B450]">
                   <tr>
                     <th className="px-4 py-2 text-left">#</th>
                     <th className="px-4 py-2 text-left">course_id</th>
@@ -285,7 +285,7 @@ const ManageCourses = ({ setSelectedCategory }) => {
                       <td className="px-4 py-2 flex gap-2">
                         <button
                           onClick={(e) => { e.stopPropagation(); openEditForm(c); }}
-                          className="px-2 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600"
+                          className="px-2 py-1 bg-[#D7B450] text-white rounded hover:bg-yellow-600"
                         >
                           Edit
                         </button>
@@ -319,7 +319,7 @@ const ManageCourses = ({ setSelectedCategory }) => {
                   <div className="flex gap-2 ml-2">
                     <button
                       onClick={(e) => { e.stopPropagation(); openEditForm(c); }}
-                      className="text-yellow-500"
+                      className="text-[#D7B450]"
                     >
                       <FaEdit />
                     </button>
@@ -343,7 +343,7 @@ const ManageCourses = ({ setSelectedCategory }) => {
                 className={`px-3 py-1 rounded transition
       ${page === 1
                     ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                    : "bg-gray-200 hover:bg-yellow-400"}
+                    : "bg-gray-200 hover:bg-[#D7B450]"}
     `}
               >
                 Prev
@@ -356,7 +356,7 @@ const ManageCourses = ({ setSelectedCategory }) => {
                   onClick={() => setPage(p)}
                   className={`px-3 py-1 rounded transition
         ${p === page
-                      ? "bg-yellow-500 text-white font-semibold"
+                      ? "bg-[#D7B450] text-white font-semibold"
                       : "bg-gray-200 text-gray-700 hover:bg-yellow-400"}
       `}
                 >
@@ -371,7 +371,7 @@ const ManageCourses = ({ setSelectedCategory }) => {
                 className={`px-3 py-1 rounded transition
       ${page === totalPages
                     ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                    : "bg-gray-200 hover:bg-yellow-400"}
+                    : "bg-gray-200 hover:bg-[#D7B450]"}
     `}
               >
                 Next
@@ -404,7 +404,7 @@ const ManageCourses = ({ setSelectedCategory }) => {
 
             <button
               onClick={() => setShowAddPopup(true)}
-              className="bg-yellow-500 text-white px-4 py-2 rounded"
+              className="bg-[#D7B450] text-white px-4 py-2 rounded"
             >
               + Add Course
             </button>
@@ -491,9 +491,9 @@ const ManageCourses = ({ setSelectedCategory }) => {
               <button
                 onClick={() => {
                   openEditForm(selectedCourse);
-                  setSelectedAction(""); // Close view popup
+                  setSelectedAction("");
                 }}
-                className="flex-1 px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600"
+                className="flex-1 px-4 py-2 bg-[#D7B450] text-white rounded hover:bg-yellow-600"
               >
                 Edit
               </button>
@@ -501,7 +501,7 @@ const ManageCourses = ({ setSelectedCategory }) => {
               <button
                 onClick={() => {
                   openDeleteConfirm(selectedCourse);
-                  setSelectedAction(""); // Close view popup
+                  setSelectedAction("");
                 }}
                 className="flex-1 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
               >
@@ -590,7 +590,7 @@ const ManageCourses = ({ setSelectedCategory }) => {
                   await handleSaveEditCourse();
                   setShowEditPopup(false);
                 }}
-                className="px-4 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700"
+                className="px-4 py-2 bg-[#D7B450] text-white rounded hover:bg-yellow-700"
               >
                 Save Changes
               </button>

@@ -45,22 +45,22 @@ const GeneralAdmin = () => {
 
               <div className="flex flex-col gap-2 sm:gap-3 sm:max-w-md md:gap-2 max-h-[80vh] overflow-auto">
                 <button onClick={() => setSelectedCategory("students")}
-                  className="flex items-center gap-1 bg-yellow-500  text-white px-4 py-2 font-bold rounded w-full hover:bg-yellow-600 sm:text-3xl md:text-3xl  active:scale-95 transition">
+                  className="flex items-center gap-1 bg-[#D7B450]  text-white px-4 py-2 font-bold rounded w-full hover:bg-yellow-600 sm:text-3xl md:text-3xl  active:scale-95 transition">
                   <FaUserGraduate className="w-6 h-6" />
                   Students
                 </button>
                 <button onClick={() => setSelectedCategory("courses")}
-                  className="flex items-center gap-1 bg-yellow-500 text-white px-4 py-2 font-bold rounded w-full hover:bg-yellow-600 sm:text-2xl md:text-3xl  active:scale-95 transition">
+                  className="flex items-center gap-1 bg-[#D7B450] text-white px-4 py-2 font-bold rounded w-full hover:bg-yellow-600 sm:text-2xl md:text-3xl  active:scale-95 transition">
                   <FaBook className="w-6 h-6" />
                   Courses
                 </button>
                 <button onClick={() => setSelectedCategory("batches")}
-                  className="flex items-center gap-1 bg-yellow-500 text-white px-4 py-2 font-bold rounded w-full hover:bg-yellow-600 sm:text-2xl md:text-3xl  active:scale-95 transition">
+                  className="flex items-center gap-1 bg-[#D7B450] text-white px-4 py-2 font-bold rounded w-full hover:bg-yellow-600 sm:text-2xl md:text-3xl  active:scale-95 transition">
                   <FaLayerGroup className="w-6 h-6" />
                   Batches
                 </button>
                 <button onClick={() => setSelectedCategory("admins")}
-                  className="flex items-center gap-1 bg-yellow-500 text-white px-4 py-2 font-bold rounded w-full hover:bg-yellow-600 sm:text-2xl md:text-3xl  active:scale-95 transition">
+                  className="flex items-center gap-1 bg-[#D7B450] text-white px-4 py-2 font-bold rounded w-full hover:bg-yellow-600 sm:text-2xl md:text-3xl  active:scale-95 transition">
                   <FaUserShield className="w-6 h-6" />
                   Session Admins
                 </button>
@@ -89,7 +89,7 @@ const GeneralAdmin = () => {
                   navigate(-1);
                 }
               }}
-              className="w-32 h-10 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 transition"
+              className="w-32 h-10 bg-[#D7B450] text-white rounded-md hover:bg-yellow-600 transition"
             >
               Back
             </button>
