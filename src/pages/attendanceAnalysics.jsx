@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PieChart, Pie, Cell, Tooltip, Legend } from 'recharts';
 import axios from 'axios';
+import ReusablePieChart from '../component/PieChartComponent';
 
 const COLORS = ['#22c55e', '#ef4444'];
 const BASE_URL = "https://gibi-backend-669108940571.us-central1.run.app";
@@ -180,38 +181,17 @@ export default function AttendanceAnalysisPage() {
               </div>
 
               {/* PieChart */}
-              {hasData ? (
-                <div
-                  className="w-full flex justify-center mb-4 cursor-pointer hover:opacity-80 transition-opacity"
-                  onClick={() => setSelectedSessionId(selectedSessionId === session.id ? null : session.id)}
-                >
-                  <PieChart width={300} height={300}>
-                    <Pie
-                      data={pieData}
-                      dataKey="value"
-                      nameKey="name"
-                      cx={150}
-                      cy={150}
-                      outerRadius={100}
-                      label={({ percent }) => `${(percent * 100).toFixed(0)}%`}
-                      labelLine={false}
-                    >
-                      {pieData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip
-                      contentStyle={{ backgroundColor: '#fff', color: '#333', border: '1px solid #ddd' }}
-                      formatter={(value, name) => [`${value} students`, name]}
-                    />
-                    <Legend wrapperStyle={{ color: '#333' }} />
-                  </PieChart>
-                </div>
-              ) : (
-                <div className="w-full h-[300px] flex items-center justify-center bg-gray-50 rounded">
-                  <p className="text-gray-500">No attendance records for this session</p>
-                </div>
-              )}
+              <ReusablePieChart
+                present={stats.present}
+                absent={stats.absent}
+                presentPercentage={stats.presentPercentage}
+                absentPercentage={stats.absentPercentage}
+                onClick={() =>
+                  setSelectedSessionId(
+                    selectedSessionId === session.id ? null : session.id
+                  )
+                }
+              />
 
               {/* Filters */}
               {session.students.length > 0 && (
