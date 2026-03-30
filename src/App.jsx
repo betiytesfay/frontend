@@ -68,7 +68,7 @@ export default function CombinedLogin() {
         style={{ backgroundColor: 'rgba(255, 255, 255, 0.2)' }}
       >
         <img src={logo} alt="Logo" className="w-40 h-40 object-contain mb-4" />
-        <h1 className="text-3xl md:text-2xl font-bold text-white text-center drop-shadow-lg">
+        <h1 className="text-3xl md:text-2xl font-bold text-blue-800 text-center drop-shadow-lg ">
           <span className="animate-fadeSlide inline-block">
             Welcome to Gibi Attendance
           </span>

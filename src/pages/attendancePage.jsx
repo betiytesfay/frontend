@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { BackButton } from '../component/backButton';
 import axios from 'axios';
 import EthDatePicker from '../component/ethioDate';
-
+import { DatePicker } from "et-calendar";
 const BASE_URL = "https://gibi-backend-669108940571.us-central1.run.app";
 
 export default function AttendancePage() {
@@ -26,10 +26,10 @@ export default function AttendancePage() {
   const [currentSession, setCurrentSession] = useState(null);
   const [savedSessions, setSavedSessions] = useState([]);
 
-  // Load saved sessions and filter out invalid ones
+
   useEffect(() => {
     const saved = JSON.parse(localStorage.getItem('attendanceSessions')) || [];
-    // Filter out sessions without courseDateId
+
     const validSessions = saved.filter(s => s.courseDateId);
     setSavedSessions(validSessions);
   }, []);
@@ -165,7 +165,10 @@ export default function AttendancePage() {
 
         // FIXED: Get date_id from the correct path
         courseDateId = courseDateResponse.data?.data?.courseDate?.date_id;
-
+        setAllCourseDates(prev => [
+          ...prev,
+          courseDateResponse.data?.data?.courseDate
+        ]);
         if (!courseDateId) {
           console.error('Full response:', courseDateResponse.data);
           throw new Error('No date_id returned from server');
@@ -261,7 +264,7 @@ export default function AttendancePage() {
 
       console.log('Success:', response.data);
 
-      // Remove the successfully sent session
+
       setSavedSessions(prev => prev.filter(s => s.id !== session.id));
       setToastMessage('Session sent successfully!');
 
@@ -311,7 +314,7 @@ export default function AttendancePage() {
     }
   };
 
-  // FIXED: Handle sending all sessions
+  //  Handle sending all sessions
   const handleSendAllSessionsToBackend = async () => {
     if (savedSessions.length === 0) return;
 
@@ -449,12 +452,10 @@ export default function AttendancePage() {
     handleDoneAttendance();
   };
 
-  // FIXED: Student only enters the number part, we add UGR- automatically
+  //  Student only enters the number part
   const handleFetchStudent = async () => {
     if (!studentId) return alert('Enter a valid Student ID');
 
-    // Student enters only the number part (e.g., "1326-16")
-    // We add UGR- automatically
     let fullStudentId = `UGR-${studentId.toUpperCase()}`;
 
     try {
@@ -496,7 +497,7 @@ export default function AttendancePage() {
       students: [
         ...prev.students,
         {
-          student_id: studentData.student_id, // Already has UGR- from fetch
+          student_id: studentData.student_id,
           is_present: true,
           name: studentData.fullName,
           gender: studentData.gender || 'Unknown',
@@ -604,10 +605,15 @@ export default function AttendancePage() {
         </select>
 
         <label>Date:</label>
-        <EthDatePicker
-          value={ethDate}
-          onChange={setEthDate}
-        />
+        <div className="border rounded w-full max-w-xs">
+          <DatePicker
+            selectedDate={ethDate ? new Date(ethDate) : new Date()}
+            onDateChange={(date) => setEthDate(date.toISOString().split('T')[0])}
+            showCalendars="ethiopian"
+            viewFirst="Ethiopian"
+            closeOnSelect
+          />
+        </div>
 
         <button
           onClick={handleStartAttendance}

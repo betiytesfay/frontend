@@ -109,7 +109,7 @@ export default function SessionPage() {
           <BackButton to="/login" label="← " />
         </div>
 
-        <h1 className="text-2xl sm:text-3xl font-bold text-green-700">
+        <h1 className="text-2xl sm:text-3xl font-bold text-blue-800">
           Welcome, Session Admin!
         </h1>
 
@@ -143,7 +143,7 @@ export default function SessionPage() {
 
             <div className="text-center sm:text-left">
               <p className="text-base sm:text-lg font-semibold">
-                Last Session: <span className="text-gray-600">{lastSessionDate ?? 'Loading...'}</span>
+                Last Session: <span className="text-blue-600">{lastSessionDate ?? 'Loading...'}</span>
               </p>
               <p className="text-gray-600">
                 {loading ? 'Loading...' :
