@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { PieChart, Pie, Cell, Tooltip, Legend } from 'recharts';
 import axios from 'axios';
 import ReusablePieChart from '../component/PieChartComponent';
-
-const COLORS = ['#22c55e', '#ef4444'];
+import SessionFilter from '../component/SessionFilter';
+import AttendanceFilter from '../component/AttendanceFilter';
 const BASE_URL = "https://gibi-backend-669108940571.us-central1.run.app";
 
 export default function AttendanceAnalysisPage() {
@@ -12,6 +11,8 @@ export default function AttendanceAnalysisPage() {
   const [backendSessions, setBackendSessions] = useState([]);
   const [allCourseDates, setAllCourseDates] = useState([]);
   const [allStudents, setAllStudents] = useState([]);
+  const [selectedYear, setSelectedYear] = useState(null);
+  const [selectedCourse, setSelectedCourse] = useState(null);
   const [loading, setLoading] = useState(true);
   const [filterPresent, setFilterPresent] = useState(false);
   const [filterAbsent, setFilterAbsent] = useState(false);
@@ -38,6 +39,19 @@ export default function AttendanceAnalysisPage() {
       return false;
     }
   };
+  const sessionsFormatted = courseDates.map(cd => {
+    // Extract year from Ethiopian date string
+    const match = cd.class_date.match(/(\d{4})\sE\.C\./);
+    const sessionYear = match ? parseInt(match[1], 10) : null;
+
+    return {
+      id: cd.date_id,
+      date: cd.class_date,
+      sessionYear,
+      courseName: cd.course?.course_name || 'N/A',
+
+    };
+  });
 
   // Fetch all data
   useEffect(() => {
@@ -67,45 +81,6 @@ export default function AttendanceAnalysisPage() {
             student_id: record.student_id,
             is_present: record.is_present
           });
-        });
-
-        const sessionsFormatted = courseDates.map(cd => {
-          const totalStudents = students.length;
-
-          const dateAttendance = attendanceByDate[cd.date_id] || [];
-          const attendanceMap = {};
-          dateAttendance.forEach(r => attendanceMap[r.student_id] = r.is_present);
-
-          const studentsWithAttendance = students.map(student => {
-            const isPresent = attendanceMap[student.student_id];
-
-            return {
-              student_id: student.student_id,
-              name: `${student.first_name} ${student.last_name}`,
-              is_present: isPresent === true, // true if present, false if absent or not marked
-              gender: student.gender || 'N/A',
-              department: student.department || 'N/A'
-            };
-          });
-
-          const present = studentsWithAttendance.filter(s => s.is_present).length;
-          const absent = studentsWithAttendance.filter(s => !s.is_present).length;
-
-          return {
-            id: cd.date_id,
-            date: cd.class_date,
-            batchId: cd.batch_id,
-            courseDateId: cd.date_id,
-            courseName: cd.course?.course_name || 'N/A',
-            students: studentsWithAttendance,
-            stats: {
-              total: totalStudents,
-              present,
-              absent,
-              presentPercentage: totalStudents > 0 ? ((present / totalStudents) * 100).toFixed(1) : 0,
-              absentPercentage: totalStudents > 0 ? ((absent / totalStudents) * 100).toFixed(1) : 0
-            }
-          };
         });
 
         setBackendSessions(sessionsFormatted);
@@ -146,11 +121,21 @@ export default function AttendanceAnalysisPage() {
       </button>
 
       <h1 className="text-3xl font-bold text-yellow-400 mb-6">Attendance Analysis</h1>
-
+      <SessionFilter
+        sessions={backendSessions}
+        selectedYear={selectedYear}
+        setSelectedYear={setSelectedYear}
+        selectedCourse={selectedCourse}
+        setSelectedCourse={setSelectedCourse}
+      />
       {backendSessions.length === 0 ? (
         <p className="text-gray-500">No attendance data available.</p>
       ) : (
-        backendSessions.map(session => {
+        backendSessions.filter(session => {
+          const yearMatches = !selectedYear || session.sessionYear === parseInt(selectedYear, 10);
+          const courseMatches = !selectedCourse || session.courseName === selectedCourse;
+          return yearMatches && courseMatches;
+        }).map(session => {
           const { stats } = session;
           const pieData = [
             { name: `Present (${stats.presentPercentage}%)`, value: stats.present },
@@ -193,45 +178,15 @@ export default function AttendanceAnalysisPage() {
                 }
               />
 
-              {/* Filters */}
               {session.students.length > 0 && (
-                <div className="mt-4 flex gap-2 flex-wrap">
-                  <button
-                    onClick={() => {
-                      setFilterPresent(!filterPresent);
-                      setFilterAbsent(false);
-                    }}
-                    className={`px-3 py-1 text-sm rounded ${filterPresent
-                      ? 'bg-green-500 text-white'
-                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                      }`}
-                  >
-                    Show Present Only ({stats.present})
-                  </button>
-                  <button
-                    onClick={() => {
-                      setFilterAbsent(!filterAbsent);
-                      setFilterPresent(false);
-                    }}
-                    className={`px-3 py-1 text-sm rounded ${filterAbsent
-                      ? 'bg-red-500 text-white'
-                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                      }`}
-                  >
-                    Show Absent Only ({stats.absent})
-                  </button>
-                  {(filterPresent || filterAbsent) && (
-                    <button
-                      onClick={() => {
-                        setFilterPresent(false);
-                        setFilterAbsent(false);
-                      }}
-                      className="px-3 py-1 text-sm rounded bg-yellow-400 text-black hover:bg-yellow-500"
-                    >
-                      Clear Filter
-                    </button>
-                  )}
-                </div>
+                <AttendanceFilter
+                  presentCount={stats.present}
+                  absentCount={stats.absent}
+                  filterPresent={filterPresent}
+                  filterAbsent={filterAbsent}
+                  setFilterPresent={setFilterPresent}
+                  setFilterAbsent={setFilterAbsent}
+                />
               )}
 
               {selectedSessionId === session.id && (
