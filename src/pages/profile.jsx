@@ -7,7 +7,7 @@ export default function Profile() {
           <p>admin name</p>
           <p>id</p>
         </div>
-        <p>phoen numebr</p>
+        <p>phone numebr</p>
         <p>department</p>
       </div>
       {logout && <div>  <p> are you sure to logout?</p>

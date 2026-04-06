@@ -12,6 +12,7 @@ export default function AttendanceAnalysisPage() {
   const [allCourseDates, setAllCourseDates] = useState([]);
   const [allStudents, setAllStudents] = useState([]);
   const [selectedYear, setSelectedYear] = useState(null);
+  const [selectedBatch, setSelectedBatch] = useState(null);
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [loading, setLoading] = useState(true);
   const [filterPresent, setFilterPresent] = useState(false);
@@ -39,19 +40,7 @@ export default function AttendanceAnalysisPage() {
       return false;
     }
   };
-  const sessionsFormatted = courseDates.map(cd => {
-    // Extract year from Ethiopian date string
-    const match = cd.class_date.match(/(\d{4})\sE\.C\./);
-    const sessionYear = match ? parseInt(match[1], 10) : null;
 
-    return {
-      id: cd.date_id,
-      date: cd.class_date,
-      sessionYear,
-      courseName: cd.course?.course_name || 'N/A',
-
-    };
-  });
 
   // Fetch all data
   useEffect(() => {
@@ -67,12 +56,25 @@ export default function AttendanceAnalysisPage() {
 
         const courseDates = courseDatesRes.data?.data?.courseDates || [];
         setAllCourseDates(courseDates);
+        const sessionsFormatted = courseDates.map(cd => {
 
+          const match = cd.class_date.match(/(\d{4})\sE\.C\./);
+          const sessionYear = match ? parseInt(match[1], 10) : null;
+
+          return {
+            id: cd.date_id,
+            date: cd.class_date,
+            sessionYear,
+            courseName: cd.course?.course_name || 'N/A',
+
+          };
+        });
         const students = studentsRes.data?.data || [];
         setAllStudents(students);
 
         const attendanceRecords = attendanceRes.data?.data?.attendanceRecords || [];
 
+        // Build attendance map per date_id
         const attendanceByDate = {};
         attendanceRecords.forEach(record => {
           const dateId = record.date_id;
@@ -83,7 +85,53 @@ export default function AttendanceAnalysisPage() {
           });
         });
 
-        setBackendSessions(sessionsFormatted);
+        // Create full session objects with statistics (like LastSessionAnalysisPage)
+        const sessionsWithStats = courseDates.map(cd => {
+          const match = cd.class_date.match(/(\d{4})\sE\.C\./);
+          const sessionYear = match ? parseInt(match[1], 10) : null;
+
+          // Get attendance records for this specific date
+          const dateAttendance = attendanceByDate[cd.date_id] || [];
+
+          // Create a map for quick lookup
+          const attendanceMap = {};
+          dateAttendance.forEach(record => {
+            attendanceMap[record.student_id] = record.is_present;
+          });
+
+          // Build student list with presence flag
+          const studentsWithAttendance = students.map(student => ({
+            student_id: student.student_id,
+            name: `${student.first_name} ${student.last_name}`,
+            is_present: attendanceMap[student.student_id] === true,
+            gender: student.gender || 'N/A',
+            department: student.department || 'N/A'
+          }));
+
+          const present = studentsWithAttendance.filter(s => s.is_present).length;
+          const absent = studentsWithAttendance.filter(s => !s.is_present).length;
+          const total = studentsWithAttendance.length;
+
+          return {
+            id: cd.date_id,
+            date: cd.class_date,
+            sessionYear,
+            courseName: cd.course?.course_name || 'N/A',
+            batchId: cd.batch_id,
+            students: studentsWithAttendance,
+            stats: {
+              total,
+              present,
+              absent,
+              presentPercentage: total > 0 ? ((present / total) * 100).toFixed(1) : 0,
+              absentPercentage: total > 0 ? ((absent / total) * 100).toFixed(1) : 0
+            }
+          };
+        });
+
+        setBackendSessions(sessionsWithStats);   // ✅ Now contains everything needed
+
+
       } catch (err) {
         console.error('Error fetching data:', err);
       } finally {
@@ -93,6 +141,11 @@ export default function AttendanceAnalysisPage() {
 
     fetchData();
   }, []);
+  const filteredSessions = backendSessions.filter(session => {
+    const batchMatches = !selectedBatch || session.batchName === selectedBatch;
+    const courseMatches = !selectedCourse || session.courseName === selectedCourse;
+    return batchMatches && courseMatches;
+  });
 
   const handleBack = async () => {
     const enteredPassword = prompt('Enter session admin password to go back:');
@@ -186,6 +239,11 @@ export default function AttendanceAnalysisPage() {
                   filterAbsent={filterAbsent}
                   setFilterPresent={setFilterPresent}
                   setFilterAbsent={setFilterAbsent}
+                  sessions={backendSessions}
+                  selectedBatch={selectedBatch}
+                  setSelectedBatch={setSelectedBatch}
+                  selectedCourse={selectedCourse}
+                  setSelectedCourse={setSelectedCourse}
                 />
               )}
 
