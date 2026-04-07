@@ -1,38 +1,29 @@
+// src/component/SessionFilter.jsx
 export default function SessionFilter({
   sessions,
-  selectedYear,
-  setSelectedYear,
+  selectedBatch,
+  setSelectedBatch,
   selectedCourse,
   setSelectedCourse
 }) {
-  // Get unique years from sessions
-  const years = Array.from(
-    new Set(sessions.map(s => new Date(s.date).getFullYear()))
-  ).sort((a, b) => b - a); // descending
-
-  // Get unique courses
-  const courses = Array.from(
-    new Set(sessions.map(s => s.courseName))
-  );
+  const batches = Array.from(new Set(sessions.map(s => s.batchName))).filter(Boolean);
+  const courses = Array.from(new Set(sessions.map(s => s.courseName))).filter(Boolean);
 
   return (
     <div className="flex gap-4 flex-wrap mb-6">
-
-      {/* Year Filter */}
       <select
-        value={selectedYear || ''}
-        onChange={(e) => setSelectedYear(e.target.value || null)}
+        value={selectedBatch || ""}
+        onChange={(e) => setSelectedBatch(e.target.value || null)}
         className="border border-gray-300 rounded px-3 py-1"
       >
-        <option value="">All Years</option>
-        {years.map(year => (
-          <option key={year} value={year}>{year}</option>
+        <option value="">All Batches</option>
+        {batches.map(batch => (
+          <option key={batch} value={batch}>{batch}</option>
         ))}
       </select>
 
-      {/* Course Filter */}
       <select
-        value={selectedCourse || ''}
+        value={selectedCourse || ""}
         onChange={(e) => setSelectedCourse(e.target.value || null)}
         className="border border-gray-300 rounded px-3 py-1"
       >
@@ -41,7 +32,6 @@ export default function SessionFilter({
           <option key={course} value={course}>{course}</option>
         ))}
       </select>
-
     </div>
   );
 }

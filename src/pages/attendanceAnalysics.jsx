@@ -5,20 +5,21 @@ import ReusablePieChart from '../component/PieChartComponent';
 import SessionFilter from '../component/SessionFilter';
 import AttendanceFilter from '../component/AttendanceFilter';
 const BASE_URL = "https://gibi-backend-669108940571.us-central1.run.app";
+import { CertificateButton } from '../component/CertificateButton';
+
 
 export default function AttendanceAnalysisPage() {
   const navigate = useNavigate();
   const [backendSessions, setBackendSessions] = useState([]);
   const [allCourseDates, setAllCourseDates] = useState([]);
   const [allStudents, setAllStudents] = useState([]);
-  const [selectedYear, setSelectedYear] = useState(null);
   const [selectedBatch, setSelectedBatch] = useState(null);
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [loading, setLoading] = useState(true);
   const [filterPresent, setFilterPresent] = useState(false);
   const [filterAbsent, setFilterAbsent] = useState(false);
   const [selectedSessionId, setSelectedSessionId] = useState(null);
-
+  const [selectedDepartment, setSelectedDepartment] = useState(null);
   // Admin password verification
   const verifySessionAdminPassword = async (enteredPassword) => {
     const adminId = localStorage.getItem('adminId');
@@ -84,12 +85,14 @@ export default function AttendanceAnalysisPage() {
             is_present: record.is_present
           });
         });
-
+        const batchesRes = await axios.get(`${BASE_URL}/batches`);
+        const batchesData = batchesRes.data?.data?.batches || [];
         // Create full session objects with statistics (like LastSessionAnalysisPage)
         const sessionsWithStats = courseDates.map(cd => {
           const match = cd.class_date.match(/(\d{4})\sE\.C\./);
           const sessionYear = match ? parseInt(match[1], 10) : null;
-
+          const batchObj = batchesData.find(b => b.batch_id === cd.batch_id);
+          const batchName = batchObj ? batchObj.batch_name : 'N/A';
           // Get attendance records for this specific date
           const dateAttendance = attendanceByDate[cd.date_id] || [];
 
@@ -118,6 +121,7 @@ export default function AttendanceAnalysisPage() {
             sessionYear,
             courseName: cd.course?.course_name || 'N/A',
             batchId: cd.batch_id,
+            batchName,
             students: studentsWithAttendance,
             stats: {
               total,
@@ -156,39 +160,43 @@ export default function AttendanceAnalysisPage() {
   };
 
   const getFilteredStudents = (students) => {
-    if (filterPresent && filterAbsent) return students;
-    if (filterPresent) return students.filter(s => s.is_present);
-    if (filterAbsent) return students.filter(s => !s.is_present);
-    return students;
+    let filtered = students;
+    if (selectedDepartment) {
+      filtered = filtered.filter(s => s.department === selectedDepartment);
+    }
+    if (filterPresent && filterAbsent) return filtered;
+    if (filterPresent) return filtered.filter(s => s.is_present);
+    if (filterAbsent) return filtered.filter(s => !s.is_present);
+    return filtered;
   };
 
   if (loading) return <p className="text-gray-900 p-6">Loading...</p>;
 
   return (
     <div className="min-h-screen bg-white text-gray-900 p-6 md:p-8">
-      <button
-        onClick={handleBack}
-        className="mb-4 px-4 py-2 bg-yellow-400 text-black rounded hover:bg-yellow-500"
-      >
-        ← Back
-      </button>
+      <div className="flex gap-4 items-center mb-4">
+        <button
+          onClick={handleBack}
+          className="px-4 py-2 bg-[#D4AF35] text-black rounded hover:bg-yellow-500"
+        >
+          ← Back
+        </button>
+        <CertificateButton />
+      </div>
+
 
       <h1 className="text-3xl font-bold text-yellow-400 mb-6">Attendance Analysis</h1>
       <SessionFilter
         sessions={backendSessions}
-        selectedYear={selectedYear}
-        setSelectedYear={setSelectedYear}
+        selectedBatch={selectedBatch}
+        setSelectedBatch={setSelectedBatch}
         selectedCourse={selectedCourse}
         setSelectedCourse={setSelectedCourse}
       />
       {backendSessions.length === 0 ? (
         <p className="text-gray-500">No attendance data available.</p>
       ) : (
-        backendSessions.filter(session => {
-          const yearMatches = !selectedYear || session.sessionYear === parseInt(selectedYear, 10);
-          const courseMatches = !selectedCourse || session.courseName === selectedCourse;
-          return yearMatches && courseMatches;
-        }).map(session => {
+        filteredSessions.map(session => {
           const { stats } = session;
           const pieData = [
             { name: `Present (${stats.presentPercentage}%)`, value: stats.present },
@@ -242,8 +250,8 @@ export default function AttendanceAnalysisPage() {
                   sessions={backendSessions}
                   selectedBatch={selectedBatch}
                   setSelectedBatch={setSelectedBatch}
-                  selectedCourse={selectedCourse}
-                  setSelectedCourse={setSelectedCourse}
+                  selectedDepartment={selectedDepartment}
+                  setSelectedDepartment={setSelectedDepartment}
                 />
               )}
 

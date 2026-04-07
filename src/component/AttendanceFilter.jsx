@@ -1,3 +1,4 @@
+// src/component/AttendanceFilter.jsx
 export default function AttendanceFilter({
   presentCount,
   absentCount,
@@ -5,20 +6,23 @@ export default function AttendanceFilter({
   filterAbsent,
   setFilterPresent,
   setFilterAbsent,
-  sessions,           // pass backendSessions
-  selectedBatch,      // state from parent
-  setSelectedBatch,   // setter from parent
-  selectedCourse,     // state from parent
-  setSelectedCourse   // setter from parent
+  sessions,
+  selectedBatch,
+  setSelectedBatch,
+  selectedDepartment,
+  setSelectedDepartment
 }) {
-  // get unique batches & courses
-  const batches = Array.from(new Set(sessions.map(s => s.batchName)));
-  const courses = Array.from(new Set(sessions.map(s => s.courseName)));
+  // All unique batch names from all sessions (for dropdown)
+  const batches = Array.from(new Set(sessions.map(s => s.batchName))).filter(Boolean);
+
+  // All unique departments from all students
+  const departments = Array.from(
+    new Set(sessions.flatMap(session => session.students.map(s => s.department)))
+  ).filter(Boolean);
 
   return (
     <div className="mt-4 flex gap-2 flex-wrap">
-
-      {/* BATCH FILTER */}
+      {/* Batch filter */}
       <select
         value={selectedBatch || ""}
         onChange={(e) => setSelectedBatch(e.target.value || null)}
@@ -26,69 +30,58 @@ export default function AttendanceFilter({
       >
         <option value="">All Batches</option>
         {batches.map(batch => (
-          <option key={batch} value={batch}>
-            {batch}
-          </option>
+          <option key={batch} value={batch}>{batch}</option>
         ))}
       </select>
 
-      {/* COURSE FILTER */}
+      {/* Department filter */}
       <select
-        value={selectedCourse || ""}
-        onChange={(e) => setSelectedCourse(e.target.value || null)}
+        value={selectedDepartment || ""}
+        onChange={(e) => setSelectedDepartment(e.target.value || null)}
         className="px-3 py-1 text-sm rounded border"
       >
-        <option value="">All Courses</option>
-        {courses.map(course => (
-          <option key={course} value={course}>
-            {course}
-          </option>
+        <option value="">All Departments</option>
+        {departments.map(dept => (
+          <option key={dept} value={dept}>{dept}</option>
         ))}
       </select>
 
-      {/* PRESENT FILTER */}
+      {/* Present button */}
       <button
         onClick={() => {
           setFilterPresent(!filterPresent);
           setFilterAbsent(false);
         }}
-        className={`px-3 py-1 text-sm rounded ${filterPresent
-          ? 'bg-green-500 text-white'
-          : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-          }`}
+        className={`px-3 py-1 text-sm rounded ${filterPresent ? 'bg-green-500 text-white' : 'bg-gray-200'}`}
       >
-        Show Present Only ({presentCount})
+        Present ({presentCount})
       </button>
 
-      {/* ABSENT FILTER */}
+      {/* Absent button */}
       <button
         onClick={() => {
           setFilterAbsent(!filterAbsent);
           setFilterPresent(false);
         }}
-        className={`px-3 py-1 text-sm rounded ${filterAbsent
-          ? 'bg-red-500 text-white'
-          : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-          }`}
+        className={`px-3 py-1 text-sm rounded ${filterAbsent ? 'bg-red-500 text-white' : 'bg-gray-200'}`}
       >
-        Show Absent Only ({absentCount})
+        Absent ({absentCount})
       </button>
 
-      {/* CLEAR FILTER */}
-      {(filterPresent || filterAbsent || selectedBatch || selectedCourse) && (
+      {/* Clear all filters */}
+      {(filterPresent || filterAbsent || selectedBatch || selectedDepartment) && (
         <button
           onClick={() => {
             setFilterPresent(false);
             setFilterAbsent(false);
             setSelectedBatch(null);
-            setSelectedCourse(null);
+            setSelectedDepartment(null);
           }}
-          className="px-3 py-1 text-sm rounded bg-yellow-400 text-black hover:bg-yellow-500"
+          className="px-3 py-1 text-sm rounded bg-yellow-400 text-black"
         >
-          Clear Filter
+          Clear Filters
         </button>
       )}
-
     </div>
   );
 }
