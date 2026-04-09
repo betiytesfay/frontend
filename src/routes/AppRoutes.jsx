@@ -5,7 +5,7 @@ import SessionAdmin from '../pages/SessionAdmin'
 import Dashboard from '../pages/Dashboard'
 import { useAuth } from '../context/AuthContext'
 import GeneralAdmin from '../pages/GeneralAdmin'
-
+import CertificateStatusPage from '../pages/CertificateStatusPage';
 function PrivateRoute({ children }) {
   const { user } = useAuth()
   return user ? children : <Navigate to="/admin/login" replace />
@@ -24,7 +24,7 @@ export default function AppRoutes() {
           </PrivateRoute>
         }
       />
-
+      <Route path="/certificate-status" element={<CertificateStatusPage />} />
       <Route
         path="/admin/general"
         element={

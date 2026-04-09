@@ -198,13 +198,19 @@ export default function AttendanceAnalysisPage() {
       ) : (
         filteredSessions.map(session => {
           const { stats } = session;
+          const filteredStudents = getFilteredStudents(session.students);
+          const filteredPresent = filteredStudents.filter(s => s.is_present).length;
+          const filteredAbsent = filteredStudents.filter(s => !s.is_present).length;
+          const filteredTotal = filteredStudents.length;
+          const filteredPresentPercent = filteredTotal > 0 ? ((filteredPresent / filteredTotal) * 100).toFixed(1) : 0;
+          const filteredAbsentPercent = filteredTotal > 0 ? ((filteredAbsent / filteredTotal) * 100).toFixed(1) : 0;
           const pieData = [
             { name: `Present (${stats.presentPercentage}%)`, value: stats.present },
             { name: `Absent (${stats.absentPercentage}%)`, value: stats.absent }
           ];
 
           const hasData = stats.present > 0 || stats.absent > 0;
-          const filteredStudents = getFilteredStudents(session.students);
+
 
           return (
             <div key={session.id} className="mb-6 bg-gray-100 border border-yellow-400 rounded-lg p-4">
@@ -228,10 +234,10 @@ export default function AttendanceAnalysisPage() {
 
               {/* PieChart */}
               <ReusablePieChart
-                present={stats.present}
-                absent={stats.absent}
-                presentPercentage={stats.presentPercentage}
-                absentPercentage={stats.absentPercentage}
+                present={filteredPresent}
+                absent={filteredAbsent}
+                presentPercentage={filteredPresentPercent}
+                absentPercentage={filteredAbsentPercent}
                 onClick={() =>
                   setSelectedSessionId(
                     selectedSessionId === session.id ? null : session.id
