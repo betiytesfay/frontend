@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { FaUserPlus, FaEye, FaEyeSlash, FaUserEdit, FaEdit, FaTrash, FaUserMinus, FaUserCircle, FaArrowLeft, FaFilter } from 'react-icons/fa';
 const BASE = "https://gibi-backend-669108940571.us-central1.run.app";
-const ManageUser = () => {
+const ManageUser = ({ setSelectedCategory }) => {
   const [selectedAction, setSelectedAction] = useState("");
   const [users, setUsers] = useState([]);
   const [showPassword, setShowPassword] = useState(false);
@@ -186,7 +186,16 @@ const ManageUser = () => {
     <div className="bg-white p-6 max-w-5xl mx-auto flex flex-col justify-center gap-4 mt-8 sm:max-w-lg rounded-xl shadow-md w-full">
       <div className="items-center justify-between flex">
         <button
-          onClick={() => window.history.back()}
+          onClick={() => {
+            if (selectedAction) {
+              clearForm();
+              setSelectedAction("");
+            } else if (setSelectedCategory) {
+              setSelectedCategory("");
+            } else {
+              window.history.back();
+            }
+          }}
           className="flex items-center gap-1 px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
         >
           <FaArrowLeft />

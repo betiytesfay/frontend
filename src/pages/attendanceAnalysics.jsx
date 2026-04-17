@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import SessionFilter from '../component/SessionFilter';
 import SessionCard from '../component/SessionCard';
+import LoadingScreen from '../component/LoadingScreen';
 import { CertificateButton } from '../component/CertificateButton';
 
 const BASE_URL = "https://gibi-backend-669108940571.us-central1.run.app";
@@ -118,7 +119,7 @@ export default function AttendanceAnalysisPage() {
     else alert('Incorrect password!');
   };
 
-  if (loading) return <p className="text-gray-900 p-6">Loading...</p>;
+  if (loading) return <LoadingScreen message="Loading attendance data..." />;
 
   return (
     <div className="min-h-screen bg-white text-gray-900 p-6 md:p-8">

@@ -26,9 +26,9 @@ const GeneralAdmin = () => {
 
         {!selectedCategory && (
           <div className="flex justify-between items-center mb-1">
-            <h1 className="text-xl font-bold sm:text-2xl md:text-3xl lg:text-4xl">
+            <h1 className="text-xl  font-bold sm:text-2xl md:text-3xl lg:text-4xl">
               Welcome Back,<br />
-              <span className="font-bold sm:text-2xl md:text-3xl lg:text-4xl">General Admin</span>
+              <span className="font-bold sm:text-2xl md:text-3xl lg:text-4xl pl-2">General Admin</span>
             </h1>
             {/* <FaUserCircle className="w-10 h-10 text-gray-700" /> */}
             <img src={logo} alt="GIBI Logo" className="w-10 h-10 rounded-full object-cover" />

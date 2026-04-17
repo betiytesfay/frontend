@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PieChart, Pie, Cell, Tooltip, Legend } from 'recharts';
 import axios from 'axios';
+import LoadingScreen from '../component/LoadingScreen';
 
 const COLORS = ['#22c55e', '#ef4444'];
 const BASE_URL = "https://gibi-backend-669108940571.us-central1.run.app";
@@ -144,7 +145,7 @@ export default function LastSessionAnalysisPage() {
     setShowStudentList(!showStudentList);
   };
 
-  if (loading) return <p className="text-gray-900 p-6">Loading...</p>;
+  if (loading) return <LoadingScreen message="Loading last session..." />;
   if (!lastSession) return <p className="text-gray-900 p-6">No session data available.</p>;
 
   const { stats } = lastSession;

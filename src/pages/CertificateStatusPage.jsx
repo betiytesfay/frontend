@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import LoadingScreen from '../component/LoadingScreen';
 
 const BASE_URL = "https://gibi-backend-669108940571.us-central1.run.app";
 const PAGE_SIZE = 10;
@@ -61,14 +62,7 @@ export default function CertificateStatusPage() {
     }
   };
 
-  if (loading) return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-      <div className="text-center">
-        <div className="w-12 h-12 border-4 border-yellow-400 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-        <p className="text-gray-500 font-medium">Loading certificate data...</p>
-      </div>
-    </div>
-  );
+  if (loading) return <LoadingScreen message="Loading certificate data..." />;
 
   return (
     <div className="min-h-screen bg-gray-50">
