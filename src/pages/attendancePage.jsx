@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { DatePicker } from "et-calendar";
+import { EthiopianDate } from "et-calendar/lib";
 import { BackButton } from "../component/backButton";
 import useCourses from "../hooks/useCourses";
 import useBatches from "../hooks/useBatches";
@@ -147,7 +148,7 @@ export default function AttendancePage() {
     if (!pwd) return;
     const valid = await verifySessionAdminPassword(pwd);
     if (!valid) return alert("Incorrect password!");
-    navigate("/sessionAdmin");
+    navigate("/sessionPage");
   };
 
   return (
@@ -176,13 +177,20 @@ export default function AttendancePage() {
         <label>Date:</label>
         <div className="border rounded w-full max-w-xs">
           <DatePicker
-            selectedDate={ethDate ? new Date(ethDate) : new Date()}
-            onDateChange={(date) => setEthDate(date.toISOString().split("T")[0])}
+            selectedDate={new Date()}
+            onDateChange={(date) => {
+              const eth = EthiopianDate.toEth(date);
+              const y = eth.Year;
+              const m = String(eth.Month).padStart(2, '0');
+              const d = String(eth.Day).padStart(2, '0');
+              setEthDate(`${y}-${m}-${d}`);
+            }}
             showCalendars="ethiopian"
             viewFirst="Ethiopian"
             closeOnSelect
           />
         </div>
+        {ethDate && <p className="text-sm text-gray-500">Selected: {ethDate}</p>}
 
         <button
           onClick={handleStartAttendance}

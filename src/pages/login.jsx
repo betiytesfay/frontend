@@ -6,7 +6,7 @@ import logo from '../assets/logo.png'
 import bgImage from '../assets/background.png'
 import '../index.css'
 
-export default function CombinedLogin() {
+export default function Login() {
   const navigate = useNavigate()
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
@@ -36,12 +36,11 @@ export default function CombinedLogin() {
       localStorage.setItem('adminId', user.student_id);
       localStorage.setItem('accessToken', response.data?.data?.accessToken || '');
       localStorage.setItem('refreshToken', response.data?.data?.refreshToken || '');
-      console.log('Admin ID from localStorage:', localStorage.getItem('adminId'));
 
       if (user.role === "super-admin") {
         navigate("/admin");
       } else if (user.role === "admin") {
-        navigate("/sessionAdmin");
+        navigate("/sessionPage");
       } else {
         navigate("/");
       }
@@ -67,7 +66,7 @@ export default function CombinedLogin() {
         style={{ backgroundColor: 'rgba(255, 255, 255, 0.2)' }}
       >
         <img src={logo} alt="Logo" className="w-40 h-40 object-contain mb-4" />
-        <h1 className="text-3xl md:text-2xl font-bold text-blue-800 text-center drop-shadow-lg ">
+        <h1 className="text-3xl md:text-2xl font-bold text-blue-800 text-center drop-shadow-lg">
           <span className="animate-fadeSlide inline-block">
             Welcome to Gibi Attendance
           </span>
@@ -81,7 +80,7 @@ export default function CombinedLogin() {
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             className="border border-gray-300 rounded p-2 w-full focus:outline-none focus:ring-2 focus:ring-[#D7B450] bg-white/90"
-            onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
+            onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
           />
         </div>
 
@@ -94,7 +93,7 @@ export default function CombinedLogin() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="border border-gray-300 rounded p-2 w-full pr-10 focus:outline-none focus:ring-2 focus:ring-[#D7B450] bg-white/90 backdrop-blur-sm"
-              onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
+              onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
             />
             <button
               type="button"

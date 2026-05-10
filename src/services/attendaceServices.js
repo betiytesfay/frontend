@@ -33,7 +33,7 @@ export async function sendAttendanceSession(session) {
     date_id: Number(session.courseDateId),
     students: session.students.map((s) => ({ student_id: s.student_id, is_present: true })),
     recorded_by_user_id: localStorage.getItem("adminId")
-      ? Number(localStorage.getItem("adminId"))
+      ? Number(localStorage.getItem("adminId")) || undefined
       : undefined,
   };
 

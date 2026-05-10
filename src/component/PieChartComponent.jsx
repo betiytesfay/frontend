@@ -26,7 +26,7 @@ export default function ReusablePieChart({ present, absent, presentPercentage, a
   }
 
   return (
-    <div className="flex flex-col items-center gap-3 cursor-pointer mb-4 sm:flex-row sm:items-center sm:gap-4" onClick={onClick}>
+    <div className="flex flex-col items-center gap-3 cursor-pointer mb-4 sm:flex-row sm:items-start sm:gap-6 sm:pl-10" onClick={onClick}>
       <div className="flex-shrink-0">
         <PieChart width={180} height={180}>
           <Pie
@@ -51,12 +51,12 @@ export default function ReusablePieChart({ present, absent, presentPercentage, a
       </div>
 
       {/* Color legend */}
-      <div className="flex flex-col gap-1.5 w-full sm:flex-1">
+      <div className="flex flex-col gap-2 min-w-[200px] w-full sm:w-auto sm:flex-1 mt-1">
         {data.map((slice, i) => (
           <div key={i} className="flex items-center gap-2 text-sm">
             <span className="w-3 h-3 rounded-sm flex-shrink-0" style={{ backgroundColor: colors[i % colors.length] }} />
-            <span className="text-gray-700 flex-1 truncate">{slice.name}</span>
-            <span className="font-semibold text-gray-800 text-xs whitespace-nowrap">
+            <span className="text-gray-700 flex-1">{slice.name}</span>
+            <span className="font-semibold text-gray-800 text-xs whitespace-nowrap ml-2">
               {slice.value}
               <span className="text-gray-400 font-normal ml-1">
                 ({total > 0 ? ((slice.value / total) * 100).toFixed(1) : 0}%)

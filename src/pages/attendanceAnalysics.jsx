@@ -20,22 +20,6 @@ export default function AttendanceAnalysisPage() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
-  const verifySessionAdminPassword = async (enteredPassword) => {
-    const adminId = localStorage.getItem('adminId');
-    if (!adminId) { alert('No admin logged in!'); return false; }
-    try {
-      const res = await axios.post(
-        `${BASE_URL}/auth/login`,
-        { student_id: adminId, password: enteredPassword },
-        { withCredentials: true }
-      );
-      return res.data?.data?.user?.role === 'admin';
-    } catch (err) {
-      console.error('Password verification failed', err.response?.data || err);
-      return false;
-    }
-  };
-
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -91,7 +75,7 @@ export default function AttendanceAnalysisPage() {
           };
         });
 
-        setBackendSessions(sessionsWithStats);
+        setBackendSessions(sessionsWithStats.sort((a, b) => b.id - a.id));
       } catch (err) {
         console.error('Error fetching data:', err);
       } finally {
@@ -111,13 +95,7 @@ export default function AttendanceAnalysisPage() {
   const totalPages = Math.ceil(filteredSessions.length / pageSize);
   const paginatedSessions = filteredSessions.slice((page - 1) * pageSize, page * pageSize);
 
-  const handleBack = async () => {
-    const enteredPassword = prompt('Enter session admin password to go back:');
-    if (!enteredPassword) return;
-    const isValid = await verifySessionAdminPassword(enteredPassword);
-    if (isValid) navigate(-1);
-    else alert('Incorrect password!');
-  };
+  const handleBack = () => navigate(-1);
 
   if (loading) return <LoadingScreen message="Loading attendance data..." />;
 
