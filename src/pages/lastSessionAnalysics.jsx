@@ -59,13 +59,32 @@ export default function LastSessionAnalysisPage() {
       if (r.date_id === latest.date_id) attendanceMap[r.student_id] = r.is_present;
     });
 
-    const studentsWithAttendance = students.map(s => ({
-      student_id: s.student_id,
-      name: `${s.first_name} ${s.last_name}`,
-      is_present: attendanceMap[s.student_id] === true,
-      gender: s.gender || 'N/A',
-      department: s.department || 'N/A'
-    }));
+    // Only include students who have attendance records for this session
+    const sessionStudentIds = Object.keys(attendanceMap);
+    const studentsWithAttendance = students
+      .filter(s => sessionStudentIds.includes(s.student_id))
+      .map(s => ({
+        student_id: s.student_id,
+        name: `${s.first_name} ${s.last_name}`,
+        is_present: attendanceMap[s.student_id] === true,
+        gender: s.gender || 'N/A',
+        department: s.department || 'N/A'
+      }));
+
+    // Also include attendance records whose student may not be in students list
+    attendanceRecords
+      .filter(r => r.date_id === latest.date_id && r.student)
+      .forEach(r => {
+        if (!studentsWithAttendance.find(s => s.student_id === r.student.student_id)) {
+          studentsWithAttendance.push({
+            student_id: r.student.student_id,
+            name: `${r.student.first_name} ${r.student.last_name}`,
+            is_present: r.is_present,
+            gender: r.student.gender || 'N/A',
+            department: r.student.department || 'N/A'
+          });
+        }
+      });
 
     const present = studentsWithAttendance.filter(s => s.is_present).length;
     const absent = studentsWithAttendance.length - present;
