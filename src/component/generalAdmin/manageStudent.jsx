@@ -222,7 +222,7 @@ const ManageStudents = ({ setSelectedCategory }) => {
 
   // === Handlers ===
   const handleAddStudent = async () => {
-    set
+
     console.log('handleAddStudent values', {
       studentFirstName,
       studentLastName,
@@ -266,7 +266,6 @@ const ManageStudents = ({ setSelectedCategory }) => {
     const now = new Date();
     const [etYear, etMonth, etDay] = toEthiopian(now.getFullYear(), now.getMonth() + 1, now.getDate());
     const etDate = `${etYear}-${String(etMonth).padStart(2, '0')}-${String(etDay).padStart(2, '0')}`;
-    const [filterGender, setFilterGender] = useState("");
     const newStudent = {
       student_id: id,
       first_name: f,

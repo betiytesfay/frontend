@@ -131,32 +131,37 @@ const ManageUser = ({ setSelectedCategory }) => {
     const payload = {
       username,
       student_id: studentId,
-      password_hash: password || undefined,
-      role,
+      password: password || undefined,
       email
     };
 
     try {
-      const res = await fetch(`${BASE}/user/${encodeURIComponent(selectedUserId)}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json", "Accept": "application/json" },
+      const res = await fetch(`${BASE}/user/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
         body: JSON.stringify(payload),
-        credentials: 'include'
+        credentials: "include"
       });
 
+      const data = await res.json();
+
       if (!res.ok) {
-        let body = '<no body>';
-        try { body = await res.text(); } catch (e) { }
-        console.error('Edit user failed', res.status, body);
-        return alert('Failed to update user');
+        const text = await res.text();
+        console.log("ERROR STATUS:", res.status);
+        console.log("ERROR BODY:", text);
+        return alert("Failed to send: " + text);
       }
+
 
       await fetchUsers();
       clearForm();
       setSelectedAction("");
     } catch (err) {
-      console.error('Edit user error', err);
-      alert('Could not connect to backend');
+      console.error("Add user error:", err);
+      alert("Backend not reachable");
     }
   };
 
@@ -203,7 +208,12 @@ const ManageUser = ({ setSelectedCategory }) => {
         </button>
         <h2 className="font-bold text-lg">Admins</h2>
         <button
-          onClick={() => setSelectedAction("add")}
+          onClick={() => {
+            setSelectedAction("add");
+            setShowViewPopup(false);
+            setShowEditPopup(false);
+            setShowDeletePopup(false);
+          }}
           className="flex items-center gap-1 bg-[#D7B450] text-white px-3 py-2 rounded hover:bg-yellow-600"
         >
           <FaUserPlus />
@@ -366,7 +376,7 @@ const ManageUser = ({ setSelectedCategory }) => {
 
           <input
             type="text"
-            placeholder="Student ID"
+            placeholder="eg.UGR-1234-56"
             className="border px-3 py-2 rounded w-full mb-2"
             value={studentId}
             onChange={(e) => setStudentId(e.target.value)}

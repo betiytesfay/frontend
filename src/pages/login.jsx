@@ -25,8 +25,12 @@ export default function Login() {
         { withCredentials: true }
       );
 
+
       const user = response.data?.data?.user;
 
+      console.log("Full User Object:", user);
+      console.log("User Role:", user?.role);
+      console.log("Role Type:", typeof user?.role);
       if (!user) {
         console.error("No user returned from backend");
         setError("Invalid credentials");

@@ -75,7 +75,7 @@ export default function AttendanceAnalysisPage() {
           };
         });
 
-        setBackendSessions(sessionsWithStats.sort((a, b) => b.id - a.id));
+        setBackendSessions(sessionsWithStats.sort((a, b) => new Date(b.date) - new Date(a.date)));
       } catch (err) {
         console.error('Error fetching data:', err);
       } finally {
