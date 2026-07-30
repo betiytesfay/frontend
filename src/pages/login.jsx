@@ -1,18 +1,17 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import axios from 'axios'
-import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline'
-import logo from '../assets/logo.png'
-import bgImage from '../assets/background.png'
-import '../index.css'
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
+import logo from '../assets/logo.png';
+import bgImage from '../assets/background.png';
 
 export default function Login() {
-  const navigate = useNavigate()
-  const [username, setUsername] = useState('')
-  const [password, setPassword] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [showPassword, setShowPassword] = useState(false)
-  const [error, setError] = useState('')
+  const navigate = useNavigate();
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState('');
 
   const handleLogin = async () => {
     setError('');
@@ -25,14 +24,8 @@ export default function Login() {
         { withCredentials: true }
       );
 
-
       const user = response.data?.data?.user;
-
-      console.log("Full User Object:", user);
-      console.log("User Role:", user?.role);
-      console.log("Role Type:", typeof user?.role);
       if (!user) {
-        console.error("No user returned from backend");
         setError("Invalid credentials");
         return;
       }
@@ -48,7 +41,6 @@ export default function Login() {
       } else {
         navigate("/");
       }
-
     } catch (err) {
       if (err.response && err.response.status === 401) {
         setError(`Login Error: ${err.response.data.message || err.message}`);
@@ -60,72 +52,93 @@ export default function Login() {
     }
   };
 
+  const demoLogin = (role) => {
+    localStorage.setItem('adminId', `DEMO-${role.toUpperCase()}`);
+    if (role === 'admin') navigate('/admin');
+    else if (role === 'session') navigate('/sessionPage');
+    else navigate('/attendance');
+  };
+
   return (
     <div
-      className="h-screen w-screen flex justify-center items-center bg-cover bg-center"
+      className="min-h-screen w-screen flex justify-center items-center bg-cover bg-center bg-no-repeat p-4 relative"
       style={{ backgroundImage: `url(${bgImage})` }}
     >
-      <div
-        className="flex flex-col m-5 items-center gap-6 w-[400px] p-8 backdrop-blur-md rounded-xl text-center"
-        style={{ backgroundColor: 'rgba(255, 255, 255, 0.2)' }}
-      >
-        <img src={logo} alt="Logo" className="w-40 h-40 object-contain mb-4" />
-        <h1 className="text-3xl md:text-2xl font-bold text-blue-800 text-center drop-shadow-lg">
-          <span className="animate-fadeSlide inline-block">
-            Welcome to Gibi Attendance
-          </span>
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px]"></div>
+
+      <div className="relative z-10 flex flex-col items-center gap-3 w-full max-w-[380px] p-5 backdrop-blur-xl bg-white/20 border border-white/30 rounded-2xl text-center shadow-2xl text-white">
+        <img src={logo} alt="Logo" className="w-20 h-20 object-contain drop-shadow-md" />
+        
+        <h1 className="text-xl font-bold tracking-tight text-white drop-shadow">
+          Gibi Attendance System
         </h1>
 
-        <div className="w-full text-left">
-          <label className="text-white text-sm mb-1 block">Student ID:</label>
+        <div className="w-full text-left space-y-1">
+          <label className="text-xs font-semibold text-gray-100">Student ID:</label>
           <input
             type="text"
-            placeholder="eg., 1234-16"
+            placeholder="e.g. 1234-16"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-            className="border border-gray-300 rounded p-2 w-full focus:outline-none focus:ring-2 focus:ring-[#D7B450] bg-white/90"
+            className="border border-white/30 rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-[#D7B450] bg-white/90 text-gray-800 text-sm shadow-inner"
             onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
           />
         </div>
 
-        <div className="w-full text-left">
-          <label className="text-white text-sm mb-1 block">Password:</label>
+        <div className="w-full text-left space-y-1">
+          <label className="text-xs font-semibold text-gray-100">Password:</label>
           <div className="relative w-full">
             <input
               type={showPassword ? 'text' : 'password'}
-              placeholder="password"
+              placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="border border-gray-300 rounded p-2 w-full pr-10 focus:outline-none focus:ring-2 focus:ring-[#D7B450] bg-white/90 backdrop-blur-sm"
+              className="border border-white/30 rounded-lg px-3 py-2 w-full pr-10 focus:outline-none focus:ring-2 focus:ring-[#D7B450] bg-white/90 text-gray-800 text-sm shadow-inner"
               onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-600"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 hover:text-gray-900"
             >
               {showPassword ? (
-                <EyeSlashIcon className="h-5 w-5" />
+                <EyeSlashIcon className="h-4 w-4" />
               ) : (
-                <EyeIcon className="h-5 w-5" />
+                <EyeIcon className="h-4 w-4" />
               )}
             </button>
           </div>
         </div>
 
-        {error && <p className="text-red-500 text-center text-sm">{error}</p>}
+        {error && <p className="text-red-300 text-xs text-center font-medium">{error}</p>}
 
         <button
           onClick={handleLogin}
           disabled={loading}
-          className="w-full border border-[#D7B450] bg-[#D7B450] text-black py-3 rounded-md text-base font-semibold transition duration-200 hover:bg-yellow-400 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full bg-[#D7B450] text-gray-900 py-2.5 rounded-lg text-sm font-bold shadow-md hover:bg-yellow-400 transition active:scale-[0.98] disabled:opacity-50 mt-1"
         >
-          {loading ? 'Logging in...' : 'Login'}
+          {loading ? 'Logging in...' : 'Sign In'}
         </button>
-        <div className="flex justify-center w-full mt-2">
-          <a href="#" className="text-white text-sm hover:underline">Forgot Password?</a>
+
+        {/* Demo Fast Access / Bypass Section */}
+        <div className="w-full border-t border-white/20 pt-3 mt-1 space-y-2">
+          <p className="text-xs text-gray-200 font-medium">⚡ Fast Test Access (No Password):</p>
+          <div className="flex gap-2">
+            <button
+              onClick={() => demoLogin('admin')}
+              className="flex-1 bg-white/20 hover:bg-white/30 text-white text-xs py-1.5 rounded-md border border-white/40 transition font-medium"
+            >
+              👑 Admin Demo
+            </button>
+            <button
+              onClick={() => demoLogin('session')}
+              className="flex-1 bg-white/20 hover:bg-white/30 text-white text-xs py-1.5 rounded-md border border-white/40 transition font-medium"
+            >
+              👤 Session Demo
+            </button>
+          </div>
         </div>
       </div>
     </div>
-  )
+  );
 }
