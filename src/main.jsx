@@ -8,7 +8,7 @@ import AttendancePage from './pages/attendancePage.jsx'
 import AttendanceAnalysis from './pages/attendanceAnalysics.jsx'
 import LastSessionAnalysisPage from './pages/lastSessionAnalysics.jsx'
 import CertificateStatusPage from './pages/CertificateStatusPage.jsx'
-
+import './index.css'
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
